@@ -34,8 +34,7 @@ async def find_cross_case_matches(entity_id: str, case_id: str) -> List[dict]:
     
     for other in other_entities:
         if not other['name']:
-            continue
-        
+            continue        
         # Exact phone match
         if entity_name.replace(" ", "") == other['name'].replace(" ", ""):
             matches.append({

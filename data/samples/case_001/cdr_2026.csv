@@ -1,0 +1,201 @@
+call_id,case_id,caller_number,callee_number,caller_name,callee_name,call_date,call_time,duration_seconds,call_type,caller_tower_id,caller_area,callee_area,source_file
+CDR0001,CASE_001,+91-90000-66677,+91-90000-88811,Nasreen Shaikh,Arun Tawde,05/01/2026,21:46:38,280,voice,Dadar,Dadar,Andheri-West,cdr_2026.csv
+CDR0002,CASE_001,+91-90000-77788,+91-90000-99900,Suresh Gawde,Unknown,07/01/2026,04:48:43,147,voice,Govandi,Govandi,Kurla-West,cdr_2026.csv
+CDR0003,CASE_001,+91-90000-22233,+91-90000-88811,Rajan Kumar,Arun Tawde,07/01/2026,22:40:52,0,sms,Govandi,Govandi,Dadar,cdr_2026.csv
+CDR0004,CASE_001,+91-90000-11122,+91-90000-44455,Rajan Kumar,Imran Sheikh,07/01/2026,23:50:08,131,voice,Govandi,Govandi,Dadar,cdr_2026.csv
+CDR0005,CASE_001,+91-90000-11122,+91-90000-55566,Rajan Kumar,Vikram Naik,08/01/2026,00:23:27,84,voice,Govandi,Govandi,Andheri-West,cdr_2026.csv
+CDR0006,CASE_001,+91-90000-55566,+91-90000-33344,Vikram Naik,Imran Sheikh,08/01/2026,14:22:00,0,sms,Bandra-West,Bandra-West,Dharavi,cdr_2026.csv
+CDR0007,CASE_001,+91-90000-11122,+91-90000-99900,Rajan Kumar,Unknown,12/01/2026,06:29:26,332,voice,Kurla-West,Kurla-West,Dharavi,cdr_2026.csv
+CDR0008,CASE_001,+91-90000-55566,+91-90000-66677,Vikram Naik,Nasreen Shaikh,12/01/2026,09:53:49,0,sms,Bandra-West,Bandra-West,Bandra-West,cdr_2026.csv
+CDR0009,CASE_001,+91-90000-33344,+91-90000-22233,Imran Sheikh,Rajan Kumar,13/01/2026,09:04:38,49,voice,Dharavi,Dharavi,Govandi,cdr_2026.csv
+CDR0010,CASE_001,+91-90000-22233,+91-90000-99900,Rajan Kumar,Unknown,14/01/2026,03:02:48,0,sms,Dharavi,Dharavi,Govandi,cdr_2026.csv
+CDR0011,CASE_001,+91-90000-55566,+91-90000-77788,Vikram Naik,Suresh Gawde,16/01/2026,14:45:05,268,voice,Andheri-West,Andheri-West,Govandi,cdr_2026.csv
+CDR0012,CASE_001,+91-90000-11122,+91-90000-88811,Rajan Kumar,Arun Tawde,18/01/2026,11:21:49,85,voice,Kurla-West,Kurla-West,Andheri-West,cdr_2026.csv
+CDR0013,CASE_001,+91-90000-66677,+91-90000-55566,Nasreen Shaikh,Vikram Naik,18/01/2026,20:35:01,0,sms,Bandra-West,Bandra-West,Bandra-West,cdr_2026.csv
+CDR0014,CASE_001,+91-90000-11122,+91-90000-66677,Rajan Kumar,Nasreen Shaikh,18/01/2026,22:47:47,0,sms,Kurla-West,Kurla-West,Bandra-West,cdr_2026.csv
+CDR0015,CASE_001,+91-90000-88811,+91-90000-77788,Arun Tawde,Suresh Gawde,20/01/2026,20:49:34,279,voice,Dadar,Dadar,Govandi,cdr_2026.csv
+CDR0016,CASE_001,+91-90000-22233,+91-90000-66677,Rajan Kumar,Nasreen Shaikh,21/01/2026,00:39:40,290,voice,Govandi,Govandi,Dadar,cdr_2026.csv
+CDR0017,CASE_001,+91-90000-66677,+91-90000-88811,Nasreen Shaikh,Arun Tawde,21/01/2026,22:53:45,0,sms,Bandra-West,Bandra-West,Andheri-West,cdr_2026.csv
+CDR0018,CASE_001,+91-90000-99900,+91-90000-11122,Unknown,Rajan Kumar,21/01/2026,23:45:13,42,voice,Kurla-West,Kurla-West,Kurla-West,cdr_2026.csv
+CDR0019,CASE_001,+91-90000-99900,+91-90000-22233,Unknown,Rajan Kumar,22/01/2026,05:16:24,177,voice,Kurla-West,Kurla-West,Govandi,cdr_2026.csv
+CDR0020,CASE_001,+91-90000-44455,+91-90000-22233,Imran Sheikh,Rajan Kumar,24/01/2026,02:29:31,167,voice,Kurla-West,Kurla-West,Kurla-West,cdr_2026.csv
+CDR0021,CASE_001,+91-90000-11122,+91-90000-88811,Rajan Kumar,Arun Tawde,24/01/2026,04:03:50,180,voice,Dharavi,Dharavi,Andheri-West,cdr_2026.csv
+CDR0022,CASE_001,+91-90000-11122,+91-90000-55566,Rajan Kumar,Vikram Naik,25/01/2026,02:23:46,77,voice,Govandi,Govandi,Bandra-West,cdr_2026.csv
+CDR0023,CASE_001,+91-90000-22233,+91-90000-99900,Rajan Kumar,Unknown,25/01/2026,02:43:39,70,voice,Govandi,Govandi,Kurla-West,cdr_2026.csv
+CDR0024,CASE_001,+91-90000-22233,+91-90000-88811,Rajan Kumar,Arun Tawde,26/01/2026,15:03:25,151,voice,Dharavi,Dharavi,Dadar,cdr_2026.csv
+CDR0025,CASE_001,+91-90000-11122,+91-90000-55566,Rajan Kumar,Vikram Naik,28/01/2026,00:44:18,0,sms,Kurla-West,Kurla-West,Bandra-West,cdr_2026.csv
+CDR0026,CASE_001,+91-90000-22233,+91-90000-99900,Rajan Kumar,Unknown,28/01/2026,17:38:32,69,voice,Kurla-West,Kurla-West,Govandi,cdr_2026.csv
+CDR0027,CASE_001,+91-90000-88811,+91-90000-11122,Arun Tawde,Rajan Kumar,30/01/2026,01:07:06,0,sms,Andheri-West,Andheri-West,Govandi,cdr_2026.csv
+CDR0028,CASE_001,+91-90000-44455,+91-90000-55566,Imran Sheikh,Vikram Naik,30/01/2026,21:49:52,295,voice,Dadar,Dadar,Bandra-West,cdr_2026.csv
+CDR0029,CASE_001,+91-90000-11122,+91-90000-33344,Rajan Kumar,Imran Sheikh,31/01/2026,02:36:33,0,sms,Dharavi,Dharavi,Dadar,cdr_2026.csv
+CDR0030,CASE_001,+91-90000-22233,+91-90000-44455,Rajan Kumar,Imran Sheikh,31/01/2026,18:34:07,407,voice,Govandi,Govandi,Dadar,cdr_2026.csv
+CDR0031,CASE_001,+91-90000-11122,+91-90000-33344,Rajan Kumar,Imran Sheikh,31/01/2026,23:13:48,364,voice,Govandi,Govandi,Dharavi,cdr_2026.csv
+CDR0032,CASE_001,+91-90000-22233,+91-90000-44455,Rajan Kumar,Imran Sheikh,01/02/2026,00:22:13,293,voice,Kurla-West,Kurla-West,Dadar,cdr_2026.csv
+CDR0033,CASE_001,+91-90000-22233,+91-90000-33344,Rajan Kumar,Imran Sheikh,01/02/2026,23:49:18,0,sms,Dharavi,Dharavi,Kurla-West,cdr_2026.csv
+CDR0034,CASE_001,+91-90000-99900,+91-90000-77788,Unknown,Suresh Gawde,02/02/2026,07:55:00,303,voice,Kurla-West,Kurla-West,Dharavi,cdr_2026.csv
+CDR0035,CASE_001,+91-90000-22233,+91-90000-55566,Rajan Kumar,Vikram Naik,02/02/2026,18:06:33,243,voice,Dharavi,Dharavi,Bandra-West,cdr_2026.csv
+CDR0036,CASE_001,+91-90000-77788,+91-90000-88811,Suresh Gawde,Arun Tawde,03/02/2026,13:35:24,0,sms,Govandi,Govandi,Dadar,cdr_2026.csv
+CDR0037,CASE_001,+91-90000-55566,+91-90000-66677,Vikram Naik,Nasreen Shaikh,03/02/2026,14:46:55,0,sms,Bandra-West,Bandra-West,Bandra-West,cdr_2026.csv
+CDR0038,CASE_001,+91-90000-22233,+91-90000-99900,Rajan Kumar,Unknown,04/02/2026,02:18:44,261,voice,Dharavi,Dharavi,Kurla-West,cdr_2026.csv
+CDR0039,CASE_001,+91-90000-22233,+91-90000-33344,Rajan Kumar,Imran Sheikh,04/02/2026,08:17:18,324,voice,Govandi,Govandi,Dharavi,cdr_2026.csv
+CDR0040,CASE_001,+91-90000-22233,+91-90000-99900,Rajan Kumar,Unknown,04/02/2026,14:48:57,236,voice,Kurla-West,Kurla-West,Dharavi,cdr_2026.csv
+CDR0041,CASE_001,+91-90000-55566,+91-90000-33344,Vikram Naik,Imran Sheikh,06/02/2026,16:26:29,184,voice,Bandra-West,Bandra-West,Dadar,cdr_2026.csv
+CDR0042,CASE_001,+91-90000-99900,+91-90000-22233,Unknown,Rajan Kumar,09/02/2026,12:39:51,285,voice,Kurla-West,Kurla-West,Govandi,cdr_2026.csv
+CDR0043,CASE_001,+91-90000-55566,+91-90000-66677,Vikram Naik,Nasreen Shaikh,10/02/2026,16:19:29,47,voice,Bandra-West,Bandra-West,Dadar,cdr_2026.csv
+CDR0044,CASE_001,+91-90000-22233,+91-90000-99900,Rajan Kumar,Unknown,12/02/2026,21:01:58,211,voice,Kurla-West,Kurla-West,Govandi,cdr_2026.csv
+CDR0045,CASE_001,+91-90000-55566,+91-90000-11122,Vikram Naik,Rajan Kumar,13/02/2026,11:31:58,308,voice,Bandra-West,Bandra-West,Kurla-West,cdr_2026.csv
+CDR0046,CASE_001,+91-90000-99900,+91-90000-77788,Unknown,Suresh Gawde,14/02/2026,17:28:44,314,voice,Govandi,Govandi,Govandi,cdr_2026.csv
+CDR0047,CASE_001,+91-90000-55566,+91-90000-66677,Vikram Naik,Nasreen Shaikh,19/02/2026,15:02:25,36,voice,Bandra-West,Bandra-West,Dadar,cdr_2026.csv
+CDR0048,CASE_001,+91-90000-33344,+91-90000-11122,Imran Sheikh,Rajan Kumar,23/02/2026,17:39:47,0,sms,Dharavi,Dharavi,Dharavi,cdr_2026.csv
+CDR0049,CASE_001,+91-90000-77788,+91-90000-66677,Suresh Gawde,Nasreen Shaikh,23/02/2026,22:41:49,305,voice,Dharavi,Dharavi,Bandra-West,cdr_2026.csv
+CDR0050,CASE_001,+91-90000-33344,+91-90000-22233,Imran Sheikh,Rajan Kumar,24/02/2026,01:16:59,0,sms,Kurla-West,Kurla-West,Govandi,cdr_2026.csv
+CDR0051,CASE_001,+91-90000-99900,+91-90000-77788,Unknown,Suresh Gawde,25/02/2026,20:38:18,0,sms,Kurla-West,Kurla-West,Govandi,cdr_2026.csv
+CDR0052,CASE_001,+91-90000-11122,+91-90000-99900,Rajan Kumar,Unknown,26/02/2026,18:03:35,0,sms,Dharavi,Dharavi,Kurla-West,cdr_2026.csv
+CDR0053,CASE_001,+91-90000-55566,+91-90000-88811,Vikram Naik,Arun Tawde,27/02/2026,11:15:03,0,sms,Andheri-West,Andheri-West,Andheri-West,cdr_2026.csv
+CDR0054,CASE_001,+91-90000-11122,+91-90000-55566,Rajan Kumar,Vikram Naik,28/02/2026,03:45:55,61,voice,Kurla-West,Kurla-West,Bandra-West,cdr_2026.csv
+CDR0055,CASE_001,+91-90000-22233,+91-90000-88811,Rajan Kumar,Arun Tawde,07/03/2026,00:51:07,0,sms,Dharavi,Dharavi,Andheri-West,cdr_2026.csv
+CDR0056,CASE_001,+91-90000-55566,+91-90000-22233,Vikram Naik,Rajan Kumar,07/03/2026,01:57:18,356,voice,Andheri-West,Andheri-West,Govandi,cdr_2026.csv
+CDR0057,CASE_001,+91-90000-11122,+91-90000-99900,Rajan Kumar,Unknown,07/03/2026,02:43:46,389,voice,Dharavi,Dharavi,Kurla-West,cdr_2026.csv
+CDR0058,CASE_001,+91-90000-11122,+91-90000-99900,Rajan Kumar,Unknown,10/03/2026,22:54:30,123,voice,Govandi,Govandi,Kurla-West,cdr_2026.csv
+CDR0059,CASE_001,+91-90000-99900,+91-90000-77788,Unknown,Suresh Gawde,11/03/2026,06:38:02,231,voice,Dharavi,Dharavi,Dharavi,cdr_2026.csv
+CDR0060,CASE_001,+91-90000-77788,+91-90000-99900,Suresh Gawde,Unknown,11/03/2026,10:20:07,0,sms,Govandi,Govandi,Govandi,cdr_2026.csv
+CDR0061,CASE_001,+91-90000-11122,+91-90000-55566,Rajan Kumar,Vikram Naik,12/03/2026,05:58:38,391,voice,Govandi,Govandi,Andheri-West,cdr_2026.csv
+CDR0062,CASE_001,+91-90000-11122,+91-90000-66677,Rajan Kumar,Nasreen Shaikh,12/03/2026,09:07:42,23,voice,Govandi,Govandi,Bandra-West,cdr_2026.csv
+CDR0063,CASE_001,+91-90000-22233,+91-90000-99900,Rajan Kumar,Unknown,13/03/2026,10:05:15,378,voice,Kurla-West,Kurla-West,Govandi,cdr_2026.csv
+CDR0064,CASE_001,+91-90000-88811,+91-90000-77788,Arun Tawde,Suresh Gawde,14/03/2026,08:21:05,0,sms,Dadar,Dadar,Dharavi,cdr_2026.csv
+CDR0065,CASE_001,+91-90000-66677,+91-90000-88811,Nasreen Shaikh,Arun Tawde,14/03/2026,18:57:32,0,sms,Bandra-West,Bandra-West,Andheri-West,cdr_2026.csv
+CDR0066,CASE_001,+91-90000-11122,+91-90000-44455,Rajan Kumar,Imran Sheikh,14/03/2026,20:00:42,433,voice,Kurla-West,Kurla-West,Dharavi,cdr_2026.csv
+CDR0067,CASE_001,+91-90000-55566,+91-90000-66677,Vikram Naik,Nasreen Shaikh,15/03/2026,00:31:38,344,voice,Andheri-West,Andheri-West,Bandra-West,cdr_2026.csv
+CDR0068,CASE_001,+91-90000-88811,+91-90000-66677,Arun Tawde,Nasreen Shaikh,15/03/2026,08:48:45,250,voice,Andheri-West,Andheri-West,Bandra-West,cdr_2026.csv
+CDR0069,CASE_001,+91-90000-99900,+91-90000-77788,Unknown,Suresh Gawde,15/03/2026,18:04:43,0,sms,Dharavi,Dharavi,Govandi,cdr_2026.csv
+CDR0070,CASE_001,+91-90000-22233,+91-90000-44455,Rajan Kumar,Imran Sheikh,16/03/2026,08:16:08,272,voice,Kurla-West,Kurla-West,Kurla-West,cdr_2026.csv
+CDR0071,CASE_001,+91-90000-44455,+91-90000-22233,Imran Sheikh,Rajan Kumar,16/03/2026,08:32:31,113,voice,Dharavi,Dharavi,Dharavi,cdr_2026.csv
+CDR0072,CASE_001,+91-90000-55566,+91-90000-44455,Vikram Naik,Imran Sheikh,16/03/2026,17:11:08,204,voice,Andheri-West,Andheri-West,Dadar,cdr_2026.csv
+CDR0073,CASE_001,+91-90000-11122,+91-90000-33344,Rajan Kumar,Imran Sheikh,17/03/2026,01:24:17,590,voice,Govandi,Govandi,Dharavi,cdr_2026.csv
+CDR0074,CASE_001,+91-90000-11122,+91-90000-33344,Rajan Kumar,Imran Sheikh,17/03/2026,22:13:58,0,sms,Govandi,Govandi,Dharavi,cdr_2026.csv
+CDR0075,CASE_001,+91-90000-66677,+91-90000-88811,Nasreen Shaikh,Arun Tawde,19/03/2026,18:04:07,265,voice,Bandra-West,Bandra-West,Andheri-West,cdr_2026.csv
+CDR0076,CASE_001,+91-90000-11122,+91-90000-99900,Rajan Kumar,Unknown,20/03/2026,16:21:17,0,sms,Govandi,Govandi,Kurla-West,cdr_2026.csv
+CDR0077,CASE_001,+91-90000-22233,+91-90000-99900,Rajan Kumar,Unknown,21/03/2026,21:08:12,225,voice,Govandi,Govandi,Dharavi,cdr_2026.csv
+CDR0078,CASE_001,+91-90000-66677,+91-90000-55566,Nasreen Shaikh,Vikram Naik,22/03/2026,21:30:16,0,sms,Bandra-West,Bandra-West,Bandra-West,cdr_2026.csv
+CDR0079,CASE_001,+91-90000-22233,+91-90000-55566,Rajan Kumar,Vikram Naik,23/03/2026,16:42:50,0,sms,Govandi,Govandi,Andheri-West,cdr_2026.csv
+CDR0080,CASE_001,+91-90000-33344,+91-90000-55566,Imran Sheikh,Vikram Naik,25/03/2026,05:43:05,149,voice,Kurla-West,Kurla-West,Bandra-West,cdr_2026.csv
+CDR0081,CASE_001,+91-90000-44455,+91-90000-11122,Imran Sheikh,Rajan Kumar,27/03/2026,03:27:35,19,voice,Dadar,Dadar,Dharavi,cdr_2026.csv
+CDR0082,CASE_001,+91-90000-55566,+91-90000-22233,Vikram Naik,Rajan Kumar,27/03/2026,20:02:02,29,voice,Bandra-West,Bandra-West,Kurla-West,cdr_2026.csv
+CDR0083,CASE_001,+91-90000-22233,+91-90000-66677,Rajan Kumar,Nasreen Shaikh,28/03/2026,14:27:20,140,voice,Dharavi,Dharavi,Dadar,cdr_2026.csv
+CDR0084,CASE_001,+91-90000-77788,+91-90000-99900,Suresh Gawde,Unknown,29/03/2026,01:07:52,43,voice,Govandi,Govandi,Dharavi,cdr_2026.csv
+CDR0085,CASE_001,+91-90000-22233,+91-90000-55566,Rajan Kumar,Vikram Naik,30/03/2026,00:29:54,164,voice,Govandi,Govandi,Bandra-West,cdr_2026.csv
+CDR0086,CASE_001,+91-90000-99900,+91-90000-77788,Unknown,Suresh Gawde,31/03/2026,07:54:10,178,voice,Kurla-West,Kurla-West,Dharavi,cdr_2026.csv
+CDR0087,CASE_001,+91-90000-33344,+91-90000-55566,Imran Sheikh,Vikram Naik,01/04/2026,19:14:54,65,voice,Dadar,Dadar,Bandra-West,cdr_2026.csv
+CDR0088,CASE_001,+91-90000-66677,+91-90000-55566,Nasreen Shaikh,Vikram Naik,02/04/2026,03:21:17,0,sms,Dadar,Dadar,Bandra-West,cdr_2026.csv
+CDR0089,CASE_001,+91-90000-77788,+91-90000-99900,Suresh Gawde,Unknown,03/04/2026,02:08:17,0,sms,Dharavi,Dharavi,Dharavi,cdr_2026.csv
+CDR0090,CASE_001,+91-90000-11122,+91-90000-99900,Rajan Kumar,Unknown,05/04/2026,05:38:09,357,voice,Govandi,Govandi,Kurla-West,cdr_2026.csv
+CDR0091,CASE_001,+91-90000-77788,+91-90000-88811,Suresh Gawde,Arun Tawde,05/04/2026,18:29:49,0,sms,Dharavi,Dharavi,Andheri-West,cdr_2026.csv
+CDR0092,CASE_001,+91-90000-55566,+91-90000-66677,Vikram Naik,Nasreen Shaikh,06/04/2026,22:22:15,0,sms,Bandra-West,Bandra-West,Bandra-West,cdr_2026.csv
+CDR0093,CASE_001,+91-90000-22233,+91-90000-99900,Rajan Kumar,Unknown,07/04/2026,02:44:53,331,voice,Kurla-West,Kurla-West,Kurla-West,cdr_2026.csv
+CDR0094,CASE_001,+91-90000-99900,+91-90000-22233,Unknown,Rajan Kumar,08/04/2026,01:54:57,224,voice,Dharavi,Dharavi,Kurla-West,cdr_2026.csv
+CDR0095,CASE_001,+91-90000-22233,+91-90000-55566,Rajan Kumar,Vikram Naik,08/04/2026,12:18:07,303,voice,Govandi,Govandi,Bandra-West,cdr_2026.csv
+CDR0096,CASE_001,+91-90000-22233,+91-90000-99900,Rajan Kumar,Unknown,09/04/2026,03:00:57,0,sms,Dharavi,Dharavi,Kurla-West,cdr_2026.csv
+CDR0097,CASE_001,+91-90000-55566,+91-90000-77788,Vikram Naik,Suresh Gawde,12/04/2026,11:21:49,96,voice,Andheri-West,Andheri-West,Govandi,cdr_2026.csv
+CDR0098,CASE_001,+91-90000-77788,+91-90000-88811,Suresh Gawde,Arun Tawde,15/04/2026,05:50:40,181,voice,Govandi,Govandi,Dadar,cdr_2026.csv
+CDR0099,CASE_001,+91-90000-77788,+91-90000-99900,Suresh Gawde,Unknown,19/04/2026,08:58:17,82,voice,Govandi,Govandi,Kurla-West,cdr_2026.csv
+CDR0100,CASE_001,+91-90000-55566,+91-90000-77788,Vikram Naik,Suresh Gawde,20/04/2026,17:18:07,217,voice,Bandra-West,Bandra-West,Govandi,cdr_2026.csv
+CDR0101,CASE_001,+91-90000-22233,+91-90000-99900,Rajan Kumar,Unknown,20/04/2026,19:28:16,394,voice,Kurla-West,Kurla-West,Kurla-West,cdr_2026.csv
+CDR0102,CASE_001,+91-90000-11122,+91-90000-99900,Rajan Kumar,Unknown,21/04/2026,14:42:54,73,voice,Govandi,Govandi,Dharavi,cdr_2026.csv
+CDR0103,CASE_001,+91-90000-55566,+91-90000-22233,Vikram Naik,Rajan Kumar,22/04/2026,01:02:46,190,voice,Bandra-West,Bandra-West,Kurla-West,cdr_2026.csv
+CDR0104,CASE_001,+91-90000-99900,+91-90000-77788,Unknown,Suresh Gawde,23/04/2026,04:40:38,132,voice,Kurla-West,Kurla-West,Govandi,cdr_2026.csv
+CDR0105,CASE_001,+91-90000-11122,+91-90000-99900,Rajan Kumar,Unknown,23/04/2026,09:01:09,321,voice,Dharavi,Dharavi,Govandi,cdr_2026.csv
+CDR0106,CASE_001,+91-90000-22233,+91-90000-66677,Rajan Kumar,Nasreen Shaikh,25/04/2026,02:14:39,32,voice,Kurla-West,Kurla-West,Dadar,cdr_2026.csv
+CDR0107,CASE_001,+91-90000-22233,+91-90000-88811,Rajan Kumar,Arun Tawde,27/04/2026,16:52:40,200,voice,Dharavi,Dharavi,Dadar,cdr_2026.csv
+CDR0108,CASE_001,+91-90000-22233,+91-90000-88811,Rajan Kumar,Arun Tawde,27/04/2026,21:26:37,0,sms,Kurla-West,Kurla-West,Andheri-West,cdr_2026.csv
+CDR0109,CASE_001,+91-90000-66677,+91-90000-22233,Nasreen Shaikh,Rajan Kumar,27/04/2026,21:46:55,120,voice,Bandra-West,Bandra-West,Govandi,cdr_2026.csv
+CDR0110,CASE_001,+91-90000-11122,+91-90000-33344,Rajan Kumar,Imran Sheikh,28/04/2026,08:59:22,466,voice,Dharavi,Dharavi,Kurla-West,cdr_2026.csv
+CDR0111,CASE_001,+91-90000-66677,+91-90000-11122,Nasreen Shaikh,Rajan Kumar,28/04/2026,16:27:43,65,voice,Dadar,Dadar,Dharavi,cdr_2026.csv
+CDR0112,CASE_001,+91-90000-77788,+91-90000-66677,Suresh Gawde,Nasreen Shaikh,28/04/2026,19:33:24,0,sms,Dharavi,Dharavi,Dadar,cdr_2026.csv
+CDR0113,CASE_001,+91-90000-11122,+91-90000-44455,Rajan Kumar,Imran Sheikh,29/04/2026,00:27:10,484,voice,Kurla-West,Kurla-West,Dadar,cdr_2026.csv
+CDR0114,CASE_001,+91-90000-22233,+91-90000-33344,Rajan Kumar,Imran Sheikh,29/04/2026,03:19:53,539,voice,Dharavi,Dharavi,Kurla-West,cdr_2026.csv
+CDR0115,CASE_001,+91-90000-55566,+91-90000-77788,Vikram Naik,Suresh Gawde,29/04/2026,05:28:58,106,voice,Bandra-West,Bandra-West,Govandi,cdr_2026.csv
+CDR0116,CASE_001,+91-90000-11122,+91-90000-33344,Rajan Kumar,Imran Sheikh,29/04/2026,07:59:23,334,voice,Dharavi,Dharavi,Dadar,cdr_2026.csv
+CDR0117,CASE_001,+91-90000-99900,+91-90000-22233,Unknown,Rajan Kumar,30/04/2026,16:57:49,0,sms,Govandi,Govandi,Kurla-West,cdr_2026.csv
+CDR0118,CASE_001,+91-90000-11122,+91-90000-44455,Rajan Kumar,Imran Sheikh,01/05/2026,02:29:33,0,sms,Dharavi,Dharavi,Dadar,cdr_2026.csv
+CDR0119,CASE_001,+91-90000-22233,+91-90000-99900,Rajan Kumar,Unknown,02/05/2026,23:00:35,90,voice,Govandi,Govandi,Dharavi,cdr_2026.csv
+CDR0120,CASE_001,+91-90000-33344,+91-90000-22233,Imran Sheikh,Rajan Kumar,03/05/2026,15:59:28,345,voice,Dharavi,Dharavi,Dharavi,cdr_2026.csv
+CDR0121,CASE_001,+91-90000-22233,+91-90000-88811,Rajan Kumar,Arun Tawde,06/05/2026,03:23:13,237,voice,Dharavi,Dharavi,Dadar,cdr_2026.csv
+CDR0122,CASE_001,+91-90000-77788,+91-90000-55566,Suresh Gawde,Vikram Naik,10/05/2026,05:03:23,156,voice,Govandi,Govandi,Bandra-West,cdr_2026.csv
+CDR0123,CASE_001,+91-90000-88811,+91-90000-77788,Arun Tawde,Suresh Gawde,11/05/2026,09:13:21,258,voice,Andheri-West,Andheri-West,Govandi,cdr_2026.csv
+CDR0124,CASE_001,+91-90000-99900,+91-90000-77788,Unknown,Suresh Gawde,11/05/2026,19:30:15,243,voice,Kurla-West,Kurla-West,Govandi,cdr_2026.csv
+CDR0125,CASE_001,+91-90000-99900,+91-90000-22233,Unknown,Rajan Kumar,12/05/2026,11:43:19,125,voice,Govandi,Govandi,Dharavi,cdr_2026.csv
+CDR0126,CASE_001,+91-90000-55566,+91-90000-66677,Vikram Naik,Nasreen Shaikh,13/05/2026,09:20:59,373,voice,Bandra-West,Bandra-West,Bandra-West,cdr_2026.csv
+CDR0127,CASE_001,+91-90000-99900,+91-90000-77788,Unknown,Suresh Gawde,13/05/2026,09:37:27,0,sms,Govandi,Govandi,Dharavi,cdr_2026.csv
+CDR0128,CASE_001,+91-90000-11122,+91-90000-99900,Rajan Kumar,Unknown,13/05/2026,11:07:01,386,voice,Govandi,Govandi,Dharavi,cdr_2026.csv
+CDR0129,CASE_001,+91-90000-77788,+91-90000-99900,Suresh Gawde,Unknown,13/05/2026,18:48:03,114,voice,Govandi,Govandi,Kurla-West,cdr_2026.csv
+CDR0130,CASE_001,+91-90000-55566,+91-90000-44455,Vikram Naik,Imran Sheikh,15/05/2026,05:00:13,0,sms,Andheri-West,Andheri-West,Kurla-West,cdr_2026.csv
+CDR0131,CASE_001,+91-90000-22233,+91-90000-33344,Rajan Kumar,Imran Sheikh,19/05/2026,14:42:22,373,voice,Govandi,Govandi,Kurla-West,cdr_2026.csv
+CDR0132,CASE_001,+91-90000-11122,+91-90000-44455,Rajan Kumar,Imran Sheikh,20/05/2026,23:02:19,0,sms,Dharavi,Dharavi,Kurla-West,cdr_2026.csv
+CDR0133,CASE_001,+91-90000-99900,+91-90000-77788,Unknown,Suresh Gawde,22/05/2026,07:29:07,0,sms,Kurla-West,Kurla-West,Dharavi,cdr_2026.csv
+CDR0134,CASE_001,+91-90000-22233,+91-90000-55566,Rajan Kumar,Vikram Naik,22/05/2026,23:44:15,302,voice,Govandi,Govandi,Andheri-West,cdr_2026.csv
+CDR0135,CASE_001,+91-90000-55566,+91-90000-44455,Vikram Naik,Imran Sheikh,24/05/2026,05:27:01,0,sms,Bandra-West,Bandra-West,Dadar,cdr_2026.csv
+CDR0136,CASE_001,+91-90000-55566,+91-90000-11122,Vikram Naik,Rajan Kumar,29/05/2026,02:05:32,338,voice,Andheri-West,Andheri-West,Dharavi,cdr_2026.csv
+CDR0137,CASE_001,+91-90000-44455,+91-90000-55566,Imran Sheikh,Vikram Naik,31/05/2026,17:55:58,0,sms,Dadar,Dadar,Bandra-West,cdr_2026.csv
+CDR0138,CASE_001,+91-90000-66677,+91-90000-22233,Nasreen Shaikh,Rajan Kumar,31/05/2026,23:47:26,279,voice,Bandra-West,Bandra-West,Govandi,cdr_2026.csv
+CDR0139,CASE_001,+91-90000-55566,+91-90000-66677,Vikram Naik,Nasreen Shaikh,01/06/2026,09:25:39,0,sms,Bandra-West,Bandra-West,Dadar,cdr_2026.csv
+CDR0140,CASE_001,+91-90000-88811,+91-90000-77788,Arun Tawde,Suresh Gawde,02/06/2026,09:46:28,32,voice,Andheri-West,Andheri-West,Dharavi,cdr_2026.csv
+CDR0141,CASE_001,+91-90000-99900,+91-90000-77788,Unknown,Suresh Gawde,02/06/2026,13:28:07,249,voice,Dharavi,Dharavi,Dharavi,cdr_2026.csv
+CDR0142,CASE_001,+91-90000-99900,+91-90000-77788,Unknown,Suresh Gawde,03/06/2026,06:17:49,222,voice,Dharavi,Dharavi,Dharavi,cdr_2026.csv
+CDR0143,CASE_001,+91-90000-11122,+91-90000-99900,Rajan Kumar,Unknown,05/06/2026,00:06:37,0,sms,Kurla-West,Kurla-West,Dharavi,cdr_2026.csv
+CDR0144,CASE_001,+91-90000-55566,+91-90000-22233,Vikram Naik,Rajan Kumar,05/06/2026,00:43:48,379,voice,Andheri-West,Andheri-West,Kurla-West,cdr_2026.csv
+CDR0145,CASE_001,+91-90000-44455,+91-90000-55566,Imran Sheikh,Vikram Naik,05/06/2026,20:07:22,230,voice,Dadar,Dadar,Bandra-West,cdr_2026.csv
+CDR0146,CASE_001,+91-90000-22233,+91-90000-99900,Rajan Kumar,Unknown,05/06/2026,23:32:30,386,voice,Dharavi,Dharavi,Kurla-West,cdr_2026.csv
+CDR0147,CASE_001,+91-90000-22233,+91-90000-99900,Rajan Kumar,Unknown,06/06/2026,14:11:31,118,voice,Govandi,Govandi,Kurla-West,cdr_2026.csv
+CDR0148,CASE_001,+91-90000-88811,+91-90000-77788,Arun Tawde,Suresh Gawde,06/06/2026,18:14:34,132,voice,Dadar,Dadar,Govandi,cdr_2026.csv
+CDR0149,CASE_001,+91-90000-99900,+91-90000-77788,Unknown,Suresh Gawde,06/06/2026,23:40:13,145,voice,Govandi,Govandi,Govandi,cdr_2026.csv
+CDR0150,CASE_001,+91-90000-55566,+91-90000-11122,Vikram Naik,Rajan Kumar,07/06/2026,23:06:03,0,sms,Bandra-West,Bandra-West,Dharavi,cdr_2026.csv
+CDR0151,CASE_001,+91-90000-11122,+91-90000-99900,Rajan Kumar,Unknown,09/06/2026,07:36:13,248,voice,Govandi,Govandi,Govandi,cdr_2026.csv
+CDR0152,CASE_001,+91-90000-77788,+91-90000-55566,Suresh Gawde,Vikram Naik,10/06/2026,19:28:40,0,sms,Govandi,Govandi,Bandra-West,cdr_2026.csv
+CDR0153,CASE_001,+91-90000-44455,+91-90000-22233,Imran Sheikh,Rajan Kumar,11/06/2026,00:01:37,587,voice,Dharavi,Dharavi,Dharavi,cdr_2026.csv
+CDR0154,CASE_001,+91-90000-99900,+91-90000-77788,Unknown,Suresh Gawde,11/06/2026,13:05:15,70,voice,Kurla-West,Kurla-West,Govandi,cdr_2026.csv
+CDR0155,CASE_001,+91-90000-22233,+91-90000-44455,Rajan Kumar,Imran Sheikh,12/06/2026,10:45:19,0,sms,Kurla-West,Kurla-West,Kurla-West,cdr_2026.csv
+CDR0156,CASE_001,+91-90000-33344,+91-90000-11122,Imran Sheikh,Rajan Kumar,12/06/2026,14:04:32,263,voice,Kurla-West,Kurla-West,Dharavi,cdr_2026.csv
+CDR0157,CASE_001,+91-90000-11122,+91-90000-33344,Rajan Kumar,Imran Sheikh,12/06/2026,21:49:08,151,voice,Kurla-West,Kurla-West,Dharavi,cdr_2026.csv
+CDR0158,CASE_001,+91-90000-22233,+91-90000-99900,Rajan Kumar,Unknown,14/06/2026,14:01:07,143,voice,Govandi,Govandi,Govandi,cdr_2026.csv
+CDR0159,CASE_001,+91-90000-99900,+91-90000-22233,Unknown,Rajan Kumar,15/06/2026,01:06:27,195,voice,Kurla-West,Kurla-West,Kurla-West,cdr_2026.csv
+CDR0160,CASE_001,+91-90000-55566,+91-90000-11122,Vikram Naik,Rajan Kumar,17/06/2026,12:21:39,364,voice,Andheri-West,Andheri-West,Govandi,cdr_2026.csv
+CDR0161,CASE_001,+91-90000-99900,+91-90000-77788,Unknown,Suresh Gawde,19/06/2026,20:22:27,291,voice,Dharavi,Dharavi,Dharavi,cdr_2026.csv
+CDR0162,CASE_001,+91-90000-99900,+91-90000-77788,Unknown,Suresh Gawde,19/06/2026,21:02:29,55,voice,Kurla-West,Kurla-West,Govandi,cdr_2026.csv
+CDR0163,CASE_001,+91-90000-22233,+91-90000-55566,Rajan Kumar,Vikram Naik,22/06/2026,19:55:34,28,voice,Dharavi,Dharavi,Bandra-West,cdr_2026.csv
+CDR0164,CASE_001,+91-90000-22233,+91-90000-88811,Rajan Kumar,Arun Tawde,23/06/2026,15:05:50,212,voice,Kurla-West,Kurla-West,Andheri-West,cdr_2026.csv
+CDR0165,CASE_001,+91-90000-11122,+91-90000-55566,Rajan Kumar,Vikram Naik,24/06/2026,03:46:39,204,voice,Dharavi,Dharavi,Andheri-West,cdr_2026.csv
+CDR0166,CASE_001,+91-90000-44455,+91-90000-22233,Imran Sheikh,Rajan Kumar,25/06/2026,05:05:40,0,sms,Dharavi,Dharavi,Dharavi,cdr_2026.csv
+CDR0167,CASE_001,+91-90000-11122,+91-90000-99900,Rajan Kumar,Unknown,25/06/2026,05:22:34,229,voice,Dharavi,Dharavi,Dharavi,cdr_2026.csv
+CDR0168,CASE_001,+91-90000-22233,+91-90000-99900,Rajan Kumar,Unknown,26/06/2026,04:05:18,123,voice,Dharavi,Dharavi,Kurla-West,cdr_2026.csv
+CDR0169,CASE_001,+91-90000-33344,+91-90000-22233,Imran Sheikh,Rajan Kumar,28/06/2026,22:37:47,292,voice,Kurla-West,Kurla-West,Dharavi,cdr_2026.csv
+CDR0170,CASE_001,+91-90000-66677,+91-90000-77788,Nasreen Shaikh,Suresh Gawde,30/06/2026,21:19:14,162,voice,Bandra-West,Bandra-West,Dharavi,cdr_2026.csv
+CDR0171,CASE_001,+91-90000-55566,+91-90000-77788,Vikram Naik,Suresh Gawde,01/07/2026,20:39:10,196,voice,Bandra-West,Bandra-West,Dharavi,cdr_2026.csv
+CDR0172,CASE_001,+91-90000-33344,+91-90000-22233,Imran Sheikh,Rajan Kumar,03/07/2026,03:19:29,0,sms,Dharavi,Dharavi,Dharavi,cdr_2026.csv
+CDR0173,CASE_001,+91-90000-66677,+91-90000-88811,Nasreen Shaikh,Arun Tawde,03/07/2026,15:15:36,223,voice,Bandra-West,Bandra-West,Dadar,cdr_2026.csv
+CDR0174,CASE_001,+91-90000-88811,+91-90000-55566,Arun Tawde,Vikram Naik,04/07/2026,06:04:19,0,sms,Dadar,Dadar,Bandra-West,cdr_2026.csv
+CDR0175,CASE_001,+91-90000-77788,+91-90000-66677,Suresh Gawde,Nasreen Shaikh,05/07/2026,07:26:37,167,voice,Govandi,Govandi,Dadar,cdr_2026.csv
+CDR0176,CASE_001,+91-90000-44455,+91-90000-22233,Imran Sheikh,Rajan Kumar,05/07/2026,22:41:36,128,voice,Dharavi,Dharavi,Dharavi,cdr_2026.csv
+CDR0177,CASE_001,+91-90000-22233,+91-90000-44455,Rajan Kumar,Imran Sheikh,06/07/2026,03:41:06,82,voice,Govandi,Govandi,Dharavi,cdr_2026.csv
+CDR0178,CASE_001,+91-90000-11122,+91-90000-33344,Rajan Kumar,Imran Sheikh,06/07/2026,04:05:59,262,voice,Govandi,Govandi,Kurla-West,cdr_2026.csv
+CDR0179,CASE_001,+91-90000-66677,+91-90000-55566,Nasreen Shaikh,Vikram Naik,06/07/2026,09:34:18,174,voice,Dadar,Dadar,Bandra-West,cdr_2026.csv
+CDR0180,CASE_001,+91-90000-33344,+91-90000-11122,Imran Sheikh,Rajan Kumar,07/07/2026,01:11:17,493,voice,Dharavi,Dharavi,Govandi,cdr_2026.csv
+CDR0181,CASE_001,+91-90000-44455,+91-90000-11122,Imran Sheikh,Rajan Kumar,07/07/2026,17:12:06,119,voice,Kurla-West,Kurla-West,Govandi,cdr_2026.csv
+CDR0182,CASE_001,+91-90000-66677,+91-90000-55566,Nasreen Shaikh,Vikram Naik,10/07/2026,14:11:31,264,voice,Dadar,Dadar,Andheri-West,cdr_2026.csv
+CDR0183,CASE_001,+91-90000-11122,+91-90000-99900,Rajan Kumar,Unknown,11/07/2026,02:53:00,165,voice,Govandi,Govandi,Dharavi,cdr_2026.csv
+CDR0184,CASE_001,+91-90000-55566,+91-90000-22233,Vikram Naik,Rajan Kumar,11/07/2026,02:56:23,281,voice,Bandra-West,Bandra-West,Dharavi,cdr_2026.csv
+CDR0185,CASE_001,+91-90000-55566,+91-90000-77788,Vikram Naik,Suresh Gawde,14/07/2026,03:31:29,0,sms,Bandra-West,Bandra-West,Dharavi,cdr_2026.csv
+CDR0186,CASE_001,+91-90000-22233,+91-90000-99900,Rajan Kumar,Unknown,14/07/2026,17:16:53,51,voice,Kurla-West,Kurla-West,Dharavi,cdr_2026.csv
+CDR0187,CASE_001,+91-90000-22233,+91-90000-99900,Rajan Kumar,Unknown,16/07/2026,22:45:18,130,voice,Govandi,Govandi,Dharavi,cdr_2026.csv
+CDR0188,CASE_001,+91-90000-99900,+91-90000-77788,Unknown,Suresh Gawde,17/07/2026,04:42:55,287,voice,Govandi,Govandi,Govandi,cdr_2026.csv
+CDR0189,CASE_001,+91-90000-77788,+91-90000-55566,Suresh Gawde,Vikram Naik,18/07/2026,08:15:06,84,voice,Govandi,Govandi,Andheri-West,cdr_2026.csv
+CDR0190,CASE_001,+91-90000-55566,+91-90000-88811,Vikram Naik,Arun Tawde,18/07/2026,08:26:44,114,voice,Bandra-West,Bandra-West,Andheri-West,cdr_2026.csv
+CDR0191,CASE_001,+91-90000-99900,+91-90000-77788,Unknown,Suresh Gawde,18/07/2026,18:19:55,0,sms,Kurla-West,Kurla-West,Govandi,cdr_2026.csv
+CDR0192,CASE_001,+91-90000-55566,+91-90000-66677,Vikram Naik,Nasreen Shaikh,19/07/2026,18:29:43,274,voice,Andheri-West,Andheri-West,Bandra-West,cdr_2026.csv
+CDR0193,CASE_001,+91-90000-11122,+91-90000-99900,Rajan Kumar,Unknown,24/07/2026,01:01:24,182,voice,Govandi,Govandi,Dharavi,cdr_2026.csv
+CDR0194,CASE_001,+91-90000-11122,+91-90000-99900,Rajan Kumar,Unknown,24/07/2026,03:59:21,220,voice,Kurla-West,Kurla-West,Govandi,cdr_2026.csv
+CDR0195,CASE_001,+91-90000-55566,+91-90000-77788,Vikram Naik,Suresh Gawde,25/07/2026,15:05:27,64,voice,Bandra-West,Bandra-West,Govandi,cdr_2026.csv
+CDR0196,CASE_001,+91-90000-55566,+91-90000-66677,Vikram Naik,Nasreen Shaikh,27/07/2026,18:02:18,113,voice,Andheri-West,Andheri-West,Bandra-West,cdr_2026.csv
+CDR0197,CASE_001,+91-90000-88811,+91-90000-66677,Arun Tawde,Nasreen Shaikh,29/07/2026,04:26:03,212,voice,Andheri-West,Andheri-West,Dadar,cdr_2026.csv
+CDR0198,CASE_001,+91-90000-66677,+91-90000-88811,Nasreen Shaikh,Arun Tawde,29/07/2026,12:03:41,0,sms,Bandra-West,Bandra-West,Andheri-West,cdr_2026.csv
+CDR0199,CASE_001,+91-90000-77788,+91-90000-99900,Suresh Gawde,Unknown,30/07/2026,19:55:09,238,voice,Dharavi,Dharavi,Kurla-West,cdr_2026.csv
+CDR0200,CASE_001,+91-90000-22233,+91-90000-99900,Rajan Kumar,Unknown,31/07/2026,22:17:56,240,voice,Govandi,Govandi,Dharavi,cdr_2026.csv

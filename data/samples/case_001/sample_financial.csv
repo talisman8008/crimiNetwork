@@ -1,0 +1,41 @@
+transaction_id,case_id,sender_name,sender_account,sender_bank,receiver_name,receiver_account,receiver_bank,amount,transaction_date,transaction_time,transaction_type,branch,remarks,status,source_file
+TXN0001,CASE_001,Arun Tawde,SBI0099112233,SBI,Rajan Kumar,SBI001234567,SBI,164528,02/01/2026,10:11:09,NEFT,Govandi Branch,Fund transfer,reversed,financial_2026.csv
+TXN0002,CASE_001,Rajan Kumar,SBI001234567,SBI,Nasreen Shaikh,ICICI0077889,ICICI,165887,07/01/2026,08:55:13,NEFT,Dharavi Branch,Business payment,completed,financial_2026.csv
+TXN0003,CASE_001,Vikram Naik,KOTAK00445566,Kotak,Imran Sheikh,HDFC009876543,HDFC,162477,14/01/2026,09:00:36,UPI,Dadar Branch,Fund transfer,completed,financial_2026.csv
+TXN0004,CASE_001,Rajan Kumar,SBI001234567,SBI,Vikram Naik,KOTAK00445566,Kotak,161285,16/01/2026,09:14:40,Hawala,Dharavi Branch,Cash settlement - no invoice,completed,financial_2026.csv
+TXN0005,CASE_001,Imran Sheikh,HDFC009876543,HDFC,Nasreen Shaikh,ICICI0077889,ICICI,12221,08/02/2026,20:51:41,UPI,Dharavi Branch,Personal transfer,completed,financial_2026.csv
+TXN0006,CASE_001,Imran Sheikh,HDFC009876543,HDFC,Vikram Naik,KOTAK00445566,Kotak,96857,09/02/2026,23:35:08,UPI,Govandi Branch,Fund transfer,completed,financial_2026.csv
+TXN0007,CASE_001,Arun Tawde,SBI0099112233,SBI,RK Enterprises,AXIS0055667788,Axis,93535,22/02/2026,21:39:57,NEFT,Bandra-West Branch,Fund transfer,completed,financial_2026.csv
+TXN0008,CASE_001,Rajan Kumar,SBI001234567,SBI,Arun Tawde,SBI0099112233,SBI,19895,05/03/2026,12:17:02,NEFT,Govandi Branch,Loan settlement,completed,financial_2026.csv
+TXN0009,CASE_001,Rajan Kumar,SBI001234567,SBI,Vikram Naik,KOTAK00445566,Kotak,142156,08/03/2026,23:57:12,Cash,Bandra-West Branch,Cash deposit,reversed,financial_2026.csv
+TXN0010,CASE_001,Arun Tawde,SBI0099112233,SBI,RK Enterprises,AXIS0055667788,Axis,21188,25/03/2026,22:33:35,NEFT,Govandi Branch,Fund transfer,completed,financial_2026.csv
+TXN0011,CASE_001,RK Enterprises,AXIS0055667788,Axis,Vikram Naik,KOTAK00445566,Kotak,176174,30/03/2026,08:53:42,UPI,Dharavi Branch,Personal transfer,completed,financial_2026.csv
+TXN0012,CASE_001,Rajan Kumar,SBI001234567,SBI,Vikram Naik,KOTAK00445566,Kotak,71127,30/03/2026,17:30:07,UPI,Bandra-West Branch,Personal transfer,completed,financial_2026.csv
+TXN0013,CASE_001,Imran Sheikh,HDFC009876543,HDFC,Vikram Naik,KOTAK00445566,Kotak,194563,31/03/2026,17:05:14,UPI,Kurla-West Branch,Personal transfer,completed,financial_2026.csv
+TXN0014,CASE_001,Rajan Kumar,SBI001234567,SBI,Imran Sheikh,HDFC009876543,HDFC,194307,04/04/2026,06:21:35,NEFT,Bandra-West Branch,Fund transfer,completed,financial_2026.csv
+TXN0015,CASE_001,Arun Tawde,SBI0099112233,SBI,RK Enterprises,AXIS0055667788,Axis,36882,11/04/2026,20:20:04,NEFT,Andheri-West Branch,Loan settlement,completed,financial_2026.csv
+TXN0016,CASE_001,RK Enterprises,AXIS0055667788,Axis,Rajan Kumar,SBI001234567,SBI,29674,12/04/2026,21:10:42,Cash,Dharavi Branch,Cash deposit,completed,financial_2026.csv
+TXN0017,CASE_001,Rajan Kumar,SBI001234567,SBI,RK Enterprises,AXIS0055667788,Axis,44508,13/04/2026,07:04:52,NEFT,Govandi Branch,Business advance payment,completed,financial_2026.csv
+TXN0018,CASE_001,RK Enterprises,AXIS0055667788,Axis,Nasreen Shaikh,ICICI0077889,ICICI,45008,14/04/2026,09:23:37,NEFT,Andheri-West Branch,Consultancy fee,completed,financial_2026.csv
+TXN0019,CASE_001,Nasreen Shaikh,ICICI0077889,ICICI,Rajan Kumar,SBI001234567,SBI,45533,15/04/2026,22:13:02,UPI,Andheri-West Branch,Personal loan repayment,completed,financial_2026.csv
+TXN0020,CASE_001,Rajan Kumar,SBI001234567,SBI,Arun Tawde,SBI0099112233,SBI,163677,18/04/2026,08:15:05,Hawala,Govandi Branch,Cash settlement - no invoice,completed,financial_2026.csv
+TXN0021,CASE_001,Arun Tawde,SBI0099112233,SBI,Rajan Kumar,SBI001234567,SBI,41503,22/04/2026,12:52:55,UPI,Kurla-West Branch,UPI transfer,completed,financial_2026.csv
+TXN0022,CASE_001,Rajan Kumar,SBI001234567,SBI,Imran Sheikh,HDFC009876543,HDFC,77662,26/04/2026,22:34:51,NEFT,Dharavi Branch,Business payment,completed,financial_2026.csv
+TXN0023,CASE_001,Vikram Naik,KOTAK00445566,Kotak,Imran Sheikh,HDFC009876543,HDFC,108766,29/04/2026,18:47:05,NEFT,Kurla-West Branch,Business payment,completed,financial_2026.csv
+TXN0024,CASE_001,Nasreen Shaikh,ICICI0077889,ICICI,Imran Sheikh,HDFC009876543,HDFC,78247,01/05/2026,14:12:44,NEFT,Bandra-West Branch,Advance payment,completed,financial_2026.csv
+TXN0025,CASE_001,Rajan Kumar,SBI001234567,SBI,Arun Tawde,SBI0099112233,SBI,57250,03/05/2026,11:27:50,NEFT,Dharavi Branch,Fund transfer,completed,financial_2026.csv
+TXN0026,CASE_001,Imran Sheikh,HDFC009876543,HDFC,Rajan Kumar,SBI001234567,SBI,74404,03/05/2026,11:33:01,UPI,Kurla-West Branch,UPI transfer,completed,financial_2026.csv
+TXN0027,CASE_001,Vikram Naik,KOTAK00445566,Kotak,Imran Sheikh,HDFC009876543,HDFC,130932,04/05/2026,15:05:09,UPI,Dharavi Branch,UPI transfer,completed,financial_2026.csv
+TXN0028,CASE_001,Vikram Naik,KOTAK00445566,Kotak,Imran Sheikh,HDFC009876543,HDFC,81799,09/05/2026,13:48:37,UPI,Kurla-West Branch,Personal transfer,completed,financial_2026.csv
+TXN0029,CASE_001,Nasreen Shaikh,ICICI0077889,ICICI,Imran Sheikh,HDFC009876543,HDFC,118120,12/05/2026,18:21:26,UPI,Andheri-West Branch,UPI transfer,completed,financial_2026.csv
+TXN0030,CASE_001,Rajan Kumar,SBI001234567,SBI,Vikram Naik,KOTAK00445566,Kotak,91900,13/05/2026,15:32:04,UPI,Andheri-West Branch,Payment,completed,financial_2026.csv
+TXN0031,CASE_001,Imran Sheikh,HDFC009876543,HDFC,Vikram Naik,KOTAK00445566,Kotak,73449,13/05/2026,17:58:10,UPI,Govandi Branch,Payment,completed,financial_2026.csv
+TXN0032,CASE_001,Imran Sheikh,HDFC009876543,HDFC,Vikram Naik,KOTAK00445566,Kotak,39278,17/05/2026,10:33:32,UPI,Kurla-West Branch,Personal transfer,completed,financial_2026.csv
+TXN0033,CASE_001,Nasreen Shaikh,ICICI0077889,ICICI,Imran Sheikh,HDFC009876543,HDFC,185897,20/05/2026,06:48:33,UPI,Dharavi Branch,Fund transfer,completed,financial_2026.csv
+TXN0034,CASE_001,Imran Sheikh,HDFC009876543,HDFC,Rajan Kumar,SBI001234567,SBI,66216,28/05/2026,18:03:14,Hawala,Andheri-West Branch,Cash settlement - no invoice,completed,financial_2026.csv
+TXN0035,CASE_001,RK Enterprises,AXIS0055667788,Axis,Rajan Kumar,SBI001234567,SBI,173678,19/06/2026,17:09:16,Cash,Kurla-West Branch,Cash withdrawal transfer,completed,financial_2026.csv
+TXN0036,CASE_001,Rajan Kumar,SBI001234567,SBI,Nasreen Shaikh,ICICI0077889,ICICI,60755,21/06/2026,15:50:07,Cash,Dharavi Branch,Cash deposit,completed,financial_2026.csv
+TXN0037,CASE_001,Vikram Naik,KOTAK00445566,Kotak,Rajan Kumar,SBI001234567,SBI,110037,09/07/2026,13:12:33,NEFT,Andheri-West Branch,Fund transfer,completed,financial_2026.csv
+TXN0038,CASE_001,Vikram Naik,KOTAK00445566,Kotak,Arun Tawde,SBI0099112233,SBI,20965,09/07/2026,17:57:29,NEFT,Govandi Branch,Loan settlement,completed,financial_2026.csv
+TXN0039,CASE_001,Vikram Naik,KOTAK00445566,Kotak,Imran Sheikh,HDFC009876543,HDFC,12304,14/07/2026,08:28:20,NEFT,Dharavi Branch,Business payment,reversed,financial_2026.csv
+TXN0040,CASE_001,Imran Sheikh,HDFC009876543,HDFC,Vikram Naik,KOTAK00445566,Kotak,146968,19/07/2026,22:21:40,UPI,Kurla-West Branch,Payment,completed,financial_2026.csv

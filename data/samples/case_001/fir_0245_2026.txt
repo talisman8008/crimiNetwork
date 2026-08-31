@@ -1,0 +1,115 @@
+FICTIONAL / SYNTHETIC DATA — FOR TESTING AND DEMONSTRATION PURPOSES ONLY
+All names, addresses, phone numbers, vehicle numbers, and events are entirely fictional.
+Any resemblance to real persons or real data is purely coincidental.
+
+========================================================================
+FIRST INFORMATION REPORT
+========================================================================
+
+FIR No.          : 0245/2026
+Police Station   : Dadar Police Station, Mumbai
+District         : Mumbai City
+State            : Maharashtra
+
+Date of Occurrence : 02/05/2026
+Time of Occurrence : Between 11:00 and 16:00 hrs (multiple visits)
+Date of Report     : 03/05/2026
+Time of Report     : 11:45 hrs
+
+------------------------------------------------------------------------
+COMPLAINANT DETAILS
+------------------------------------------------------------------------
+
+Name    : Hasmukh Mehta S/o Chandulal Mehta
+Address : Shop No. 14-16, Mehta Cloth House, Dadar TT Circle,
+          Dadar West, Mumbai - 400028
+Phone   : +91-90000-00033
+
+------------------------------------------------------------------------
+ACCUSED DETAILS
+------------------------------------------------------------------------
+
+Accused No. 1:
+Name    : Imran Sheikh @ Immu Sheikh
+S/o     : Yakub Sheikh
+R/o     : Room No. 12, Azad Nagar, Andheri West, Mumbai - 400058
+Phone   : +91-90000-44455
+
+Accused No. 2:
+Name    : Rajan Kumar @ Rajan @ Raju Bhai
+S/o     : Late Suresh Kumar
+R/o     : Flat No. 204, Sai Krupa CHS, Four Bungalows,
+          Andheri West, Mumbai - 400053
+Phone   : +91-90000-11122
+
+Accused No. 3:
+Name    : Vikram Naik
+S/o     : Prakash Naik
+R/o     : Chawl No. 7, Kamani Nagar, Kurla West, Mumbai - 400070
+Phone   : +91-90000-55566
+
+------------------------------------------------------------------------
+SECTIONS APPLIED
+------------------------------------------------------------------------
+
+IPC Section 420 (Cheating and dishonestly inducing delivery of property)
+IPC Section 120B (Criminal Conspiracy)
+
+------------------------------------------------------------------------
+VEHICLE INVOLVED
+------------------------------------------------------------------------
+
+Vehicle No. : MH-01-DT-1123
+Type        : Four-wheeler, white coloured SUV
+
+------------------------------------------------------------------------
+STATEMENT OF COMPLAINANT
+------------------------------------------------------------------------
+
+The complainant, Hasmukh Mehta, a wholesale cloth merchant operating
+from Dadar TT Circle, states that in the first week of April 2026, two
+persons visited his shop and represented themselves as procurement agents
+of a fictional shipping and logistics firm named Global Freight Services.
+
+The first of these persons introduced himself as Imran, the second
+as Rajan. They stated that their firm required a large bulk consignment
+of cotton fabrics and requested samples and a proforma invoice. On their
+second visit on 02/05/2026, all three accused arrived together in
+vehicle no. MH-01-DT-1123. The third person, subsequently identified
+as Vikram Naik, presented himself as the logistics coordinator.
+
+The accused produced fictitious letterheads and documentation purporting
+to be from Global Freight Services and persuaded the complainant to
+transfer an advance payment of Rs. 3,50,000 via NEFT to a bank account
+they represented as belonging to the firm. The consignment was never
+delivered and the accused became unreachable thereafter.
+
+Inquiries with the Registrar of Companies reveal no entity named
+Global Freight Services registered at the address provided on the
+letterhead. The bank account to which the transfer was made is stated
+by the complainant's banker to have been opened in the name of
+RK Enterprises, details of which are under investigation.
+
+A cashier at the complainant's shop, Nasreen Shaikh W/o Farukh Shaikh
+R/o Nagpada, Mumbai - 400008, Phone: +91-90000-66677, who was present
+during the accused's visits, has provided a statement corroborating
+the complainant's account and confirming the identities of the accused
+from photographs shown to her.
+
+Investigating officers note a possible organised criminal nexus between
+the three accused, with coordinated roles observed across this FIR and
+FIR Nos. 0112/2026 (Andheri PS) and 0187/2026 (Kurla PS).
+
+------------------------------------------------------------------------
+INVESTIGATING OFFICER
+------------------------------------------------------------------------
+
+Name   : Inspector Nilesh Kadam
+Badge  : MH-PI-3341
+Station: Dadar Police Station
+
+------------------------------------------------------------------------
+FIR registered at Dadar Police Station on 03/05/2026 at 11:45 hrs.
+Bank account details of RK Enterprises requisitioned from concerned bank.
+Statement of witness Nasreen Shaikh recorded and preserved.
+========================================================================
