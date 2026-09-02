@@ -204,11 +204,12 @@ table {
 }
 
 .top-navbar-brand img {
-  width: 40px;
-  height: 40px;
-  background: white;
-  border-radius: 50%;
-  padding: 4px;
+  /* Shield mark, kept at its own 120:140 proportion. The gold band carries enough contrast
+     against the navy bar that it needs no backing plate. */
+  width: 38px;
+  height: 44px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .top-navbar-brand-text {

@@ -1,15 +1,16 @@
-import { useEffect, useRef, useCallback } from "react";
-import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
-import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
-import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
-import { CSS2DRenderer, CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Entity, EntityType, Relationship } from "../data/types";
 import { IconMinus, IconPlus, IconTarget } from "./icons";
 
-/* ── colour palette ── */
+/**
+ * Orbitable 3D network view drawn on a plain 2D canvas.
+ *
+ * There is no 3D library here. Nodes hold real x/y/z positions; each frame they are rotated by
+ * the current yaw/pitch, projected through a pinhole camera, sorted back-to-front and painted.
+ * Depth is carried by size, by a radial gradient that shades each node like a lit sphere, and by
+ * fog that washes distant nodes and edges toward the background colour.
+ */
+
 const typeColor: Record<EntityType, string> = {
   person: "#2563eb",
   organization: "#d97706",
@@ -18,124 +19,183 @@ const typeColor: Record<EntityType, string> = {
   phone: "#e11d48",
 };
 
-const riskGlow: Record<string, string> = {
-  high: "#ef4444",
-  medium: "#f59e0b",
-  low: "#64748b",
+const riskRing: Record<string, string> = {
+  high: "#b91c1c",
+  medium: "#b45309",
+  low: "#cbd5e1",
 };
 
-const edgeTypeColor: Record<string, string> = {
-  associate: "#94a3b8",
-  family: "#f472b6",
-  financial: "#22d3ee",
-  communication: "#a78bfa",
-  ownership: "#fb923c",
-  frequents: "#4ade80",
-  employment: "#facc15",
-};
+const BG = "#f0f2f5";
+const CAMERA_DISTANCE = 900;
+const FOCAL = 780;
 
-/* ── 3D force layout ── */
-interface SimNode {
+interface Node3D {
   id: string;
+  entity: Entity;
   x: number;
   y: number;
   z: number;
-  vx: number;
-  vy: number;
-  vz: number;
+  radius: number;
+  /** filled per frame */
+  sx: number;
+  sy: number;
+  sz: number;
+  scale: number;
 }
 
-function runForceLayout(
-  entities: Entity[],
-  relationships: Relationship[],
-  iterations = 120,
-): Map<string, THREE.Vector3> {
-  const nodes: SimNode[] = entities.map((e) => ({
-    id: e.id,
-    x: (Math.random() - 0.5) * 200,
-    y: (Math.random() - 0.5) * 200,
-    z: (Math.random() - 0.5) * 200,
-    vx: 0,
-    vy: 0,
-    vz: 0,
-  }));
+/** Fibonacci sphere, then relaxed so linked entities pull together and everything else pushes
+ *  apart. Gives a readable ball of nodes rather than a shell with the structure hidden inside. */
+function layout(entities: Entity[], relationships: Relationship[]): Node3D[] {
+  const n = entities.length;
+  const golden = Math.PI * (3 - Math.sqrt(5));
+  const spread = 190 + n * 16;
 
-  const idx = new Map<string, number>();
-  nodes.forEach((n, i) => idx.set(n.id, i));
+  const degree = new Map<string, number>();
+  relationships.forEach((r) => {
+    degree.set(r.source, (degree.get(r.source) ?? 0) + 1);
+    degree.set(r.target, (degree.get(r.target) ?? 0) + 1);
+  });
 
-  const REPULSION = 8000;
-  const SPRING = 0.012;
-  const REST = 40;
-  const DAMPING = 0.88;
-  const DT = 0.7;
+  const nodes: Node3D[] = entities.map((e, i) => {
+    const t = n === 1 ? 0 : i / (n - 1);
+    const y = 1 - t * 2;
+    const ring = Math.sqrt(Math.max(0, 1 - y * y));
+    const theta = golden * i;
+    // pull higher-degree entities toward the middle so hubs sit at the core
+    const d = degree.get(e.id) ?? 0;
+    const pull = 1 - Math.min(d, 8) / 26;
+    const r = spread * pull * (0.72 + 0.28 * ring);
+    return {
+      id: e.id,
+      entity: e,
+      x: Math.cos(theta) * r,
+      y: y * spread * pull * 0.82,
+      z: Math.sin(theta) * r,
+      radius: 7 + Math.min(d, 8) * 1.6,
+      sx: 0,
+      sy: 0,
+      sz: 0,
+      scale: 1,
+    };
+  });
 
-  for (let iter = 0; iter < iterations; iter++) {
-    // charge repulsion
+  const index = new Map(nodes.map((nd, i) => [nd.id, i]));
+  const links = relationships
+    .map((r) => [index.get(r.source), index.get(r.target)] as const)
+    .filter((l): l is readonly [number, number] => l[0] !== undefined && l[1] !== undefined);
+
+  // a few relaxation passes: springs on links, repulsion everywhere
+  for (let pass = 0; pass < 90; pass++) {
+    for (const [a, b] of links) {
+      const A = nodes[a];
+      const B = nodes[b];
+      const dx = B.x - A.x;
+      const dy = B.y - A.y;
+      const dz = B.z - A.z;
+      const dist = Math.hypot(dx, dy, dz) || 1;
+      const target = 205;
+      const f = ((dist - target) / dist) * 0.02;
+      A.x += dx * f;
+      A.y += dy * f;
+      A.z += dz * f;
+      B.x -= dx * f;
+      B.y -= dy * f;
+      B.z -= dz * f;
+    }
+
     for (let i = 0; i < nodes.length; i++) {
       for (let j = i + 1; j < nodes.length; j++) {
-        const a = nodes[i];
-        const b = nodes[j];
-        const dx = a.x - b.x;
-        const dy = a.y - b.y;
-        const dz = a.z - b.z;
-        const distSq = dx * dx + dy * dy + dz * dz + 1;
-        const force = REPULSION / distSq;
-        const dist = Math.sqrt(distSq);
-        const fx = (force * dx) / dist;
-        const fy = (force * dy) / dist;
-        const fz = (force * dz) / dist;
-        a.vx += fx;
-        a.vy += fy;
-        a.vz += fz;
-        b.vx -= fx;
-        b.vy -= fy;
-        b.vz -= fz;
+        const A = nodes[i];
+        const B = nodes[j];
+        const dx = B.x - A.x;
+        const dy = B.y - A.y;
+        const dz = B.z - A.z;
+        const distSq = dx * dx + dy * dy + dz * dz || 1;
+        const min = 132;
+        if (distSq < min * min) {
+          const dist = Math.sqrt(distSq);
+          const push = ((min - dist) / dist) * 0.24;
+          A.x -= dx * push;
+          A.y -= dy * push;
+          A.z -= dz * push;
+          B.x += dx * push;
+          B.y += dy * push;
+          B.z += dz * push;
+        }
       }
     }
-
-    // spring attraction
-    for (const r of relationships) {
-      const ai = idx.get(r.source);
-      const bi = idx.get(r.target);
-      if (ai === undefined || bi === undefined) continue;
-      const a = nodes[ai];
-      const b = nodes[bi];
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
-      const dz = b.z - a.z;
-      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) + 0.01;
-      const displacement = dist - REST;
-      const force = SPRING * displacement;
-      const fx = (force * dx) / dist;
-      const fy = (force * dy) / dist;
-      const fz = (force * dz) / dist;
-      a.vx += fx;
-      a.vy += fy;
-      a.vz += fz;
-      b.vx -= fx;
-      b.vy -= fy;
-      b.vz -= fz;
-    }
-
-    // integrate
-    for (const n of nodes) {
-      n.vx *= DAMPING;
-      n.vy *= DAMPING;
-      n.vz *= DAMPING;
-      n.x += n.vx * DT;
-      n.y += n.vy * DT;
-      n.z += n.vz * DT;
-    }
   }
 
-  const result = new Map<string, THREE.Vector3>();
-  for (const n of nodes) {
-    result.set(n.id, new THREE.Vector3(n.x, n.y, n.z));
-  }
-  return result;
+  // Normalise each axis on its own. Relaxation leaves the cloud noticeably taller than it is
+  // wide, and since the on-screen fit is limited by whichever axis is longest, that wasted the
+  // horizontal space. Keeping y a little shorter than x/z also reads better in a wide pane.
+  let maxX = 0;
+  let maxY = 0;
+  let maxZ = 0;
+  nodes.forEach((nd) => {
+    maxX = Math.max(maxX, Math.abs(nd.x));
+    maxY = Math.max(maxY, Math.abs(nd.y));
+    maxZ = Math.max(maxZ, Math.abs(nd.z));
+  });
+  const kx = maxX > 0 ? 300 / maxX : 1;
+  const ky = maxY > 0 ? 250 / maxY : 1;
+  const kz = maxZ > 0 ? 300 / maxZ : 1;
+  nodes.forEach((nd) => {
+    nd.x *= kx;
+    nd.y *= ky;
+    nd.z *= kz;
+  });
+
+  return nodes;
 }
 
-/* ── component props ── */
+const FALLBACK_RGB: [number, number, number] = [100, 100, 100];
+const colorCache = new Map<string, [number, number, number]>();
+let colorProbe: CanvasRenderingContext2D | null = null;
+
+/** Let the canvas normalise the colour instead of parsing by hand: it accepts hex of any length,
+ *  rgb()/rgba(), hsl() and named colours, and always reports back a form we can read. */
+function parseColor(c: string): [number, number, number] {
+  const cached = colorCache.get(c);
+  if (cached) return cached;
+
+  if (!colorProbe) colorProbe = document.createElement("canvas").getContext("2d");
+  let rgb = FALLBACK_RGB;
+
+  if (colorProbe && typeof c === "string") {
+    // An invalid assignment is ignored, so seed a sentinel and see whether it actually changed.
+    colorProbe.fillStyle = "#646464";
+    colorProbe.fillStyle = c;
+    const norm = String(colorProbe.fillStyle);
+    if (norm.startsWith("#") && norm.length === 7) {
+      const v = parseInt(norm.slice(1), 16);
+      rgb = [(v >> 16) & 255, (v >> 8) & 255, v & 255];
+    } else {
+      const m = norm.match(/[\d.]+/g);
+      if (m && m.length >= 3) rgb = [Number(m[0]), Number(m[1]), Number(m[2])];
+    }
+  }
+
+  if (!rgb.every((v) => Number.isFinite(v))) rgb = FALLBACK_RGB;
+  colorCache.set(c, rgb);
+  return rgb;
+}
+
+function mixToward(color: string, target: string, amount: number): string {
+  const [r1, g1, b1] = parseColor(color);
+  const [r2, g2, b2] = parseColor(target);
+  const t = Number.isFinite(amount) ? Math.max(0, Math.min(1, amount)) : 0;
+  const m = (a: number, b: number) => Math.round(a + (b - a) * t);
+  return `rgb(${m(r1, r2)}, ${m(g1, g2)}, ${m(b1, b2)})`;
+}
+
+function shade(color: string, amount: number): string {
+  const [r, g, b] = parseColor(color);
+  const a = Number.isFinite(amount) ? amount : 1;
+  const f = (c: number) => Math.max(0, Math.min(255, Math.round(c * a)));
+  return `rgb(${f(r)}, ${f(g)}, ${f(b)})`;
+}
+
 interface GraphView3DProps {
   entities: Entity[];
   relationships: Relationship[];
@@ -147,7 +207,6 @@ interface GraphView3DProps {
   nodeColorOverride?: Map<string, string>;
 }
 
-/* ── main component ── */
 export default function GraphView3D({
   entities,
   relationships,
@@ -158,568 +217,383 @@ export default function GraphView3D({
   dimmedNodeIds,
   nodeColorOverride,
 }: GraphView3DProps) {
-  const mountRef = useRef<HTMLDivElement>(null);
-  const sceneRef = useRef<{
-    renderer: THREE.WebGLRenderer;
-    cssRenderer: CSS2DRenderer;
-    scene: THREE.Scene;
-    camera: THREE.PerspectiveCamera;
-    controls: OrbitControls;
-    composer: EffectComposer;
-    nodeMeshes: Map<string, THREE.Mesh>;
-    edgeLines: Map<string, THREE.Line>;
-    glowMeshes: Map<string, THREE.Mesh>;
-    labelObjects: Map<string, CSS2DObject>;
-    particleSystems: Map<string, { points: THREE.Points; progress: Float32Array; speeds: Float32Array; dirs: THREE.Vector3 }>;
-    raycaster: THREE.Raycaster;
-    mouse: THREE.Vector2;
-    animId: number;
-    positions: Map<string, THREE.Vector3>;
-    tooltip: HTMLDivElement;
-    hoveredId: string | null;
-  } | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const nodesRef = useRef<Node3D[]>([]);
+  const frameRef = useRef<number>(0);
+  const needsFit = useRef(true);
 
-  // keep a ref to the latest onSelect so the click handler never goes stale
-  const onSelectRef = useRef(onSelect);
-  onSelectRef.current = onSelect;
+  // camera: yaw/pitch in radians, zoom multiplier
+  const camera = useRef({ yaw: 0.5, pitch: -0.25, zoom: 1 });
+  const drag = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+  const spin = useRef(true);
+  const [autoSpin, setAutoSpin] = useState(true);
 
-  const cleanup = useCallback(() => {
-    const s = sceneRef.current;
-    if (!s) return;
-    cancelAnimationFrame(s.animId);
-    s.controls.dispose();
-    s.renderer.dispose();
-    s.composer.dispose();
-    // remove label objects
-    s.labelObjects.forEach((lbl) => {
-      if (lbl.element.parentNode) lbl.element.parentNode.removeChild(lbl.element);
-      lbl.removeFromParent();
-    });
-    // remove particle systems
-    s.particleSystems.forEach((ps) => {
-      ps.points.geometry.dispose();
-      (ps.points.material as THREE.PointsMaterial).dispose();
-    });
-    s.scene.traverse((obj) => {
-      if ((obj as THREE.Mesh).geometry) (obj as THREE.Mesh).geometry.dispose();
-      const mat = (obj as THREE.Mesh).material;
-      if (mat) {
-        if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
-        else (mat as THREE.Material).dispose();
-      }
-    });
-    if (s.renderer.domElement.parentNode) s.renderer.domElement.parentNode.removeChild(s.renderer.domElement);
-    if (s.cssRenderer.domElement.parentNode) s.cssRenderer.domElement.parentNode.removeChild(s.cssRenderer.domElement);
-    if (s.tooltip.parentNode) s.tooltip.parentNode.removeChild(s.tooltip);
-    sceneRef.current = null;
-  }, []);
+  // props the draw loop reads without re-subscribing every render
+  const live = useRef({ selectedId, highlightEdgeIds, hiddenEdgeIds, dimmedNodeIds, nodeColorOverride, relationships });
+  live.current = { selectedId, highlightEdgeIds, hiddenEdgeIds, dimmedNodeIds, nodeColorOverride, relationships };
 
-  /* ── build scene whenever entities/relationships change ── */
   useEffect(() => {
-    cleanup();
-    const container = mountRef.current;
-    if (!container || entities.length === 0) return;
-
-    const width = container.clientWidth;
-    const height = container.clientHeight;
-
-    // ── renderer ──
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
-    container.appendChild(renderer.domElement);
-
-    // ── CSS2D renderer for labels ──
-    const cssRenderer = new CSS2DRenderer();
-    cssRenderer.setSize(width, height);
-    cssRenderer.domElement.style.position = "absolute";
-    cssRenderer.domElement.style.top = "0";
-    cssRenderer.domElement.style.left = "0";
-    cssRenderer.domElement.style.pointerEvents = "none";
-    container.appendChild(cssRenderer.domElement);
-
-    // ── scene ──
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color("#0a0e1a");
-
-    // subtle ambient grid of particles
-    const starsGeo = new THREE.BufferGeometry();
-    const starsCount = 600;
-    const starPositions = new Float32Array(starsCount * 3);
-    for (let i = 0; i < starsCount * 3; i++) starPositions[i] = (Math.random() - 0.5) * 800;
-    starsGeo.setAttribute("position", new THREE.BufferAttribute(starPositions, 3));
-    const starsMat = new THREE.PointsMaterial({ color: "#1e293b", size: 1.2, transparent: true, opacity: 0.5 });
-    scene.add(new THREE.Points(starsGeo, starsMat));
-
-    // ── camera ──
-    const camera = new THREE.PerspectiveCamera(55, width / height, 0.1, 2000);
-    camera.position.set(0, 0, 280);
-
-    // ── lights ──
-    scene.add(new THREE.AmbientLight("#334155", 1.8));
-    const dirLight = new THREE.DirectionalLight("#e2e8f0", 0.6);
-    dirLight.position.set(50, 100, 80);
-    scene.add(dirLight);
-
-    // ── controls ──
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.08;
-    controls.minDistance = 30;
-    controls.maxDistance = 800;
-    controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.3;
-
-    // ── post-processing ──
-    const composer = new EffectComposer(renderer);
-    composer.addPass(new RenderPass(scene, camera));
-    const bloom = new UnrealBloomPass(new THREE.Vector2(width, height), 0.6, 0.4, 0.7);
-    composer.addPass(bloom);
-    composer.addPass(new OutputPass());
-
-    // ── tooltip ──
-    const tooltip = document.createElement("div");
-    tooltip.className = "graph3d-tooltip";
-    tooltip.style.display = "none";
-    container.appendChild(tooltip);
-
-    // ── layout ──
-    const positions = runForceLayout(entities, relationships);
-
-    // compute degree
-    const degree = new Map<string, number>();
-    relationships.forEach((r) => {
-      degree.set(r.source, (degree.get(r.source) ?? 0) + 1);
-      degree.set(r.target, (degree.get(r.target) ?? 0) + 1);
-    });
-
-    // ── nodes ──
-    const nodeMeshes = new Map<string, THREE.Mesh>();
-    const glowMeshes = new Map<string, THREE.Mesh>();
-    const labelObjects = new Map<string, CSS2DObject>();
-
-    for (const e of entities) {
-      const pos = positions.get(e.id)!;
-      const d = degree.get(e.id) ?? 0;
-      const baseRadius = 2.2 + Math.min(d, 10) * 0.5;
-      const color = nodeColorOverride?.get(e.id) ?? typeColor[e.type];
-
-      // core sphere
-      const geo = new THREE.SphereGeometry(baseRadius, 24, 24);
-      const mat = new THREE.MeshStandardMaterial({
-        color,
-        emissive: color,
-        emissiveIntensity: 0.35,
-        roughness: 0.3,
-        metalness: 0.4,
-        transparent: true,
-        opacity: dimmedNodeIds?.has(e.id) ? 0.12 : 1,
-      });
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.copy(pos);
-      mesh.userData = { entityId: e.id };
-      scene.add(mesh);
-      nodeMeshes.set(e.id, mesh);
-
-      // risk glow halo
-      const glowRadius = baseRadius * 1.8;
-      const glowGeo = new THREE.SphereGeometry(glowRadius, 16, 16);
-      const glowColor = riskGlow[e.riskLevel];
-      const glowMat = new THREE.MeshBasicMaterial({
-        color: glowColor,
-        transparent: true,
-        opacity: e.riskLevel === "high" ? 0.18 : e.riskLevel === "medium" ? 0.1 : 0.04,
-        side: THREE.BackSide,
-      });
-      const glowMesh = new THREE.Mesh(glowGeo, glowMat);
-      glowMesh.position.copy(pos);
-      if (dimmedNodeIds?.has(e.id)) glowMat.opacity = 0.02;
-      scene.add(glowMesh);
-      glowMeshes.set(e.id, glowMesh);
-
-      // CSS2D label
-      const labelDiv = document.createElement("div");
-      labelDiv.className = "graph3d-label";
-      labelDiv.textContent = e.label;
-      labelDiv.style.color = color;
-      if (dimmedNodeIds?.has(e.id)) labelDiv.style.opacity = "0.15";
-      const labelObj = new CSS2DObject(labelDiv);
-      labelObj.position.set(0, baseRadius + 3, 0);
-      mesh.add(labelObj);
-      labelObjects.set(e.id, labelObj);
-    }
-
-    // ── edges ──
-    const edgeLines = new Map<string, THREE.Line>();
-    const particleSystems = new Map<string, { points: THREE.Points; progress: Float32Array; speeds: Float32Array; dirs: THREE.Vector3 }>();
-
-    for (const r of relationships) {
-      const from = positions.get(r.source);
-      const to = positions.get(r.target);
-      if (!from || !to) continue;
-
-      const isHighlighted = highlightEdgeIds?.has(r.id) ?? false;
-      const isHidden = hiddenEdgeIds?.has(r.id) ?? false;
-
-      const lineColor = isHighlighted ? "#f97316" : (edgeTypeColor[r.type] ?? "#475569");
-      const lineWidth = 1; // WebGL lines are always 1px, we use linebasicmaterial
-      const geo = new THREE.BufferGeometry().setFromPoints([from, to]);
-      const mat = new THREE.LineBasicMaterial({
-        color: lineColor,
-        transparent: true,
-        opacity: isHidden ? 0 : isHighlighted ? 0.95 : 0.25 + Math.min(r.weight, 10) * 0.04,
-        linewidth: lineWidth,
-      });
-      const line = new THREE.Line(geo, mat);
-      line.userData = { relId: r.id };
-      scene.add(line);
-      edgeLines.set(r.id, line);
-
-      // ── animated particles along edge ──
-      if (!isHidden && r.weight >= 2) {
-        const particleCount = Math.min(r.weight, 8);
-        const pGeo = new THREE.BufferGeometry();
-        const pPositions = new Float32Array(particleCount * 3);
-        const progress = new Float32Array(particleCount);
-        const speeds = new Float32Array(particleCount);
-        const dir = new THREE.Vector3().subVectors(to, from);
-
-        for (let i = 0; i < particleCount; i++) {
-          progress[i] = Math.random();
-          speeds[i] = 0.002 + Math.random() * 0.003;
-          const p = new THREE.Vector3().copy(from).addScaledVector(dir, progress[i]);
-          pPositions[i * 3] = p.x;
-          pPositions[i * 3 + 1] = p.y;
-          pPositions[i * 3 + 2] = p.z;
-        }
-
-        pGeo.setAttribute("position", new THREE.BufferAttribute(pPositions, 3));
-        const pMat = new THREE.PointsMaterial({
-          color: lineColor,
-          size: isHighlighted ? 2.5 : 1.5,
-          transparent: true,
-          opacity: isHighlighted ? 0.9 : 0.55,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false,
-        });
-        const points = new THREE.Points(pGeo, pMat);
-        scene.add(points);
-        particleSystems.set(r.id, { points, progress, speeds, dirs: dir });
-      }
-    }
-
-    // ── selection ring ──
-    const selectionRingGeo = new THREE.RingGeometry(0.9, 1.1, 32);
-    const selectionRingMat = new THREE.MeshBasicMaterial({
-      color: "#fbbf24",
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.85,
-    });
-    const selectionRing = new THREE.Mesh(selectionRingGeo, selectionRingMat);
-    selectionRing.visible = false;
-    scene.add(selectionRing);
-
-    if (selectedId) {
-      const mesh = nodeMeshes.get(selectedId);
-      if (mesh) {
-        const radius = (mesh.geometry as THREE.SphereGeometry).parameters.radius;
-        selectionRing.scale.set(radius * 1.6, radius * 1.6, 1);
-        selectionRing.position.copy(mesh.position);
-        selectionRing.visible = true;
-      }
-    }
-
-    // ── raycasting ──
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-    let hoveredId: string | null = null;
-
-    function onMouseMove(e: MouseEvent) {
-      const rect = renderer.domElement.getBoundingClientRect();
-      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-    }
-
-    function onClick() {
-      raycaster.setFromCamera(mouse, camera);
-      const allMeshes = [...nodeMeshes.values()];
-      const hits = raycaster.intersectObjects(allMeshes);
-      if (hits.length > 0) {
-        const id = hits[0].object.userData.entityId as string;
-        onSelectRef.current(id);
-      } else {
-        onSelectRef.current(null);
-      }
-    }
-
-    renderer.domElement.addEventListener("mousemove", onMouseMove);
-    renderer.domElement.addEventListener("click", onClick);
-
-    // stop auto-rotate on interaction
-    renderer.domElement.addEventListener("pointerdown", () => {
-      controls.autoRotate = false;
-    });
-
-    // ── resize ──
-    function onResize() {
-      const w = container!.clientWidth;
-      const h = container!.clientHeight;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-      cssRenderer.setSize(w, h);
-      composer.setSize(w, h);
-    }
-    window.addEventListener("resize", onResize);
-    const resizeObs = new ResizeObserver(onResize);
-    resizeObs.observe(container);
-
-    // ── animation loop ──
-    const clock = new THREE.Clock();
-    let animId = 0;
-
-    function animate() {
-      animId = requestAnimationFrame(animate);
-      const elapsed = clock.getElapsedTime();
-      controls.update();
-
-      // gentle node breathing
-      nodeMeshes.forEach((mesh) => {
-        const base = (mesh.geometry as THREE.SphereGeometry).parameters.radius;
-        const breathe = 1 + Math.sin(elapsed * 1.5 + mesh.position.x * 0.1) * 0.03;
-        mesh.scale.setScalar(breathe);
-      });
-
-      // selection ring rotation
-      if (selectionRing.visible) {
-        selectionRing.lookAt(camera.position);
-        selectionRingMat.opacity = 0.5 + Math.sin(elapsed * 3) * 0.35;
-      }
-
-      // animate particles
-      particleSystems.forEach((ps) => {
-        const posAttr = ps.points.geometry.getAttribute("position") as THREE.BufferAttribute;
-        const from = new THREE.Vector3(
-          posAttr.getX(0) - ps.dirs.x * ps.progress[0],
-          posAttr.getY(0) - ps.dirs.y * ps.progress[0],
-          posAttr.getZ(0) - ps.dirs.z * ps.progress[0],
-        );
-        // we need to calculate from base: from the edge start
-        // But we stored dirs as (to - from), so edge_start = position - dirs * progress
-        // Actually, let's recompute from the line endpoints
-        for (let i = 0; i < ps.progress.length; i++) {
-          ps.progress[i] += ps.speeds[i];
-          if (ps.progress[i] > 1) ps.progress[i] -= 1;
-        }
-        // recompute positions by finding start position from first particle
-        // Edge start = line start. We stored dirs = to - from, and positions as from + dirs*progress.
-        // So we need the 'from' position. Let's just get it from the first particle's init.
-        // We'll store edge start on the ps object — but we didn't. Let's infer it:
-        // Actually, easier: use the edge line geometry
-        const entry = ps as typeof ps & { _from?: THREE.Vector3 };
-        if (!entry._from) {
-          // compute it from the first particle's original placement equation
-          // We know: pPos[0] was = from + dirs * progress[0]_original. But that's lost.
-          // Instead just grab from the line's geometry:
-          entry._from = new THREE.Vector3();
-          // find the corresponding line
-          edgeLines.forEach((line, relId) => {
-            if (particleSystems.get(relId) === ps) {
-              const linePos = line.geometry.getAttribute("position") as THREE.BufferAttribute;
-              entry._from!.set(linePos.getX(0), linePos.getY(0), linePos.getZ(0));
-            }
-          });
-        }
-
-        for (let i = 0; i < ps.progress.length; i++) {
-          const px = entry._from!.x + ps.dirs.x * ps.progress[i];
-          const py = entry._from!.y + ps.dirs.y * ps.progress[i];
-          const pz = entry._from!.z + ps.dirs.z * ps.progress[i];
-          posAttr.setXYZ(i, px, py, pz);
-        }
-        posAttr.needsUpdate = true;
-      });
-
-      // hover detection
-      raycaster.setFromCamera(mouse, camera);
-      const allMeshes = [...nodeMeshes.values()];
-      const hits = raycaster.intersectObjects(allMeshes);
-      if (hits.length > 0) {
-        const id = hits[0].object.userData.entityId as string;
-        if (hoveredId !== id) {
-          hoveredId = id;
-          const ent = entities.find((e) => e.id === id);
-          tooltip.innerHTML = `<strong>${ent?.label ?? id}</strong><br/><span style="text-transform:capitalize">${ent?.type ?? ""}</span>`;
-          tooltip.style.display = "block";
-          renderer.domElement.style.cursor = "pointer";
-        }
-        // position tooltip near mouse
-        const rect = renderer.domElement.getBoundingClientRect();
-        tooltip.style.left = `${((mouse.x + 1) / 2) * rect.width + 14}px`;
-        tooltip.style.top = `${((-mouse.y + 1) / 2) * rect.height - 10}px`;
-      } else {
-        if (hoveredId) {
-          hoveredId = null;
-          tooltip.style.display = "none";
-          renderer.domElement.style.cursor = "grab";
-        }
-      }
-
-      composer.render();
-      cssRenderer.render(scene, camera);
-    }
-
-    animate();
-
-    sceneRef.current = {
-      renderer,
-      cssRenderer,
-      scene,
-      camera,
-      controls,
-      composer,
-      nodeMeshes,
-      edgeLines,
-      glowMeshes,
-      labelObjects,
-      particleSystems,
-      raycaster,
-      mouse,
-      animId,
-      positions,
-      tooltip,
-      hoveredId,
-    };
-
-    return () => {
-      window.removeEventListener("resize", onResize);
-      resizeObs.disconnect();
-      renderer.domElement.removeEventListener("mousemove", onMouseMove);
-      renderer.domElement.removeEventListener("click", onClick);
-      cleanup();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    nodesRef.current = layout(entities, relationships);
+    needsFit.current = true;
   }, [entities, relationships]);
 
-  /* ── live prop updates without full rebuild ── */
+  const project = useCallback((nd: Node3D, cx: number, cy: number) => {
+    const { yaw, pitch, zoom } = camera.current;
+    const cosY = Math.cos(yaw);
+    const sinY = Math.sin(yaw);
+    const cosP = Math.cos(pitch);
+    const sinP = Math.sin(pitch);
 
-  // selection ring
+    // yaw about Y, then pitch about X
+    const x1 = nd.x * cosY - nd.z * sinY;
+    const z1 = nd.x * sinY + nd.z * cosY;
+    const y2 = nd.y * cosP - z1 * sinP;
+    const z2 = nd.y * sinP + z1 * cosP;
+
+    const depth = z2 + CAMERA_DISTANCE;
+    const scale = (FOCAL / Math.max(depth, 1)) * zoom;
+    nd.sx = cx + x1 * scale;
+    nd.sy = cy + y2 * scale;
+    nd.sz = z2;
+    nd.scale = scale;
+  }, []);
+
+  const draw = useCallback(() => {
+    const canvas = canvasRef.current;
+    const wrap = wrapRef.current;
+    if (!canvas || !wrap) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const w = wrap.clientWidth;
+    const h = wrap.clientHeight;
+    if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+    }
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = BG;
+    ctx.fillRect(0, 0, w, h);
+
+    const nodes = nodesRef.current;
+    if (nodes.length === 0) return;
+
+    if (spin.current && !drag.current) camera.current.yaw += 0.0016;
+
+    const cx = w / 2;
+    const cy = h / 2;
+    nodes.forEach((nd) => project(nd, cx, cy));
+
+    // Frame the whole network on first paint after a layout, whatever the pane size.
+    if (needsFit.current && w > 120 && h > 120) {
+      // Fit each axis on its own. Collapsing both into one extent and comparing it against the
+      // shorter pane side leaves a wide pane mostly empty.
+      // Fit the bulk of the network, not its furthest straggler. A couple of loosely connected
+      // nodes sit far outside the core, and fitting those shrank everything else to a clump.
+      const xs = nodes.map((nd) => Math.abs(nd.sx - cx)).sort((a, b) => a - b);
+      const ys = nodes.map((nd) => Math.abs(nd.sy - cy)).sort((a, b) => a - b);
+      const pick = (arr: number[]) => arr[Math.min(arr.length - 1, Math.floor(arr.length * 0.9))];
+      const extentX = pick(xs);
+      const extentY = pick(ys);
+      if (extentX > 0 && extentY > 0) {
+        const k = Math.min((w * 0.44) / extentX, (h * 0.43) / extentY);
+        camera.current.zoom = Math.max(0.45, Math.min(3.2, camera.current.zoom * k));
+        needsFit.current = false;
+        nodes.forEach((nd) => project(nd, cx, cy));
+      }
+    }
+
+    const byId = new Map(nodes.map((nd) => [nd.id, nd]));
+    const { selectedId: sel, highlightEdgeIds: hl, hiddenEdgeIds: hidden, dimmedNodeIds: dim, nodeColorOverride: override, relationships: rels } = live.current;
+
+    // depth range, for fog
+    let minZ = Infinity;
+    let maxZ = -Infinity;
+    nodes.forEach((nd) => {
+      if (nd.sz < minZ) minZ = nd.sz;
+      if (nd.sz > maxZ) maxZ = nd.sz;
+    });
+    const span = maxZ - minZ || 1;
+    // Enough fog to read depth, but not so much that the outer shell dissolves into the page.
+    const fogOf = (z: number) => Math.min(0.55, Math.max(0, (z - minZ) / span) * 0.62);
+
+    const neighbours = new Set<string>();
+    if (sel) {
+      rels.forEach((r) => {
+        if (r.source === sel) neighbours.add(r.target);
+        if (r.target === sel) neighbours.add(r.source);
+      });
+    }
+
+    // edges first, back to front
+    const edges = rels
+      .filter((r) => !hidden?.has(r.id))
+      .map((r) => ({ r, a: byId.get(r.source), b: byId.get(r.target) }))
+      .filter((e): e is { r: Relationship; a: Node3D; b: Node3D } => !!e.a && !!e.b)
+      .sort((p, q) => (q.a.sz + q.b.sz) / 2 - (p.a.sz + p.b.sz) / 2);
+
+    for (const { r, a, b } of edges) {
+      const isPath = hl?.has(r.id) ?? false;
+      const touchesSel = sel != null && (r.source === sel || r.target === sel);
+      const fog = fogOf((a.sz + b.sz) / 2);
+
+      let colour: string;
+      let width: number;
+      if (isPath) {
+        colour = mixToward("#ea580c", BG, fog * 0.4);
+        width = 2.6;
+      } else if (touchesSel) {
+        colour = mixToward("#eab308", BG, fog * 0.4);
+        width = 2.2;
+      } else {
+        colour = mixToward("#94a3b8", BG, 0.25 + fog * 0.7);
+        width = 1;
+      }
+
+      ctx.strokeStyle = colour;
+      ctx.lineWidth = width * Math.min(1.4, (a.scale + b.scale) / 2);
+      ctx.globalAlpha = sel && !touchesSel && !isPath ? 0.35 : 1;
+      ctx.beginPath();
+      ctx.moveTo(a.sx, a.sy);
+      ctx.lineTo(b.sx, b.sy);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    // nodes back to front, so near ones overlap far ones
+    const ordered = [...nodes].sort((p, q) => q.sz - p.sz);
+
+    for (const nd of ordered) {
+      const fog = fogOf(nd.sz);
+      const base = override?.get(nd.id) ?? typeColor[nd.entity.type];
+      const isSel = nd.id === sel;
+      const isNeighbour = neighbours.has(nd.id);
+      const dimmed = dim?.has(nd.id) ?? false;
+
+      const r = nd.radius * nd.scale;
+      if (!Number.isFinite(r) || !Number.isFinite(nd.sx) || !Number.isFinite(nd.sy) || r < 0.5) continue;
+
+      ctx.globalAlpha = dimmed ? 0.16 : sel && !isSel && !isNeighbour ? 0.5 : 1;
+
+      // lit sphere: highlight up-left, body colour, darker rim
+      const lit = mixToward(base, BG, fog * 0.75);
+      const grad = ctx.createRadialGradient(nd.sx - r * 0.35, nd.sy - r * 0.4, r * 0.1, nd.sx, nd.sy, r);
+      grad.addColorStop(0, mixToward(lit, "#ffffff", 0.55));
+      grad.addColorStop(0.45, lit);
+      grad.addColorStop(1, shade(base, 0.62));
+
+      // contact shadow grounds the sphere
+      ctx.beginPath();
+      ctx.fillStyle = "rgba(15, 23, 42, 0.13)";
+      ctx.ellipse(nd.sx + r * 0.1, nd.sy + r * 0.25, r * 0.95, r * 0.95, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.fillStyle = grad;
+      ctx.arc(nd.sx, nd.sy, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // risk ring, thinner as it recedes
+      if (!dimmed) {
+        ctx.beginPath();
+        ctx.strokeStyle = mixToward(riskRing[nd.entity.riskLevel] ?? "#cbd5e1", BG, fog * 0.6);
+        ctx.lineWidth = Math.max(0.6, (nd.entity.riskLevel === "high" ? 2.4 : 1.6) * nd.scale);
+        ctx.arc(nd.sx, nd.sy, r + ctx.lineWidth * 0.6, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      if (isSel) {
+        ctx.beginPath();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 3;
+        ctx.arc(nd.sx, nd.sy, r + 6, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.strokeStyle = "#1d4ed8";
+        ctx.lineWidth = 1.6;
+        ctx.arc(nd.sx, nd.sy, r + 8.5, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // labels only for nearer / important nodes, so the ball stays readable
+      const worthLabel = isSel || isNeighbour || nd.radius >= 12;
+      if (worthLabel && !dimmed && nd.scale > 0.5) {
+        ctx.globalAlpha = Math.min(1, Math.max(0.25, 1 - fog));
+        ctx.font = `${isSel ? 600 : 400} ${Math.max(9, Math.min(13, 12 * nd.scale))}px "Segoe UI", Arial, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        const label = nd.entity.label;
+        const ty = nd.sy + r + 4;
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "rgba(240, 242, 245, 0.9)";
+        ctx.strokeText(label, nd.sx, ty);
+        ctx.fillStyle = "#1e293b";
+        ctx.fillText(label, nd.sx, ty);
+      }
+
+      ctx.globalAlpha = 1;
+    }
+
+  }, [project]);
+
+  // Scheduling the next frame in a finally means one bad frame cannot kill the whole loop.
+  const tick = useCallback(() => {
+    try {
+      draw();
+    } finally {
+      frameRef.current = requestAnimationFrame(tick);
+    }
+  }, [draw]);
+
   useEffect(() => {
-    const s = sceneRef.current;
-    if (!s) return;
-    // find old selection ring
-    s.scene.children.forEach((child) => {
-      if ((child as THREE.Mesh).geometry?.type === "RingGeometry") {
-        if (selectedId) {
-          const mesh = s.nodeMeshes.get(selectedId);
-          if (mesh) {
-            const radius = (mesh.geometry as THREE.SphereGeometry).parameters.radius;
-            child.scale.set(radius * 1.6, radius * 1.6, 1);
-            child.position.copy(mesh.position);
-            child.visible = true;
-          }
-        } else {
-          child.visible = false;
+    frameRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameRef.current);
+  }, [tick]);
+
+  // Re-frame whenever the pane resizes. Without this the first frame, which can land while the
+  // pane is still collapsing into place, permanently decides the zoom.
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => {
+      needsFit.current = true;
+    });
+    ro.observe(wrap);
+    return () => ro.disconnect();
+  }, []);
+
+  // pointer: drag to orbit, click to select
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const onDown = (e: PointerEvent) => {
+      drag.current = { x: e.clientX, y: e.clientY, moved: false };
+      canvas.setPointerCapture(e.pointerId);
+    };
+
+    const onMove = (e: PointerEvent) => {
+      const d = drag.current;
+      if (!d) return;
+      const dx = e.clientX - d.x;
+      const dy = e.clientY - d.y;
+      if (Math.abs(dx) + Math.abs(dy) > 3) d.moved = true;
+      camera.current.yaw += dx * 0.006;
+      camera.current.pitch = Math.max(-1.3, Math.min(1.3, camera.current.pitch + dy * 0.006));
+      d.x = e.clientX;
+      d.y = e.clientY;
+    };
+
+    const onUp = (e: PointerEvent) => {
+      const d = drag.current;
+      drag.current = null;
+      if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
+      if (!d || d.moved) return;
+
+      // click: nearest node under the cursor, front-most wins
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      let hit: Node3D | null = null;
+      for (const nd of [...nodesRef.current].sort((p, q) => p.sz - q.sz)) {
+        const r = nd.radius * nd.scale + 4;
+        if (Math.hypot(nd.sx - mx, nd.sy - my) <= r) {
+          hit = nd;
+          break;
         }
       }
-    });
-  }, [selectedId]);
+      onSelect(hit ? hit.id : null);
+    };
 
-  // dimmed nodes
-  useEffect(() => {
-    const s = sceneRef.current;
-    if (!s) return;
-    s.nodeMeshes.forEach((mesh, id) => {
-      const mat = mesh.material as THREE.MeshStandardMaterial;
-      mat.opacity = dimmedNodeIds?.has(id) ? 0.12 : 1;
-      const lbl = s.labelObjects.get(id);
-      if (lbl) (lbl.element as HTMLDivElement).style.opacity = dimmedNodeIds?.has(id) ? "0.15" : "1";
-      const glow = s.glowMeshes.get(id);
-      if (glow) (glow.material as THREE.MeshBasicMaterial).opacity = dimmedNodeIds?.has(id) ? 0.02 : 0.12;
-    });
-  }, [dimmedNodeIds]);
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      camera.current.zoom = Math.max(0.35, Math.min(3, camera.current.zoom * (e.deltaY > 0 ? 0.9 : 1.1)));
+    };
 
-  // community colour override
-  useEffect(() => {
-    const s = sceneRef.current;
-    if (!s) return;
-    entities.forEach((e) => {
-      const override = nodeColorOverride?.get(e.id);
-      const color = override ?? typeColor[e.type];
-      const mesh = s.nodeMeshes.get(e.id);
-      if (mesh) {
-        const mat = mesh.material as THREE.MeshStandardMaterial;
-        mat.color.set(color);
-        mat.emissive.set(color);
-      }
-      const lbl = s.labelObjects.get(e.id);
-      if (lbl) (lbl.element as HTMLDivElement).style.color = color;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodeColorOverride]);
+    canvas.addEventListener("pointerdown", onDown);
+    canvas.addEventListener("pointermove", onMove);
+    canvas.addEventListener("pointerup", onUp);
+    canvas.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      canvas.removeEventListener("pointerdown", onDown);
+      canvas.removeEventListener("pointermove", onMove);
+      canvas.removeEventListener("pointerup", onUp);
+      canvas.removeEventListener("wheel", onWheel);
+    };
+  }, [onSelect]);
 
-  // hidden edges
-  useEffect(() => {
-    const s = sceneRef.current;
-    if (!s) return;
-    s.edgeLines.forEach((line, id) => {
-      const mat = line.material as THREE.LineBasicMaterial;
-      const isHidden = hiddenEdgeIds?.has(id) ?? false;
-      mat.opacity = isHidden ? 0 : 0.35;
-      const ps = s.particleSystems.get(id);
-      if (ps) ps.points.visible = !isHidden;
-    });
-  }, [hiddenEdgeIds]);
-
-  // highlighted edges
-  useEffect(() => {
-    const s = sceneRef.current;
-    if (!s) return;
-    relationships.forEach((r) => {
-      const line = s.edgeLines.get(r.id);
-      if (!line) return;
-      const mat = line.material as THREE.LineBasicMaterial;
-      const isHighlighted = highlightEdgeIds?.has(r.id) ?? false;
-      const isHidden = hiddenEdgeIds?.has(r.id) ?? false;
-      mat.color.set(isHighlighted ? "#f97316" : (edgeTypeColor[r.type] ?? "#475569"));
-      mat.opacity = isHidden ? 0 : isHighlighted ? 0.95 : 0.25 + Math.min(r.weight, 10) * 0.04;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [highlightEdgeIds]);
-
-  /* ── zoom helpers ── */
-  function recenter() {
-    const s = sceneRef.current;
-    if (!s) return;
-    s.controls.reset();
-    s.camera.position.set(0, 0, 280);
-    s.controls.update();
-  }
-
-  function zoomBy(factor: number) {
-    const s = sceneRef.current;
-    if (!s) return;
-    s.camera.position.multiplyScalar(1 / factor);
-    s.controls.update();
+  function toggleSpin() {
+    spin.current = !spin.current;
+    setAutoSpin(spin.current);
   }
 
   return (
     <>
-      <div ref={mountRef} className="graph3d-container" style={{ width: "100%", height: "100%", position: "relative" }} />
+      <div ref={wrapRef} style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }}>
+        <canvas ref={canvasRef} style={{ display: "block", cursor: "grab", touchAction: "none" }} />
+      </div>
+
       <div className="icon-dock icon-dock-bottom-left">
-        <button className="icon-dock-btn" onClick={recenter} aria-label="Recenter graph">
+        <button
+          className="icon-dock-btn"
+          onClick={() => {
+            camera.current = { yaw: 0.5, pitch: -0.25, zoom: 1 };
+            needsFit.current = true;
+          }}
+          aria-label="Reset view"
+        >
           <IconTarget />
         </button>
-        <button className="icon-dock-btn" onClick={() => zoomBy(1.3)} aria-label="Zoom in">
+        <button
+          className="icon-dock-btn"
+          onClick={() => {
+            camera.current.zoom = Math.min(3, camera.current.zoom * 1.2);
+          }}
+          aria-label="Zoom in"
+        >
           <IconPlus />
         </button>
-        <button className="icon-dock-btn" onClick={() => zoomBy(1 / 1.3)} aria-label="Zoom out">
+        <button
+          className="icon-dock-btn"
+          onClick={() => {
+            camera.current.zoom = Math.max(0.35, camera.current.zoom / 1.2);
+          }}
+          aria-label="Zoom out"
+        >
           <IconMinus />
+        </button>
+        <button
+          className={`icon-dock-btn ${autoSpin ? "active" : ""}`}
+          onClick={toggleSpin}
+          aria-label={autoSpin ? "Stop rotation" : "Start rotation"}
+          title={autoSpin ? "Stop rotation" : "Start rotation"}
+        >
+          {autoSpin ? <IconPause3D /> : <IconPlay3D />}
         </button>
       </div>
     </>
+  );
+}
+
+function IconPause3D() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+      <rect x="7" y="5.5" width="3.6" height="13" rx="0.8" />
+      <rect x="13.4" y="5.5" width="3.6" height="13" rx="0.8" />
+    </svg>
+  );
+}
+
+function IconPlay3D() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+      <path d="M8 5.5v13l11-6.5Z" />
+    </svg>
   );
 }

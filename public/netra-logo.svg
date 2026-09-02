@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 300" role="img" aria-label="NETRA — NCRB, Ministry of Home Affairs">
+  <title>NETRA — NCRB, Ministry of Home Affairs</title>
+
+  <!-- Layered shield: navy outer, gold band, white field -->
+  <path d="M120 6 L226 32 V166 C226 224 180 266 120 288 C60 266 14 224 14 166 V32 Z" fill="#0f2c4e"/>
+  <path d="M120 19 L213 42 V166 C213 217 173 255 120 275 C67 255 27 217 27 166 V42 Z" fill="#c9a227"/>
+  <path d="M120 32 L200 52 V166 C200 210 166 244 120 262 C74 244 40 210 40 166 V52 Z" fill="#ffffff"/>
+
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <!-- Network lattice woven through the eye -->
+    <g stroke="#c9a227" stroke-width="2.2" fill="none" opacity="0.95">
+      <path d="M70 84 L94 100 L120 80 L146 100 L170 84"/>
+      <path d="M66 134 L94 122 L120 144 L146 122 L174 134"/>
+      <path d="M94 100 L94 122 M146 100 L146 122 M120 80 L120 144"/>
+      <path d="M70 84 L66 134 M170 84 L174 134"/>
+    </g>
+    <g stroke="#0f2c4e" stroke-width="2.2" fill="none" opacity="0.9">
+      <path d="M94 100 L146 122 M146 100 L94 122"/>
+      <path d="M85 112 L120 80 L155 112 L120 144 Z"/>
+    </g>
+
+    <!-- Eye outline -->
+    <path d="M52 112 C76 78 164 78 188 112 C164 146 76 146 52 112 Z"
+          fill="none" stroke="#0f2c4e" stroke-width="7"/>
+
+    <!-- Iris and pupil -->
+    <circle cx="120" cy="112" r="27" fill="#ffffff" stroke="#0f2c4e" stroke-width="5"/>
+    <circle cx="120" cy="112" r="26" fill="none" stroke="#c9a227" stroke-width="2" opacity="0.9"/>
+    <circle cx="120" cy="112" r="13.5" fill="#0f2c4e"/>
+    <circle cx="114" cy="106" r="4.2" fill="#ffffff" opacity="0.95"/>
+
+    <!-- Lattice nodes -->
+    <g fill="#0f2c4e">
+      <circle cx="120" cy="80" r="5"/>
+      <circle cx="70" cy="84" r="4.4"/>
+      <circle cx="170" cy="84" r="4.4"/>
+      <circle cx="120" cy="144" r="5"/>
+    </g>
+    <g fill="#c9a227">
+      <circle cx="94" cy="100" r="4"/>
+      <circle cx="146" cy="100" r="4"/>
+      <circle cx="94" cy="122" r="4"/>
+      <circle cx="146" cy="122" r="4"/>
+      <circle cx="66" cy="134" r="4"/>
+      <circle cx="174" cy="134" r="4"/>
+    </g>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="120" y="196" text-anchor="middle"
+        font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="44" font-weight="700"
+        letter-spacing="1.5" fill="#12345e">NETRA</text>
+
+  <text x="120" y="214" text-anchor="middle"
+        font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="600"
+        letter-spacing="0.4" fill="#12345e">AI-POWERED CRIMINAL</text>
+  <text x="120" y="229" text-anchor="middle"
+        font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="12.5" font-weight="600"
+        letter-spacing="0.4" fill="#12345e">NETWORK ANALYSIS</text>
+
+  <!-- Authority band -->
+  <path d="M46 240 H194" stroke="#0f2c4e" stroke-width="2.5" stroke-linecap="round"/>
+  <text x="120" y="256" text-anchor="middle"
+        font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="700"
+        letter-spacing="0.3" fill="#12345e">NCRB | MINISTRY OF</text>
+  <text x="120" y="269" text-anchor="middle"
+        font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="11" font-weight="700"
+        letter-spacing="0.3" fill="#12345e">HOME AFFAIRS</text>
+</svg>

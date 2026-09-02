@@ -40,9 +40,9 @@ export default function Login() {
           <span>English</span>
         </div>
       </div>
-      <header className="top-navbar" style={{ justifyContent: 'center', height: 80 }}>
+      <header className="top-navbar" style={{ justifyContent: 'center', height: 'auto', padding: '16px 24px' }}>
         <div className="top-navbar-brand" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <img src="/favicon.svg" alt="NETRA Logo" style={{ margin: '0 auto' }} />
+          <img src="/netra-logo.svg" alt="NETRA" style={{ margin: '0 auto', width: 52, height: 60 }} />
           <div className="top-navbar-brand-text" style={{ alignItems: 'center' }}>
             <strong style={{ fontSize: 18 }}>NETRA</strong>
             <span>Network Intelligence &amp; Explainable Threat Relationship Analyzer</span>

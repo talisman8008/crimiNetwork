@@ -47,7 +47,7 @@ export default function Layout() {
       </div>
       <header className="top-navbar">
         <div className="top-navbar-brand">
-          <img src="/favicon.svg" alt="NETRA Logo" />
+          <img src="/netra-logo.svg" alt="NETRA Logo" />
           <div className="top-navbar-brand-text">
             <strong>NETRA</strong>
             <span>Fragmented evidence. Clear intelligence.</span>
