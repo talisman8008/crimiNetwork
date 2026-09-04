@@ -10,7 +10,6 @@ export default function Login() {
   const location = useLocation();
   const [officerId, setOfficerId] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<UserRole>("investigator");
   const [error, setError] = useState("");
 
   async function handleSubmit(e: FormEvent) {
@@ -22,7 +21,9 @@ export default function Login() {
     setError("");
     try {
       await login(officerId.trim(), password);
-      const fallback = role === "supervisor" ? "/supervisor" : "/";
+      // Wait for React to re-render with the new role, or use local storage
+      const storedRole = localStorage.getItem('netra-auth-role')?.replace(/"/g, '') || "investigator";
+      const fallback = storedRole === "supervisor" ? "/supervisor" : "/";
       const redirectTo = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? fallback;
       navigate(redirectTo, { replace: true });
     } catch (err) {
@@ -86,27 +87,6 @@ export default function Login() {
                   autoComplete="current-password"
                   style={{ width: '100%', padding: '10px 12px', fontSize: 15, border: '1px solid var(--border-strong)', borderRadius: 'var(--radius-sm)' }}
                 />
-              </div>
-              <div className="login-field" style={{ marginBottom: 24 }}>
-                <label style={{ display: 'block', marginBottom: 8, fontSize: 13, fontWeight: 600, color: 'var(--navy-800)' }}>Sign in as</label>
-                <div className="role-picker">
-                  <button
-                    type="button"
-                    className={`role-picker-option ${role === "investigator" ? "active" : ""}`}
-                    onClick={() => setRole("investigator")}
-                  >
-                    <span className="role-picker-title">Investigator</span>
-                    <span className="role-picker-sub">Work assigned cases</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`role-picker-option ${role === "supervisor" ? "active" : ""}`}
-                    onClick={() => setRole("supervisor")}
-                  >
-                    <span className="role-picker-title">Supervisor</span>
-                    <span className="role-picker-sub">Assign and oversee</span>
-                  </button>
-                </div>
               </div>
               {error && <div className="login-error" style={{ marginBottom: 16, color: 'var(--risk-high)', fontSize: 13, fontWeight: 500 }}>{error}</div>}
               

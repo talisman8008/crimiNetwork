@@ -56,9 +56,26 @@ export default function Cases() {
     );
   }
 
+  if (cases.length === 0) {
+    return (
+      <>
+        <PageHeader eyebrow="Investigations" title="Cases" />
+        <div className="content">No active investigations available.</div>
+      </>
+    );
+  }
+
   return (
     <>
-      <PageHeader eyebrow="Investigations" title="Cases" />
+      <PageHeader 
+        eyebrow="Investigations" 
+        title="Cases" 
+        right={
+          <span style={{ fontSize: 12, color: "var(--text-tertiary)" }} title="Secondary metrics use synthetic data">
+            (Some data is synthetic)
+          </span>
+        }
+      />
       <div className="content">
         {bridgeEntities.length > 0 && (
           <div className="card" style={{ marginBottom: 20 }}>

@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useEffect, type ReactNode } from "react";
 import { useLocalStorage } from "./useLocalStorage";
 import { generateMockIp, seedAccessLog } from "../data/accessLogData";
 import type { AccessLogEntry, UserRole } from "../data/types";
@@ -97,6 +97,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }),
     [officerId, setOfficerId, role, setRole, accessLog, setAccessLog],
   );
+
+  // Listen for unauthorized events to trigger global logout
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      value.logout();
+    };
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+  }, [value]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

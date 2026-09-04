@@ -34,6 +34,7 @@ export default function Dashboard() {
   
   const [cases, setCases] = useState<Case[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     async function loadCases() {
@@ -41,6 +42,7 @@ export default function Dashboard() {
         const data = await fetchApi<Case[]>('/cases');
         setCases(data || []);
       } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load cases");
         console.error("Failed to load cases", err);
       } finally {
         setLoading(false);
@@ -65,14 +67,32 @@ export default function Dashboard() {
     );
   }
 
+  if (error) {
+    return (
+      <>
+        <PageHeader eyebrow={`Signed in as ${officerId ?? "officer"}`} title="Your Caseload" />
+        <div className="content" style={{ color: "var(--risk-high)" }}>Error loading cases: {error}</div>
+      </>
+    );
+  }
+
+  if (cases.length === 0) {
+    return (
+      <>
+        <PageHeader eyebrow={`Signed in as ${officerId ?? "officer"}`} title="Your Caseload" />
+        <div className="content">No cases assigned yet.</div>
+      </>
+    );
+  }
+
   return (
     <>
       <PageHeader
         eyebrow={`Signed in as ${officerId ?? "officer"}`}
         title="Your Caseload"
         right={
-          <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
-            {cases.length} investigations &middot; {crossCaseCount} entities span more than one
+          <span style={{ fontSize: 12, color: "var(--text-tertiary)" }} title="Metrics derived from synthetic baseline">
+            {cases.length} investigations &middot; {crossCaseCount} entities span more than one (Synthetic)
           </span>
         }
       />
@@ -104,7 +124,7 @@ export default function Dashboard() {
                   <div style={{ minWidth: 0 }}>
                     <div className="case-workspace-code mono">{c.code}</div>
                     <h2 className="case-workspace-title">{c.title}</h2>
-                    <div className="case-workspace-law">{c.sections.join(" · ")}</div>
+                    <div className="case-workspace-law">{c.sections?.join(" · ")}</div>
                   </div>
                   <span className="case-workspace-status">
                     <span className="status-dot" style={{ background: caseStatusColor(c.status) }} />
@@ -112,18 +132,18 @@ export default function Dashboard() {
                   </span>
                 </header>
 
-                <div className="case-workspace-figures">
+                <div className="case-workspace-figures" title="Data currently uses synthetic baseline">
                   <div>
                     <span className="cw-figure mono">{caseEntities.length}</span>
-                    <span className="cw-figure-label">Entities</span>
+                    <span className="cw-figure-label">Entities (Mock)</span>
                   </div>
                   <div>
                     <span className="cw-figure mono">{caseLinks.length}</span>
-                    <span className="cw-figure-label">Links</span>
+                    <span className="cw-figure-label">Links (Mock)</span>
                   </div>
                   <div>
                     <span className="cw-figure mono">{events.length}</span>
-                    <span className="cw-figure-label">Logged events</span>
+                    <span className="cw-figure-label">Logged (Mock)</span>
                   </div>
                   <div>
                     <span
@@ -132,7 +152,7 @@ export default function Dashboard() {
                     >
                       {caseAlerts.length}
                     </span>
-                    <span className="cw-figure-label">Open alerts</span>
+                    <span className="cw-figure-label">Open alerts (Mock)</span>
                   </div>
                 </div>
 
@@ -156,16 +176,16 @@ export default function Dashboard() {
                     </>
                   )}
                   <dt>Team</dt>
-                  <dd>{team.length} assigned</dd>
+                  <dd>{team.length} assigned (Mock)</dd>
                   {topThree.length > 0 && (
                     <>
-                      <dt>Central figures</dt>
+                      <dt>Central figures (Mock)</dt>
                       <dd>{topThree.map((t) => t.entity.label).join(", ")}</dd>
                     </>
                   )}
                   {nextHearing && (
                     <>
-                      <dt>Next hearing</dt>
+                      <dt>Next hearing (Mock)</dt>
                       <dd>
                         {nextHearing.hearingType} &middot; {formatDate(nextHearing.date)}
                       </dd>
