@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { corroborationFor, getEntityById, relationshipsFor } from "../data/mockData";
 import { getSocialProfile } from "../data/socialData";
-import type { Entity } from "../data/types";
+import type { Entity, Relationship } from "../data/types";
 import { calculateAge, EntityIcon, entitySubLabel, entityTypeLabel, formatDate, RiskBadge } from "./ui";
 import { IconX } from "./icons";
 import NetworkRoleCard from "./NetworkRoleCard";
@@ -11,6 +10,8 @@ import { useWatchlist } from "../lib/watchlist";
 
 interface EntityDetailPanelProps {
   entity: Entity;
+  allEntities: Entity[];
+  allRelationships: Relationship[];
   onClose: () => void;
   onSelectRelated: (id: string) => void;
 }
@@ -53,10 +54,11 @@ export function fieldsFor(e: Entity, redacted: boolean): { label: string; value:
   }
 }
 
-export default function EntityDetailPanel({ entity, onClose, onSelectRelated }: EntityDetailPanelProps) {
-  const connections = relationshipsFor(entity.id);
-  const corroborated = corroborationFor(entity.id);
-  const corroboratedIds = new Set(corroborated.map((c) => c.otherId));
+export default function EntityDetailPanel({ entity, allEntities, allRelationships, onClose, onSelectRelated }: EntityDetailPanelProps) {
+  const connections = allRelationships.filter((r) => r.source === entity.id || r.target === entity.id);
+  // Calculate corroboration from actual relationships: if multiple evidenceSources verify a link between A and B
+  const corroboratedIds = new Set<string>();
+  
   const { redacted } = useRedaction();
   const { isPinned, toggle } = useWatchlist();
   const pinned = isPinned(entity.id);
@@ -70,6 +72,14 @@ export default function EntityDetailPanel({ entity, onClose, onSelectRelated }: 
     const otherId = rel.source === entity.id ? rel.target : rel.source;
     if (!groupedConnections.has(otherId)) groupedConnections.set(otherId, []);
     groupedConnections.get(otherId)!.push(rel);
+  }
+
+  // Populate corroboratedIds
+  for (const [otherId, rels] of groupedConnections.entries()) {
+    const sources = new Set(rels.map((r) => r.evidenceSource));
+    if (sources.size > 1) {
+      corroboratedIds.add(otherId);
+    }
   }
 
   return (
@@ -137,7 +147,7 @@ export default function EntityDetailPanel({ entity, onClose, onSelectRelated }: 
         <div className="section-title">Connections ({groupedConnections.size})</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: entity.type === "person" ? 16 : 0 }}>
           {[...groupedConnections.entries()].map(([otherId, rels]) => {
-            const other = getEntityById(otherId);
+            const other = allEntities.find((e) => e.id === otherId);
             if (!other) return null;
             const sources = [...new Set(rels.map((r) => r.evidenceSource))];
             const isCorroborated = corroboratedIds.has(otherId);

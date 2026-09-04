@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import BackgroundEyes from "../components/BackgroundEyes";
-import type { UserRole } from "../data/types";
+
 
 export default function Login() {
   const { login } = useAuth();

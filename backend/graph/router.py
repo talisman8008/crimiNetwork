@@ -20,44 +20,73 @@ async def get_graph(
 ):
     type_filter = entity_types.split(",") if entity_types else None
     
-    cypher = """
-        MATCH (n {case_id: $case_id})
-        WHERE NOT n:Case
-        OPTIONAL MATCH (n)-[r]-(m {case_id: $case_id})
-        WHERE type(r) <> 'PART_OF'
-        AND ($min_conf = 0 OR coalesce(r.confidence, 1.0) >= $min_conf)
-        RETURN DISTINCT n.id as id, n.name as label,
-               labels(n)[0] as type,
-               coalesce(n.pagerank, 0) as centrality,
-               coalesce(n.community_id, 0) as community_id,
-               coalesce(n.anomaly_score, 0) as anomaly_score,
-               coalesce(n.confidence, 0.5) as confidence,
-               coalesce(n.degree, 0) as connection_count
-    """
+    if case_id == "all":
+        cypher = """
+            MATCH (n)
+            WHERE NOT n:Case
+            OPTIONAL MATCH (n)-[r]-(m)
+            WHERE type(r) <> 'PART_OF'
+            AND ($min_conf = 0 OR coalesce(r.confidence, 1.0) >= $min_conf)
+            RETURN DISTINCT n.id as id, n.name as label,
+                   labels(n)[0] as type,
+                   coalesce(n.pagerank, 0) as centrality,
+                   coalesce(n.community_id, 0) as community_id,
+                   coalesce(n.anomaly_score, 0) as anomaly_score,
+                   coalesce(n.confidence, 0.5) as confidence,
+                   coalesce(n.degree, 0) as connection_count
+        """
+        edge_cypher = """
+            MATCH (a)-[r]->(b)
+            WHERE type(r) <> 'PART_OF' AND NOT a:Case AND NOT b:Case
+            AND coalesce(r.confidence, 1.0) >= $min_conf
+            RETURN a.id + '_' + type(r) + '_' + b.id as id,
+                   a.id as source, b.id as target,
+                   type(r) as type,
+                   coalesce(r.confidence, 0.5) as confidence,
+                   coalesce(r.frequency, 1) as frequency,
+                   r.source_file as source_file,
+                   r.source_row as source_row,
+                   r.date as date
+        """
+        params = {"min_conf": min_confidence}
+    else:
+        cypher = """
+            MATCH (n {case_id: $case_id})
+            WHERE NOT n:Case
+            OPTIONAL MATCH (n)-[r]-(m {case_id: $case_id})
+            WHERE type(r) <> 'PART_OF'
+            AND ($min_conf = 0 OR coalesce(r.confidence, 1.0) >= $min_conf)
+            RETURN DISTINCT n.id as id, n.name as label,
+                   labels(n)[0] as type,
+                   coalesce(n.pagerank, 0) as centrality,
+                   coalesce(n.community_id, 0) as community_id,
+                   coalesce(n.anomaly_score, 0) as anomaly_score,
+                   coalesce(n.confidence, 0.5) as confidence,
+                   coalesce(n.degree, 0) as connection_count
+        """
+        edge_cypher = """
+            MATCH (a {case_id: $case_id})-[r]->(b {case_id: $case_id})
+            WHERE type(r) <> 'PART_OF'
+            AND coalesce(r.confidence, 1.0) >= $min_conf
+            RETURN a.id + '_' + type(r) + '_' + b.id as id,
+                   a.id as source, b.id as target,
+                   type(r) as type,
+                   coalesce(r.confidence, 0.5) as confidence,
+                   coalesce(r.frequency, 1) as frequency,
+                   r.source_file as source_file,
+                   r.source_row as source_row,
+                   r.date as date
+        """
+        params = {"case_id": case_id, "min_conf": min_confidence}
+
+    nodes = await run_query(cypher, params)
     
-    nodes = await run_query(cypher, {
-        "case_id": case_id,
-        "min_conf": min_confidence
-    })
-    
-    edge_cypher = """
-        MATCH (a {case_id: $case_id})-[r]->(b {case_id: $case_id})
-        WHERE type(r) <> 'PART_OF'
-        AND coalesce(r.confidence, 1.0) >= $min_conf
-        RETURN a.id + '_' + type(r) + '_' + b.id as id,
-               a.id as source, b.id as target,
-               type(r) as type,
-               coalesce(r.confidence, 0.5) as confidence,
-               coalesce(r.frequency, 1) as frequency,
-               r.source_file as source_file,
-               r.source_row as source_row,
-               r.date as date
-    """
-    
-    edges = await run_query(edge_cypher, {
-        "case_id": case_id,
-        "min_conf": min_confidence
-    })
+    # Format node types to match frontend lowercased variants
+    for n in nodes:
+        if n.get('type'):
+            n['type'] = n['type'].lower()
+
+    edges = await run_query(edge_cypher, params)
     
     # Format edges with evidence records
     formatted_edges = []
