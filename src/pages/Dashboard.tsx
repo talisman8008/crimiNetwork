@@ -1,9 +1,9 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 import {
   alerts,
-  cases,
   entitiesForCase,
   relationshipsForCase,
   topConnectedEntities,
@@ -17,6 +17,8 @@ import { describeWorkspace, useCaseWorkspaces } from "../lib/caseWorkspace";
 import { getEntityById } from "../data/mockData";
 import { useActiveCase } from "../lib/activeCase";
 import { useAuth } from "../lib/auth";
+import { fetchApi } from "../lib/api";
+import type { Case } from "../data/types";
 
 const severityColor: Record<string, string> = {
   high: "var(--risk-high)",
@@ -29,12 +31,38 @@ export default function Dashboard() {
   const { openCase } = useActiveCase();
   const { workspaces } = useCaseWorkspaces();
   const { officerId } = useAuth();
+  
+  const [cases, setCases] = useState<Case[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadCases() {
+      try {
+        const data = await fetchApi<Case[]>('/cases');
+        setCases(data || []);
+      } catch (err) {
+        console.error("Failed to load cases", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadCases();
+  }, []);
 
   const crossCaseCount = crossCaseEntities().length;
 
   function enterCase(caseId: string) {
     openCase(caseId);
     navigate("/workspace");
+  }
+
+  if (loading) {
+    return (
+      <>
+        <PageHeader eyebrow={`Signed in as ${officerId ?? "officer"}`} title="Your Caseload" />
+        <div className="content">Loading cases...</div>
+      </>
+    );
   }
 
   return (

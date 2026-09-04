@@ -13,17 +13,21 @@ export default function Login() {
   const [role, setRole] = useState<UserRole>("investigator");
   const [error, setError] = useState("");
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!officerId.trim() || !password.trim()) {
       setError("Enter your Officer ID and password to continue.");
       return;
     }
     setError("");
-    login(officerId.trim(), role);
-    const fallback = role === "supervisor" ? "/supervisor" : "/";
-    const redirectTo = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? fallback;
-    navigate(redirectTo, { replace: true });
+    try {
+      await login(officerId.trim(), password);
+      const fallback = role === "supervisor" ? "/supervisor" : "/";
+      const redirectTo = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? fallback;
+      navigate(redirectTo, { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed");
+    }
   }
 
   return (
