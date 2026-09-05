@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
-import GraphView3D from "../components/GraphView3D";
+import GraphView3D, { typeColor as typeSwatch } from "../components/GraphView3D";
 import EntityDetailPanel from "../components/EntityDetailPanel";
 import EvidenceBoard from "../components/EvidenceBoard";
 import {
@@ -24,13 +24,6 @@ import type { EntityType, RelationType, SourceType } from "../data/types";
 import { eventsForCase } from "../data/timelineData";
 import EventTimeline from "../components/EventTimeline";
 
-const typeSwatch: Record<EntityType, string> = {
-  person: "#2563eb",
-  organization: "#d97706",
-  location: "#0d9488",
-  vehicle: "#7c3aed",
-  phone: "#e11d48",
-};
 
 const allTypes: EntityType[] = ["person", "organization", "location", "vehicle", "phone"];
 const allRelationTypes: RelationType[] = ["associate", "family", "financial", "communication", "ownership", "frequents", "employment"];
