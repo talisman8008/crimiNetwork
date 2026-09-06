@@ -6,6 +6,7 @@ import {
   IconFolder,
   IconShield,
   IconX,
+  IconHelp,
 } from "./icons";
 import { useAuth } from "../lib/auth";
 import { useActiveCase } from "../lib/activeCase";
@@ -14,6 +15,9 @@ import CommandPalette from "./CommandPalette";
 import NotificationsPanel from "./NotificationsPanel";
 import CaseAssistantWidget from "./CaseAssistantWidget";
 import IconRail from "./IconRail";
+import FirstRunDialog from "./FirstRunDialog";
+import GuidedTour from "./GuidedTour";
+import { useOnboarding } from "../lib/onboarding";
 
 const baseNavItems = [
   { to: "/", label: "Dashboard", icon: IconGrid, end: true },
@@ -27,6 +31,7 @@ const supervisorNavItem = { to: "/supervisor", label: "Oversight", icon: IconShi
 export default function Layout() {
   const { logout, role } = useAuth();
   const { activeCaseId, closeCase } = useActiveCase();
+  const { openIntro } = useOnboarding();
   const activeCase = activeCaseId ? getCaseById(activeCaseId) : undefined;
   const navigate = useNavigate();
 
@@ -81,6 +86,14 @@ export default function Layout() {
             </span>
           )}
           <NotificationsPanel />
+          <button
+            className="navbar-help"
+            onClick={openIntro}
+            aria-label="How this console works"
+            title="How this console works"
+          >
+            <IconHelp />
+          </button>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", lineHeight: 1.25, borderRight: "1px solid rgba(255,255,255,0.2)", paddingRight: 16 }}>
             <span style={{ fontSize: 13, color: "var(--text-on-dark-dim)", fontWeight: 500 }}>{formalOfficerId}</span>
             <span style={{ fontSize: 11, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
@@ -111,6 +124,8 @@ export default function Layout() {
       </div>
       <CommandPalette />
       <CaseAssistantWidget />
+      <FirstRunDialog />
+      <GuidedTour />
     </div>
   );
 }

@@ -318,7 +318,7 @@ export default function NetworkGraph() {
               <input type="date" className="select" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
             </label>
           </div>
-          <div className="filter-bar">
+          <div className="filter-bar analysis-tools">
             {allTypes.map((t) => (
               <button key={t} className={`chip-toggle ${activeTypes.has(t) ? "active" : ""}`} onClick={() => toggleType(t)}>
                 <span className="swatch" style={{ background: typeSwatch[t] }} />
