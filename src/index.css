@@ -4193,3 +4193,131 @@ a.rank-row:hover .rank-name {
     grid-column: span 1;
   }
 }
+
+/* Reference-weight dashboard: larger figures, roomier cards, a real map card. */
+
+.topbar-heading h1 {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.stat-tile {
+  padding: 18px 20px;
+}
+
+.stat-tile-value {
+  font-size: 27px;
+  letter-spacing: -0.01em;
+}
+
+.stat-grid {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.chart-grid {
+  grid-template-columns: 1fr 1.35fr;
+  gap: 16px;
+}
+
+.chart-card {
+  padding: 20px 22px;
+}
+
+.chart-card-title {
+  margin-bottom: 18px;
+}
+
+.dash-filters select {
+  min-width: 200px;
+  padding: 10px 13px;
+  border-radius: var(--radius-md);
+}
+
+@media (max-width: 1180px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .chart-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Severity heatmap --------------------------------------------------------- */
+
+.heatmap-wrap {
+  position: relative;
+  height: 232px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--surface-sunken);
+}
+
+.heatmap-wrap .leaflet-container {
+  font: inherit;
+}
+
+.heatmap-zoom {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.heatmap-zoom button,
+.heatmap-expand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+
+.heatmap-zoom button:hover,
+.heatmap-expand:hover {
+  color: var(--accent-strong);
+  border-color: var(--border-strong);
+}
+
+.heatmap-zoom svg,
+.heatmap-expand svg {
+  width: 14px;
+  height: 14px;
+}
+
+.heatmap-expand {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 500;
+}
+
+/* Auto margins on a column flex child override stretch, which was collapsing the page to
+   max-content width and leaving a wide gutter on the right. */
+.main-col {
+  width: 100%;
+}
+
+/* The grid is now an explicit narrow/wide pair, so the wide cards take the second column
+   rather than spanning both and pushing themselves onto their own row. */
+.chart-card-wide {
+  grid-column: auto;
+}
+
+@media (max-width: 1180px) {
+  .chart-card-wide {
+    grid-column: auto;
+  }
+}

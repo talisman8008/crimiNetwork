@@ -252,3 +252,14 @@ export function IconExternalLink({ className, style }: IconProps) {
   );
 }
 
+
+export function IconMaximize({ className, style }: IconProps) {
+  return (
+    <svg {...base} className={className} style={style}>
+      <path d="M14 4h6v6" />
+      <path d="M10 20H4v-6" />
+      <path d="M20 4l-7.5 7.5" />
+      <path d="M4 20l7.5-7.5" />
+    </svg>
+  );
+}

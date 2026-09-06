@@ -18,6 +18,7 @@ import { officersForCase } from "../data/officersData";
 import { eventsForCase } from "../data/timelineData";
 import { caseStatusColor, entityTypeLabel, formatDate, SeverityBadge } from "../components/ui";
 import { Bars, Donut, DonutLegend } from "../components/Charts";
+import SeverityHeatmap from "../components/SeverityHeatmap";
 import type { EntityType } from "../data/types";
 import { describeWorkspace, useCaseWorkspaces } from "../lib/caseWorkspace";
 import { getEntityById } from "../data/mockData";
@@ -34,7 +35,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { openCase } = useActiveCase();
   const { workspaces } = useCaseWorkspaces();
-  const { officerId } = useAuth();
+  useAuth();
 
   const crossCaseCount = crossCaseEntities().length;
 
@@ -108,7 +109,6 @@ export default function Dashboard() {
   return (
     <>
       <PageHeader
-        eyebrow={`Signed in as ${officerId ?? "officer"}`}
         title="Dashboard"
         right={
           <div className="dash-filters">
@@ -155,6 +155,11 @@ export default function Dashboard() {
               <Donut slices={alertStatusSlices} total={alertTotal} />
               <DonutLegend slices={alertStatusSlices} showPercent />
             </div>
+          </section>
+
+          <section className="panel chart-card chart-card-wide">
+            <h2 className="chart-card-title">Severity heatmap</h2>
+            <SeverityHeatmap />
           </section>
 
           <section className="panel chart-card">

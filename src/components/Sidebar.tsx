@@ -31,9 +31,9 @@ const groups: {
   {
     label: "Analysis",
     items: [
-      { to: "/", label: "Dashboard", icon: IconGrid, end: true },
       { to: "/workspace", label: "Workspace", icon: IconFolder },
       { to: "/network", label: "Network", icon: IconNetwork },
+      { to: "/", label: "Dashboard", icon: IconGrid, end: true },
       { to: "/entities", label: "Database", icon: IconDatabase },
     ],
   },
