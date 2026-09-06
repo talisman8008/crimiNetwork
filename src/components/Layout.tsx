@@ -15,7 +15,6 @@ import CommandPalette from "./CommandPalette";
 import NotificationsPanel from "./NotificationsPanel";
 import CaseAssistantWidget from "./CaseAssistantWidget";
 import IconRail from "./IconRail";
-import FirstRunDialog from "./FirstRunDialog";
 import GuidedTour from "./GuidedTour";
 import { useOnboarding } from "../lib/onboarding";
 
@@ -31,7 +30,7 @@ const supervisorNavItem = { to: "/supervisor", label: "Oversight", icon: IconShi
 export default function Layout() {
   const { logout, role } = useAuth();
   const { activeCaseId, closeCase } = useActiveCase();
-  const { openIntro } = useOnboarding();
+  const { startTour } = useOnboarding();
   const activeCase = activeCaseId ? getCaseById(activeCaseId) : undefined;
   const navigate = useNavigate();
 
@@ -88,9 +87,9 @@ export default function Layout() {
           <NotificationsPanel />
           <button
             className="navbar-help"
-            onClick={openIntro}
-            aria-label="How this console works"
-            title="How this console works"
+            onClick={startTour}
+            aria-label="Show me around this console"
+            title="Show me around this console"
           >
             <IconHelp />
           </button>
@@ -124,7 +123,6 @@ export default function Layout() {
       </div>
       <CommandPalette />
       <CaseAssistantWidget />
-      <FirstRunDialog />
       <GuidedTour />
     </div>
   );
