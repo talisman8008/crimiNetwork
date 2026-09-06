@@ -16,15 +16,9 @@ interface TourStep {
 const steps: TourStep[] = [
   {
     route: "/",
-    selector: ".top-navbar-nav",
-    title: "The views you will live in",
-    body: "Dashboard is your caseload. Workspace is the case you currently have open. Network is the graph, and Database is every entity on record.",
-  },
-  {
-    route: "/",
-    selector: ".icon-rail",
-    title: "Everything else is on this rail",
-    body: "Cases, court dates, the location map, CCTV, alerts, data sources and the access log. Collapse it once the icons are familiar.",
+    selector: ".sidebar-nav",
+    title: "Everything lives on this rail",
+    body: "Analysis is where you work: the dashboard, the case you have open, the graph and the full entity database. Below it sit casework, the evidence sources behind every link, and the oversight trail.",
   },
   {
     route: "/",

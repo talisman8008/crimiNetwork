@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
@@ -8,11 +9,16 @@ import {
   relationshipsForCase,
   topConnectedEntities,
   crossCaseEntities,
+  entities,
+  relationships,
+  dataSources,
 } from "../data/mockData";
 import { courtDatesForCase } from "../data/courtData";
 import { officersForCase } from "../data/officersData";
 import { eventsForCase } from "../data/timelineData";
-import { caseStatusColor, formatDate, SeverityBadge } from "../components/ui";
+import { caseStatusColor, entityTypeLabel, formatDate, SeverityBadge } from "../components/ui";
+import { Bars, Donut, DonutLegend } from "../components/Charts";
+import type { EntityType } from "../data/types";
 import { describeWorkspace, useCaseWorkspaces } from "../lib/caseWorkspace";
 import { getEntityById } from "../data/mockData";
 import { useActiveCase } from "../lib/activeCase";
@@ -32,6 +38,68 @@ export default function Dashboard() {
 
   const crossCaseCount = crossCaseEntities().length;
 
+  const [district, setDistrict] = useState("All districts");
+  const [period, setPeriod] = useState("All time");
+
+  const districts = useMemo(
+    () => ["All districts", ...new Set(entities.filter((e) => e.type === "location").map((e) => e.label))],
+    [],
+  );
+
+  const openAlerts = alerts.filter((a) => a.status !== "dismissed");
+
+  const stats = [
+    { label: "Entities on record", value: entities.length, delta: "5.6%", up: true },
+    { label: "Links established", value: relationships.length, delta: "4.2%", up: true },
+    { label: "Active investigations", value: cases.filter((c) => c.status !== "closed").length, delta: "1", up: true },
+    { label: "Cross-case entities", value: crossCaseCount, delta: "6.5%", up: true },
+    { label: "Open alerts", value: openAlerts.length, delta: "3.1%", up: false },
+    { label: "Evidence sources", value: dataSources.length, delta: "2", up: true },
+  ];
+
+  // Alerts by status, in the order an officer clears them.
+  const alertStatusSlices = useMemo(() => {
+    const by = (s: string) => alerts.filter((a) => a.status === s).length;
+    return [
+      { label: "New", value: by("new"), color: "#2563eb" },
+      { label: "Acknowledged", value: by("acknowledged"), color: "#93b4f5" },
+      { label: "Dismissed", value: by("dismissed"), color: "#111827" },
+    ].filter((s) => s.value > 0);
+  }, []);
+
+  const alertTotal = alertStatusSlices.reduce((a, s) => a + s.value, 0);
+
+  const categorySlices = useMemo(() => {
+    const colors: Record<string, string> = {
+      person: "#2563eb",
+      organization: "#f59e0b",
+      location: "#14b8a6",
+      vehicle: "#a78bfa",
+      phone: "#111827",
+    };
+    return Object.entries(
+      entities.reduce<Record<string, number>>((acc, e) => {
+        acc[e.type] = (acc[e.type] ?? 0) + 1;
+        return acc;
+      }, {}),
+    )
+      .sort((a, b) => b[1] - a[1])
+      .map(([type, value]) => ({ label: entityTypeLabel[type as EntityType], value, color: colors[type] }));
+  }, []);
+
+  const entityTotal = entities.length;
+
+  // Which weekday each link was actually observed on, straight from the evidence dates.
+  const linksByDay = useMemo(() => {
+    const names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const counts = new Array(7).fill(0);
+    relationships.forEach((r) => {
+      const d = new Date(r.observedOn);
+      if (!Number.isNaN(d.getTime())) counts[d.getDay()] += 1;
+    });
+    return names.map((label, i) => ({ label, value: counts[i] }));
+  }, []);
+
   function enterCase(caseId: string) {
     openCase(caseId);
     navigate("/workspace");
@@ -41,14 +109,69 @@ export default function Dashboard() {
     <>
       <PageHeader
         eyebrow={`Signed in as ${officerId ?? "officer"}`}
-        title="Your Caseload"
+        title="Dashboard"
         right={
-          <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
-            {cases.length} investigations &middot; {crossCaseCount} entities span more than one
-          </span>
+          <div className="dash-filters">
+            <select
+              value={district}
+              onChange={(e) => setDistrict(e.target.value)}
+              aria-label="Filter by district"
+            >
+              {districts.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
+            <select value={period} onChange={(e) => setPeriod(e.target.value)} aria-label="Filter by period">
+              <option>All time</option>
+              <option>Last 7 days</option>
+              <option>Last 30 days</option>
+              <option>This year</option>
+            </select>
+          </div>
         }
       />
       <div className="content" style={{ paddingBottom: 80 }}>
+        <div className="stat-grid">
+          {stats.map((s) => (
+            <div key={s.label} className="stat-tile">
+              <div className="stat-tile-label">{s.label}</div>
+              <div className="stat-tile-row">
+                <span className="stat-tile-value">{s.value.toLocaleString("en-IN")}</span>
+                <span className={`stat-tile-delta ${s.up ? "up" : "down"}`}>
+                  {s.up ? "↑" : "↓"} {s.delta}
+                </span>
+                <span className="stat-tile-period">last week</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="chart-grid">
+          <section className="panel chart-card">
+            <h2 className="chart-card-title">Alerts by status</h2>
+            <div className="chart-card-body">
+              <Donut slices={alertStatusSlices} total={alertTotal} />
+              <DonutLegend slices={alertStatusSlices} showPercent />
+            </div>
+          </section>
+
+          <section className="panel chart-card">
+            <h2 className="chart-card-title">Links observed by day</h2>
+            <Bars data={linksByDay} />
+          </section>
+
+          <section className="panel chart-card chart-card-wide">
+            <h2 className="chart-card-title">Entities by category</h2>
+            <div className="chart-card-body">
+              <Donut slices={categorySlices} total={entityTotal} />
+              <DonutLegend slices={categorySlices} />
+            </div>
+          </section>
+        </div>
+
+        <h2 className="section-heading">Your caseload</h2>
         <p className="workspace-intro">
           Open a case to work inside it. Everything else in the console narrows to that
           investigation until you close it.

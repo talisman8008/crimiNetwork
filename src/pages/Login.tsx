@@ -32,22 +32,14 @@ export default function Login() {
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', flex: 1 }}>
 
       {/* Formal Header */}
-      <div className="sarkari-top-strip">
-        <div className="tricolor" />
-        <div>Government of India | Ministry of Home Affairs</div>
-        <div style={{ display: "flex", gap: 16 }}>
-          <span>A- A A+</span>
-          <span>English</span>
-        </div>
+      <div className="login-topline">
+        <span className="tricolor-dot" aria-hidden="true" />
+        Government of India &middot; Ministry of Home Affairs &middot; National Crime Records Bureau
       </div>
-      <header className="top-navbar" style={{ justifyContent: 'center', height: 'auto', padding: '16px 24px' }}>
-        <div className="top-navbar-brand" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <img src="/netra-logo.svg" alt="NETRA" style={{ margin: '0 auto', width: 52, height: 60 }} />
-          <div className="top-navbar-brand-text" style={{ alignItems: 'center' }}>
-            <strong style={{ fontSize: 18 }}>NETRA</strong>
-            <span>Network Intelligence &amp; Explainable Threat Relationship Analyzer</span>
-          </div>
-        </div>
+      <header className="login-brand">
+        <img src="/netra-logo.svg" alt="NETRA" />
+        <strong>NETRA</strong>
+        <span>Network Intelligence &amp; Explainable Threat Relationship Analyzer</span>
       </header>
 
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
