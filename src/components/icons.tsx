@@ -88,6 +88,24 @@ export function IconChevronRight({ className, style }: IconProps) {
   );
 }
 
+export function IconChevronLeft({ className, style }: IconProps) {
+  return (
+    <svg {...base} className={className} style={style}>
+      <path d="M15 5.5 8.5 12 15 18.5" />
+    </svg>
+  );
+}
+
+export function IconHelp({ className, style }: IconProps) {
+  return (
+    <svg {...base} className={className} style={style}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M9.6 9.4a2.5 2.5 0 1 1 3.2 2.7c-.5.2-.8.7-.8 1.3v.5" />
+      <path d="M12 17.1h.01" />
+    </svg>
+  );
+}
+
 export function IconAlertTriangle({ className, style }: IconProps) {
   return (
     <svg {...base} className={className} style={style}>
@@ -234,3 +252,14 @@ export function IconExternalLink({ className, style }: IconProps) {
   );
 }
 
+
+export function IconMaximize({ className, style }: IconProps) {
+  return (
+    <svg {...base} className={className} style={style}>
+      <path d="M14 4h6v6" />
+      <path d="M10 20H4v-6" />
+      <path d="M20 4l-7.5 7.5" />
+      <path d="M4 20l7.5-7.5" />
+    </svg>
+  );
+}

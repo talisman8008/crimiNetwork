@@ -4,7 +4,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import PageHeader from "../components/PageHeader";
 import EntityDetailPanel from "../components/EntityDetailPanel";
-import { cases, entities, getEntityById, relationshipsFor, relationships } from "../data/mockData";
+import { cases, entities, getEntityById, relationshipsFor } from "../data/mockData";
 import type { EntityType, RiskLevel } from "../data/types";
 import { IconMinus, IconPlus, IconTarget } from "../components/icons";
 import { eventDates, eventsWithLocation, eventTypeLabel } from "../data/timelineData";
@@ -279,7 +279,7 @@ export default function MapView() {
         </div>
         <div style={{ width: 340, borderLeft: "1px solid var(--border)", padding: 14, flexShrink: 0, overflow: "hidden" }}>
           {selectedEntity ? (
-            <EntityDetailPanel entity={selectedEntity} allEntities={entities} allRelationships={relationships} onClose={() => setSelectedId(null)} onSelectRelated={setSelectedId} />
+            <EntityDetailPanel entity={selectedEntity} onClose={() => setSelectedId(null)} onSelectRelated={setSelectedId} />
           ) : (
             activeDay ? (
             <div className="card" style={{ height: "100%", display: "flex", flexDirection: "column" }}>

@@ -7,16 +7,23 @@ import { IconMinus, IconPlus, IconTarget } from "./icons";
  *
  * There is no 3D library here. Nodes hold real x/y/z positions; each frame they are rotated by
  * the current yaw/pitch, projected through a pinhole camera, sorted back-to-front and painted.
- * Depth is carried by size, by a radial gradient that shades each node like a lit sphere, and by
- * fog that washes distant nodes and edges toward the background colour.
+ * Depth is carried by size and by fog that washes distant nodes and edges toward the background
+ * colour, with only a soft top-lit gradient on each node. Deliberately restrained: gloss,
+ * specular highlights and drop shadows read as decoration rather than as data.
  */
 
-const typeColor: Record<EntityType, string> = {
-  person: "#2563eb",
-  organization: "#d97706",
-  location: "#0d9488",
-  vehicle: "#7c3aed",
-  phone: "#e11d48",
+/** Matches --font-sans, so labels sit in the same voice as the rest of the portal. */
+const LABEL_FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, Helvetica, sans-serif';
+
+/** Muted and navy-anchored, matching the rest of the portal. Entity type is a quiet hue shift
+ *  rather than a primary colour: saturation is held back for risk and selection, which are what
+ *  an officer is actually scanning the graph for. */
+export const typeColor: Record<EntityType, string> = {
+  person: "#3d5a80",
+  organization: "#7c6a45",
+  location: "#3f6f66",
+  vehicle: "#5b5476",
+  phone: "#7a4f58",
 };
 
 const riskRing: Record<string, string> = {
@@ -71,7 +78,7 @@ function layout(entities: Entity[], relationships: Relationship[]): Node3D[] {
       x: Math.cos(theta) * r,
       y: y * spread * pull * 0.82,
       z: Math.sin(theta) * r,
-      radius: 7 + Math.min(d, 8) * 1.6,
+      radius: 6 + Math.min(d, 8) * 1.35,
       sx: 0,
       sy: 0,
       sz: 0,
@@ -226,8 +233,8 @@ export default function GraphView3D({
   // camera: yaw/pitch in radians, zoom multiplier
   const camera = useRef({ yaw: 0.5, pitch: -0.25, zoom: 1 });
   const drag = useRef<{ x: number; y: number; moved: boolean } | null>(null);
-  const spin = useRef(true);
-  const [autoSpin, setAutoSpin] = useState(true);
+  const spin = useRef(false);
+  const [autoSpin, setAutoSpin] = useState(false);
 
   // props the draw loop reads without re-subscribing every render
   const live = useRef({ selectedId, highlightEdgeIds, hiddenEdgeIds, dimmedNodeIds, nodeColorOverride, relationships });
@@ -381,43 +388,36 @@ export default function GraphView3D({
 
       ctx.globalAlpha = dimmed ? 0.16 : sel && !isSel && !isNeighbour ? 0.5 : 1;
 
-      // lit sphere: highlight up-left, body colour, darker rim
-      const lit = mixToward(base, BG, fog * 0.75);
-      const grad = ctx.createRadialGradient(nd.sx - r * 0.35, nd.sy - r * 0.4, r * 0.1, nd.sx, nd.sy, r);
-      grad.addColorStop(0, mixToward(lit, "#ffffff", 0.55));
-      grad.addColorStop(0.45, lit);
-      grad.addColorStop(1, shade(base, 0.62));
-
-      // contact shadow grounds the sphere
-      ctx.beginPath();
-      ctx.fillStyle = "rgba(15, 23, 42, 0.13)";
-      ctx.ellipse(nd.sx + r * 0.1, nd.sy + r * 0.25, r * 0.95, r * 0.95, 0, 0, Math.PI * 2);
-      ctx.fill();
+      // Dimensional, not glossy. A soft top-lit gradient and a darker rim read as solid without
+      // the specular dot and drop shadow that turn nodes into plastic marbles; the depth cues
+      // that actually matter here are size and fog.
+      const lit = mixToward(base, BG, fog * 0.62);
+      const grad = ctx.createLinearGradient(nd.sx, nd.sy - r, nd.sx, nd.sy + r);
+      grad.addColorStop(0, mixToward(lit, "#ffffff", 0.16));
+      grad.addColorStop(1, shade(lit, 0.87));
 
       ctx.beginPath();
       ctx.fillStyle = grad;
       ctx.arc(nd.sx, nd.sy, r, 0, Math.PI * 2);
       ctx.fill();
 
-      // risk ring, thinner as it recedes
-      if (!dimmed) {
-        ctx.beginPath();
-        ctx.strokeStyle = mixToward(riskRing[nd.entity.riskLevel] ?? "#cbd5e1", BG, fog * 0.6);
-        ctx.lineWidth = Math.max(0.6, (nd.entity.riskLevel === "high" ? 2.4 : 1.6) * nd.scale);
-        ctx.arc(nd.sx, nd.sy, r + ctx.lineWidth * 0.6, 0, Math.PI * 2);
-        ctx.stroke();
-      }
+      // Risk rides on the node's own border rather than a ring floating outside it, and only at
+      // the top level. Most entities in a live case carry some flag, so ringing anything above
+      // "low" turned the graph into a field of targets and told an officer nothing.
+      const highRisk = nd.entity.riskLevel === "high" && !dimmed;
+      ctx.beginPath();
+      ctx.strokeStyle = highRisk
+        ? mixToward(riskRing.high, BG, fog * 0.5)
+        : mixToward(shade(base, 0.68), BG, fog * 0.55);
+      ctx.lineWidth = Math.max(0.6, (highRisk ? 1.8 : 0.9) * nd.scale);
+      ctx.arc(nd.sx, nd.sy, r, 0, Math.PI * 2);
+      ctx.stroke();
 
       if (isSel) {
         ctx.beginPath();
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 3;
-        ctx.arc(nd.sx, nd.sy, r + 6, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.strokeStyle = "#1d4ed8";
-        ctx.lineWidth = 1.6;
-        ctx.arc(nd.sx, nd.sy, r + 8.5, 0, Math.PI * 2);
+        ctx.strokeStyle = "#0f2c4e";
+        ctx.lineWidth = 1.5;
+        ctx.arc(nd.sx, nd.sy, r + 5, 0, Math.PI * 2);
         ctx.stroke();
       }
 
@@ -425,7 +425,7 @@ export default function GraphView3D({
       const worthLabel = isSel || isNeighbour || nd.radius >= 12;
       if (worthLabel && !dimmed && nd.scale > 0.5) {
         ctx.globalAlpha = Math.min(1, Math.max(0.25, 1 - fog));
-        ctx.font = `${isSel ? 600 : 400} ${Math.max(9, Math.min(13, 12 * nd.scale))}px "Segoe UI", Arial, sans-serif`;
+        ctx.font = `${isSel ? 600 : 400} ${Math.max(9, Math.min(12, 11 * nd.scale))}px ${LABEL_FONT}`;
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
         const label = nd.entity.label;

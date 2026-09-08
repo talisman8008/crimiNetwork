@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { useLocalStorage } from "./useLocalStorage";
 import { generateMockIp, seedAccessLog } from "../data/accessLogData";
 import type { AccessLogEntry, UserRole } from "../data/types";
@@ -8,7 +8,7 @@ interface AuthContextValue {
   officerId: string | null;
   role: UserRole;
   accessLog: AccessLogEntry[];
-  login: (officerId: string, password?: string) => Promise<void>;
+  login: (officerId: string, role: UserRole) => void;
   logout: () => void;
 }
 
@@ -29,54 +29,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       officerId,
       role,
       accessLog,
-      login: async (id: string, password?: string) => {
-        // Use standard URLSearchParams for OAuth2PasswordRequestForm
-        const formData = new URLSearchParams();
-        formData.append("username", id);
-        formData.append("password", password || "password123");
-        
-        try {
-          const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            body: formData,
-          });
-          
-          if (!response.ok) {
-            throw new Error('Invalid credentials');
-          }
-          
-          const data = await response.json();
-          // Store token
-          localStorage.setItem('netra-auth-token', data.access_token);
-          
-          // Decode JWT payload (simple base64 decode for frontend)
-          const base64Url = data.access_token.split('.')[1];
-          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-          const payload = JSON.parse(window.atob(base64));
-          
-          const nextRole = payload.role?.toLowerCase() || 'investigator';
-          
-          setOfficerId(id);
-          setRole(nextRole);
-          setAccessLog((prev) => [
-            {
-              id: `al-${Date.now()}`,
-              officerId: id,
-              action: "login",
-              status: "success",
-              ipAddress: generateMockIp(id),
-              location: "Central Crime Station, Sector 14 (Internal)",
-              device: "This browser session",
-              at: now(),
-            },
-            ...prev,
-          ]);
-        } catch (err) {
-          throw err;
-        }
+      login: (id: string, nextRole: UserRole) => {
+        setOfficerId(id);
+        setRole(nextRole);
+        setAccessLog((prev) => [
+          {
+            id: `al-${Date.now()}`,
+            officerId: id,
+            action: "login",
+            status: "success",
+            ipAddress: generateMockIp(id),
+            location: "Central Crime Station, Sector 14 (Internal)",
+            device: "This browser session",
+            at: now(),
+          },
+          ...prev,
+        ]);
       },
       logout: () => {
-        localStorage.removeItem('netra-auth-token');
         if (officerId) {
           setAccessLog((prev) => [
             {
@@ -97,15 +67,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }),
     [officerId, setOfficerId, role, setRole, accessLog, setAccessLog],
   );
-
-  // Listen for unauthorized events to trigger global logout
-  useEffect(() => {
-    const handleUnauthorized = () => {
-      value.logout();
-    };
-    window.addEventListener('auth:unauthorized', handleUnauthorized);
-    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
-  }, [value]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -21,6 +21,7 @@ import { AuthProvider } from "./lib/auth";
 import { RedactionProvider } from "./lib/redaction";
 import { WatchlistProvider } from "./lib/watchlist";
 import { ActiveCaseProvider } from "./lib/activeCase";
+import { OnboardingProvider } from "./lib/onboarding";
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
       <RedactionProvider>
         <WatchlistProvider>
           <ActiveCaseProvider>
+          <OnboardingProvider>
           <BrowserRouter>
             <Routes>
               <Route path="/login" element={<Login />} />
@@ -52,6 +54,7 @@ export default function App() {
               </Route>
             </Routes>
           </BrowserRouter>
+          </OnboardingProvider>
           </ActiveCaseProvider>
         </WatchlistProvider>
       </RedactionProvider>

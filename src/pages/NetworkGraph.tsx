@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
-import GraphView3D from "../components/GraphView3D";
+import GraphView3D, { typeColor as typeSwatch } from "../components/GraphView3D";
 import EntityDetailPanel from "../components/EntityDetailPanel";
 import EvidenceBoard from "../components/EvidenceBoard";
 import {
   cases,
+  entities,
+  entitiesForCase,
+  getEntityById,
   networkRoleFor,
+  relationships,
+  relationshipsFor,
 } from "../data/mockData";
 import { cctvFootage } from "../data/cctvData";
 import { EntityIcon, entityTypeLabel, formatDate, RiskBadge } from "../components/ui";
@@ -15,18 +20,10 @@ import { findShortestPath } from "../lib/graphAlgo";
 import { useCaseWorkspaces } from "../lib/caseWorkspace";
 import { communityColor, detectCommunities } from "../lib/communities";
 import { useActiveCase } from "../lib/activeCase";
-import type { Entity, EntityType, Relationship, RelationType, SourceType } from "../data/types";
+import type { EntityType, RelationType, SourceType } from "../data/types";
 import { eventsForCase } from "../data/timelineData";
 import EventTimeline from "../components/EventTimeline";
-import { fetchApi } from "../lib/api";
 
-const typeSwatch: Record<EntityType, string> = {
-  person: "#2563eb",
-  organization: "#d97706",
-  location: "#0d9488",
-  vehicle: "#7c3aed",
-  phone: "#e11d48",
-};
 
 const allTypes: EntityType[] = ["person", "organization", "location", "vehicle", "phone"];
 const allRelationTypes: RelationType[] = ["associate", "family", "financial", "communication", "ownership", "frequents", "employment"];
@@ -45,50 +42,6 @@ export default function NetworkGraph() {
   const { activeCaseId } = useActiveCase();
   const [tab, setTab] = useState<"graph" | "board">("graph");
   const [caseId, setCaseId] = useState<string>(searchParams.get("case") ?? activeCaseId ?? "all");
-  
-  // API State
-  const [entities, setEntities] = useState<Entity[]>([]);
-  const [relationships, setRelationships] = useState<Relationship[]>([]);
-
-
-  useEffect(() => {
-    async function loadGraph() {
-      try {
-        const data = await fetchApi<{ nodes: any[]; edges: any[] }>(`/cases/${caseId}/graph`);
-        
-        // Map backend node payload to frontend Entity
-        const mappedEntities = data.nodes.map(n => ({
-          id: n.id,
-          label: n.label,
-          type: (n.type as EntityType) || "person",
-          riskLevel: (n.anomaly_score > 0.8 ? "high" : n.anomaly_score > 0.4 ? "medium" : "low") as "high" | "medium" | "low",
-          caseIds: caseId === "all" ? [] : [caseId],
-          tags: [],
-          status: "active",
-        })) as unknown as Entity[];
-        
-        // Map backend edge payload to frontend Relationship
-        const mappedRelationships: Relationship[] = data.edges.map(e => ({
-          id: e.id,
-          source: e.source,
-          target: e.target,
-          type: (e.type?.toLowerCase() || "associate") as RelationType,
-          observedOn: e.records?.[0]?.date || "2026-01-01",
-          evidenceSource: (e.records?.[0]?.source_file || "Network Analysis") as SourceType,
-          confidence: e.confidence,
-          weight: e.frequency || 1,
-          description: e.records?.[0]?.detail || "",
-        }));
-        
-        setEntities(mappedEntities);
-        setRelationships(mappedRelationships);
-      } catch (err) {
-        console.error("Failed to load graph", err);
-      }
-    }
-    loadGraph();
-  }, [caseId]);
-
   const [activeTypes, setActiveTypes] = useState<Set<EntityType>>(new Set(allTypes));
   const [relationType, setRelationType] = useState<RelationType | "all">("all");
   const [sourceFilter, setSourceFilter] = useState<SourceType | "all">("all");
@@ -248,7 +201,7 @@ export default function NetworkGraph() {
       degree.set(r.target, (degree.get(r.target) ?? 0) + 1);
     });
     return [...degree.entries()]
-      .map(([id, count]) => ({ entity: entities.find((e) => e.id === id), count }))
+      .map(([id, count]) => ({ entity: getEntityById(id), count }))
       .filter((x): x is { entity: NonNullable<typeof x.entity>; count: number } => !!x.entity)
       .sort((a, b) => b.count - a.count)
       .slice(0, 6);
@@ -278,7 +231,7 @@ export default function NetworkGraph() {
     setSelectedId(null);
   }
 
-  const selectedEntity = selectedId ? entities.find((e) => e.id === selectedId) : undefined;
+  const selectedEntity = selectedId ? getEntityById(selectedId) : undefined;
   const panelMode: "entity" | "pathfinder" | "communities" | "legend" = selectedEntity
     ? "entity"
     : pathfinderOpen
@@ -291,20 +244,20 @@ export default function NetworkGraph() {
   const spotlightConnections = useMemo(() => {
     if (!selectedEntity) return [];
     const otherIds = [
-      ...new Set(relationships.filter((r) => r.source === selectedEntity.id || r.target === selectedEntity.id).map((r) => (r.source === selectedEntity.id ? r.target : r.source))),
+      ...new Set(relationshipsFor(selectedEntity.id).map((r) => (r.source === selectedEntity.id ? r.target : r.source))),
     ];
-    return otherIds.map((id) => entities.find((e) => e.id === id)).filter((e): e is NonNullable<typeof e> => !!e);
-  }, [selectedEntity, relationships, entities]);
+    return otherIds.map((id) => getEntityById(id)).filter((e): e is NonNullable<typeof e> => !!e);
+  }, [selectedEntity]);
   const spotlightFootage = selectedEntity
     ? cctvFootage.find((f) => f.linkedEntityIds.includes(selectedEntity.id))
     : undefined;
   const spotlightLastObserved = useMemo(() => {
     if (!selectedEntity) return null;
-    const dates = relationships.filter((r) => r.source === selectedEntity.id || r.target === selectedEntity.id)
+    const dates = relationshipsFor(selectedEntity.id)
       .map((r) => r.observedOn)
       .sort();
     return dates.length ? dates[dates.length - 1] : null;
-  }, [selectedEntity, relationships]);
+  }, [selectedEntity]);
 
   return (
     <div className={`network-page ${selectedEntity ? "focus-mode" : ""}`}>
@@ -365,7 +318,7 @@ export default function NetworkGraph() {
               <input type="date" className="select" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
             </label>
           </div>
-          <div className="filter-bar">
+          <div className="filter-bar analysis-tools">
             {allTypes.map((t) => (
               <button key={t} className={`chip-toggle ${activeTypes.has(t) ? "active" : ""}`} onClick={() => toggleType(t)}>
                 <span className="swatch" style={{ background: typeSwatch[t] }} />
@@ -515,8 +468,6 @@ export default function NetworkGraph() {
               {panelMode === "entity" && selectedEntity && (
                 <EntityDetailPanel
                   entity={selectedEntity}
-                  allEntities={entities}
-                  allRelationships={relationships}
                   onClose={() => setSelectedId(null)}
                   onSelectRelated={setSelectedId}
                 />
@@ -567,7 +518,7 @@ export default function NetworkGraph() {
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                           {pathResult.entityIds.map((id, i) => {
-                            const ent = entities.find((e) => e.id === id);
+                            const ent = getEntityById(id);
                             if (!ent) return null;
                             const rel =
                               i < pathResult.relationshipIds.length
@@ -650,7 +601,7 @@ export default function NetworkGraph() {
                           </div>
                           <div className="community-members">
                             {c.entityIds.map((id) => {
-                              const ent = entities.find((e) => e.id === id);
+                              const ent = getEntityById(id);
                               if (!ent) return null;
                               return (
                                 <button
@@ -888,7 +839,7 @@ export default function NetworkGraph() {
               </div>
             </div>
           ) : (
-            <EvidenceBoard key={caseId} caseId={caseId} entities={entities} />
+            <EvidenceBoard key={caseId} caseId={caseId} entities={entitiesForCase(caseId)} />
           )}
         </>
       )}

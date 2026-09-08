@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import PageHeader from "../components/PageHeader";
 import EntityDetailPanel from "../components/EntityDetailPanel";
-import { entities, getEntityById, relationshipsFor, relationships } from "../data/mockData";
+import { entities, getEntityById, relationshipsFor } from "../data/mockData";
 import { EntityIcon, entitySubLabel, entityTypeLabel, RiskBadge } from "../components/ui";
 import { IconSearch } from "../components/icons";
 import type { EntityType, RiskLevel } from "../data/types";
@@ -95,8 +95,6 @@ export default function Entities() {
           <div style={{ width: 340, borderLeft: "1px solid var(--border)", padding: 14, flexShrink: 0 }}>
             <EntityDetailPanel
               entity={selectedEntity}
-              allEntities={entities}
-              allRelationships={relationships}
               onClose={() => setSelectedId(null)}
               onSelectRelated={setSelectedId}
             />

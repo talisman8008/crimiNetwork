@@ -1,15 +1,12 @@
-import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
-import { crossCaseEntities, entitiesForCase, getCaseById, linkedCasesFor, relationshipsForCase } from "../data/mockData";
+import { cases, crossCaseEntities, entitiesForCase, getCaseById, linkedCasesFor, relationshipsForCase } from "../data/mockData";
 import { caseStatusColor, EntityIcon, formatDate, RiskBadge } from "../components/ui";
 import { IconChevronRight } from "../components/icons";
 import { courtDatesForCase } from "../data/courtData";
 import { officersForCase } from "../data/officersData";
 import { describeWorkspace, useCaseWorkspaces } from "../lib/caseWorkspace";
 import { getEntityById as lookupEntity } from "../data/mockData";
-import { fetchApi } from "../lib/api";
-import type { Case } from "../data/types";
 
 const priorityColor: Record<string, string> = {
   high: "var(--risk-high)",
@@ -20,62 +17,10 @@ const priorityColor: Record<string, string> = {
 export default function Cases() {
   const bridgeEntities = crossCaseEntities();
   const { workspaces } = useCaseWorkspaces();
-  const [cases, setCases] = useState<Case[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    async function loadCases() {
-      try {
-        const data = await fetchApi<Case[]>('/cases');
-        setCases(data || []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load cases");
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadCases();
-  }, []);
-
-  if (loading) {
-    return (
-      <>
-        <PageHeader eyebrow="Investigations" title="Cases" />
-        <div className="content">Loading cases...</div>
-      </>
-    );
-  }
-
-  if (error) {
-    return (
-      <>
-        <PageHeader eyebrow="Investigations" title="Cases" />
-        <div className="content" style={{ color: "var(--risk-high)" }}>Error: {error}</div>
-      </>
-    );
-  }
-
-  if (cases.length === 0) {
-    return (
-      <>
-        <PageHeader eyebrow="Investigations" title="Cases" />
-        <div className="content">No active investigations available.</div>
-      </>
-    );
-  }
 
   return (
     <>
-      <PageHeader 
-        eyebrow="Investigations" 
-        title="Cases" 
-        right={
-          <span style={{ fontSize: 12, color: "var(--text-tertiary)" }} title="Secondary metrics use synthetic data">
-            (Some data is synthetic)
-          </span>
-        }
-      />
+      <PageHeader eyebrow="Investigations" title="Cases" />
       <div className="content">
         {bridgeEntities.length > 0 && (
           <div className="card" style={{ marginBottom: 20 }}>
