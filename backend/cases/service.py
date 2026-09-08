@@ -47,6 +47,11 @@ async def update_case(db: AsyncSession, case_id: str, case_data: CaseUpdate, use
         return None
 
     update_dict = case_data.model_dump(exclude_unset=True)
+    
+    # Restrict investigators from modifying case assignment
+    if user.role == "INVESTIGATOR" and "assigned_to" in update_dict:
+        update_dict.pop("assigned_to")
+
     for key, value in update_dict.items():
         setattr(case, key, value)
         

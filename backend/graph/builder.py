@@ -46,6 +46,9 @@ async def add_entities(
         await _process_financial_records(records, case_id, source_file, confidence)
     elif source_type == "fir":
         await _process_fir_entities(entities, case_id, source_file, confidence)
+    elif source_type == "social_media":
+        await _process_social_records(records, case_id, source_file, confidence)
+        await _process_fir_entities(entities, case_id, source_file, confidence) # also link NER entities
     
     print(f"✓ Graph built for {source_type}")
     
@@ -122,8 +125,8 @@ async def _process_cdr_records(
 ):
     """Create CALLED relationships from CDR records."""
     for record in records:
-        caller = record.get("caller_number") or record.get("caller_name")
-        callee = record.get("callee_number") or record.get("callee_name")
+        caller = record.get("caller")
+        callee = record.get("callee")
         
         if not caller or not callee:
             continue
@@ -152,10 +155,10 @@ async def _process_cdr_records(
             "case_id": case_id,
             "confidence": confidence,
             "source_file": source_file,
-            "row": record.get("call_id", "unknown"),
-            "date": record.get("call_date", ""),
+            "row": record.get("row_number", "unknown"),
+            "date": record.get("datetime", ""),
             "duration": record.get("duration_seconds", 0),
-            "tower": record.get("caller_area", ""),
+            "tower": record.get("tower_location", ""),
         })
 
 async def _process_financial_records(
@@ -166,8 +169,8 @@ async def _process_financial_records(
 ):
     """Create TRANSACTED_WITH relationships from financial records."""
     for record in records:
-        sender = record.get("sender_name")
-        receiver = record.get("receiver_name")
+        sender = record.get("sender")
+        receiver = record.get("receiver")
         
         if not sender or not receiver:
             continue
@@ -196,8 +199,8 @@ async def _process_financial_records(
             "case_id": case_id,
             "confidence": confidence,
             "source_file": source_file,
-            "row": record.get("transaction_id", "unknown"),
-            "date": record.get("transaction_date", ""),
+            "row": record.get("row_number", "unknown"),
+            "date": record.get("date", ""),
             "amount": record.get("amount", 0),
             "tx_type": record.get("transaction_type", "unknown"),
         })
@@ -229,3 +232,43 @@ async def _process_fir_entities(
                 "confidence": confidence,
                 "source_file": source_file,
             })
+
+async def _process_social_records(
+    records: List[dict],
+    case_id: str,
+    source_file: str,
+    confidence: float
+):
+    """Create POSTED_ON relationships from social media records."""
+    for i, record in enumerate(records):
+        username = record.get('username')
+        platform = record.get('platform')
+        
+        if not username:
+            continue
+            
+        user_id = _generate_node_id(username, 'PERSON', case_id)
+        
+        await run_query("""
+            MERGE (a:Person {id: $user_id})
+            SET a.name = $username, a.case_id = $case_id, a.social_platform = $platform
+            WITH a
+            MERGE (p:Platform {name: $platform})
+            MERGE (a)-[r:POSTED_ON]->(p)
+            SET r.confidence = $confidence,
+                r.source_file = $source_file,
+                r.date = $date,
+                r.content = $content,
+                r.source_row = $row,
+                r.frequency = coalesce(r.frequency, 0) + 1
+        """, {
+            "user_id": user_id,
+            "username": username,
+            "platform": platform,
+            "case_id": case_id,
+            "confidence": confidence,
+            "source_file": source_file,
+            "row": str(i+1),
+            "date": record.get("date", ""),
+            "content": record.get("content", "")
+        })

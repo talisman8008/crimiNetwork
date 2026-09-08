@@ -371,6 +371,39 @@ async def test_upload_and_job_lifecycle(client):
     assert resp.status_code == 200
     assert "status" in resp.json()
 
+@pytest.mark.asyncio
+async def test_upload_and_graph_builder_call(client):
+    import asyncio
+    token = await get_token(client)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Upload a Financial file
+    csv_content = b"sender_name,receiver_name,transaction_date,amount\nJohn,Jane,2025-12-25,100.50\n"
+    files = {"file": ("test_fin.csv", csv_content, "text/csv")}
+    data = {"source_type": "financial"}
+    resp = await client.post("/api/cases/c-1/upload", files=files, data=data, headers=headers)
+    assert resp.status_code == 200
+    job_id = resp.json()["job_id"]
+
+    # Wait for background task
+    await asyncio.sleep(0.5)
+
+    # Verify mock was called
+    import sys
+    mock_nlp_ref = sys.modules['nlp.router']
+    mock_nlp_ref.process.assert_called()
+    args, kwargs = mock_nlp_ref.process.call_args
+    assert args[0] == "c-1" # case_id
+    assert args[2] == "financial" # source_type
+    
+    parsed_output = args[1]
+    assert "records" in parsed_output
+    record = parsed_output["records"][0]
+    assert record["sender"] == "John"
+    assert record["receiver"] == "Jane"
+    assert record["amount"] == 100.5
+    assert record["date"] == "2025-12-25"
+
 
 @pytest.mark.asyncio
 async def test_health():
