@@ -32,8 +32,12 @@ services:
     volumes:
       - chroma_data:/app/chroma_db
       - ./backend/models:/app/models
+      - app_data:/app/data
+      - app_uploads:/app/uploads
 
 volumes:
   neo4j_data:
   neo4j_logs:
   chroma_data:
+  app_data:
+  app_uploads:

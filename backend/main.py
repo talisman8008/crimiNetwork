@@ -12,9 +12,28 @@ from copilot.router import router as copilot_router # Dev 2
 
 app = FastAPI(title="Criminal Network Analysis API")
 
+from db.database import engine, Base, AsyncSessionLocal
+from auth.service import seed_demo_users
+from cases.service import seed_demo_cases
+import os
+
 @app.on_event("startup")
 async def startup():
-    await create_schema()
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    
+    async with AsyncSessionLocal() as db:
+        await seed_demo_users(db)
+        await seed_demo_cases(db)
+        
+    os.makedirs("uploads", exist_ok=True)
+    
+    # Try creating neo4j schema but don't fail if neo4j isn't up
+    try:
+        await create_schema()
+    except Exception as e:
+        print(f"Neo4j init failed (normal if mocking): {e}")
+        
     print("✓ System ready")
 
 app.include_router(auth_router)

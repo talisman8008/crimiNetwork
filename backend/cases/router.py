@@ -1,107 +1,66 @@
-"""
-Cases router — minimal stub for Dev 1.
-CRUD for investigation cases.
-"""
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
 
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel
-from typing import Optional, List
-from datetime import datetime
-import uuid
-
-from dependencies import get_current_user
+from db.database import get_db
+from dependencies import get_current_user, require_supervisor
+from cases.schemas import CaseCreate, CaseUpdate, CaseResponse
+from cases.service import create_case, get_cases, get_case, update_case, delete_case
+from db.models import User, Case
 
 router = APIRouter(prefix="/api/cases", tags=["cases"])
 
-# In-memory case store with seed data matching frontend
-_cases = {
-    "c-1": {
-        "id": "c-1",
-        "code": "RC-2026/04",
-        "title": "Operation Silent Thread",
-        "status": "active",
-        "priority": "high",
-        "openedOn": "2026-02-14",
-        "leadOfficer": "Insp. Vikram Singh",
-        "station": "Cyber Cell, HQ",
-        "entityIds": [],
-        "summary": "Investigation into a coordinated series of high-value cryptocurrency thefts targeting domestic exchanges, with suspected routing through dark web mixers.",
-        "sections": ["IT Act Sec 66C", "IPC 420", "IPC 120B"],
-        "description": "",
-    },
-    "c-2": {
-        "id": "c-2",
-        "code": "FIR-44/2026",
-        "title": "Cross-Border Narcotics Syndicate",
-        "status": "under review",
-        "priority": "high",
-        "openedOn": "2026-05-22",
-        "leadOfficer": "ACP Sharma",
-        "station": "Narcotics Control Bureau",
-        "entityIds": [],
-        "summary": "Large scale synthetic drug distribution network operating across three states. Initial break from a seized shipment in sector 14.",
-        "sections": ["NDPS Act Sec 21", "NDPS Act Sec 27A"],
-        "description": "",
-    }
-}
-
-
-class CaseCreate(BaseModel):
-    title: str
-    description: Optional[str] = ""
-    fir_number: Optional[str] = None
-
-
-class CaseUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    status: Optional[str] = None
-
-
-@router.post("")
-async def create_case(req: CaseCreate, user=Depends(get_current_user)):
-    case_id = f"CASE-{uuid.uuid4().hex[:8].upper()}"
-    _cases[case_id] = {
-        "id": case_id,
-        "code": req.fir_number or case_id,
-        "title": req.title,
-        "summary": req.description or "",
-        "status": "active",
-        "priority": "medium",
-        "openedOn": datetime.now().isoformat()[:10],
-        "leadOfficer": user.name if hasattr(user, 'name') else "Assigned Officer",
+def map_case_to_response(case: Case) -> dict:
+    return {
+        "id": case.id,
+        "name": case.name,
+        "fir_number": case.fir_number,
+        "status": case.status,
+        "entity_count": 0, # Placeholder
+        "last_updated": case.updated_at,
+        "sources_uploaded": [f.filename for f in case.uploaded_files] if case.uploaded_files else [],
+        "assigned_to": case.assigned_to,
+        
+        # Frontend compatibility fields
+        "title": case.name,
+        "code": case.fir_number or case.id[:8],
+        "summary": case.description or "",
+        "priority": "high", # default
+        "openedOn": case.date_filed or case.created_at.strftime("%Y-%m-%d"),
+        "leadOfficer": case.assigned_user.name if case.assigned_user else "Assigned Officer",
         "station": "HQ",
-        "entityIds": [],
-        "sections": [],
-        "description": req.description,
-        "fir_number": req.fir_number,
-        "created_by": user.badge_id,
+        "sections": []
     }
-    return _cases[case_id]
 
+@router.post("", response_model=CaseResponse)
+async def create_case_endpoint(req: CaseCreate, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
+    case = await create_case(db, req, user)
+    # Refresh to get assigned_user relation
+    case = await get_case(db, case.id, user)
+    return map_case_to_response(case)
 
-@router.get("")
-async def list_cases(user=Depends(get_current_user)):
-    return list(_cases.values())
+@router.get("", response_model=List[CaseResponse])
+async def list_cases(db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
+    cases = await get_cases(db, user)
+    return [map_case_to_response(c) for c in cases]
 
-
-@router.get("/{case_id}")
-async def get_case(case_id: str, user=Depends(get_current_user)):
-    case = _cases.get(case_id)
+@router.get("/{case_id}", response_model=CaseResponse)
+async def get_case_endpoint(case_id: str, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
+    case = await get_case(db, case_id, user)
     if not case:
-        return {"error": "Case not found"}
-    return case
+        raise HTTPException(status_code=404, detail="Case not found")
+    return map_case_to_response(case)
 
-
-@router.patch("/{case_id}")
-async def update_case(case_id: str, req: CaseUpdate, user=Depends(get_current_user)):
-    case = _cases.get(case_id)
+@router.patch("/{case_id}", response_model=CaseResponse)
+async def update_case_endpoint(case_id: str, req: CaseUpdate, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
+    case = await update_case(db, case_id, req, user)
     if not case:
-        return {"error": "Case not found"}
-    if req.title is not None:
-        case["title"] = req.title
-    if req.description is not None:
-        case["description"] = req.description
-    if req.status is not None:
-        case["status"] = req.status
-    return case
+        raise HTTPException(status_code=404, detail="Case not found")
+    return map_case_to_response(case)
+
+@router.delete("/{case_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_case_endpoint(case_id: str, db: AsyncSession = Depends(get_db), user: User = Depends(require_supervisor)):
+    success = await delete_case(db, case_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Case not found")
+    return None

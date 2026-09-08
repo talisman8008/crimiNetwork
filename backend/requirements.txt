@@ -3,11 +3,13 @@ uvicorn[standard]
 python-dotenv
 python-jose[cryptography]
 passlib[bcrypt]
+bcrypt<4.1
 python-multipart
 pdfplumber
 pandas
 sqlalchemy
 aiosqlite
+python-dateutil
 neo4j
 networkx
 python-louvain
@@ -25,3 +27,6 @@ python-docx
 numpy
 seqeval
 datasets
+pytest
+pytest-asyncio
+httpx

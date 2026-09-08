@@ -1,77 +1,59 @@
-"""
-Auth router — minimal stub for Dev 1.
-Provides JWT login so other endpoints can work behind auth.
-"""
+from fastapi import APIRouter, HTTPException, Depends, Request, status
+from sqlalchemy.ext.asyncio import AsyncSession
+import json
 
-from fastapi import APIRouter, HTTPException, Depends
-from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import BaseModel
-from datetime import datetime, timedelta, timezone
-from jose import jwt
-import hashlib
-
-from config import SECRET_KEY, ALGORITHM, TOKEN_EXPIRE_HOURS
+from db.database import get_db
+from auth.schemas import TokenResponse, LoginRequest
+from auth.service import authenticate_user, create_access_token
+from dependencies import get_current_user
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
+@router.post("/login", response_model=TokenResponse)
+async def login(request: Request, db: AsyncSession = Depends(get_db)):
+    content_type = request.headers.get("content-type", "")
+    badge_id = ""
+    password = ""
+    
+    if "application/json" in content_type:
+        try:
+            body = await request.json()
+            badge_id = body.get("badge_id")
+            password = body.get("password")
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="Invalid JSON")
+    elif "application/x-www-form-urlencoded" in content_type or "multipart/form-data" in content_type:
+        form = await request.form()
+        badge_id = form.get("username") # Frontend sends username
+        password = form.get("password")
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported Media Type")
+    
+    if not badge_id or not password:
+        raise HTTPException(status_code=400, detail="Badge ID/Username and password are required")
 
-def _hash_pw(password: str) -> str:
-    """Simple SHA-256 hash for demo purposes."""
-    return hashlib.sha256(password.encode()).hexdigest()
-
-
-def _verify_pw(password: str, hashed: str) -> bool:
-    return _hash_pw(password) == hashed
-
-
-# In-memory user store (replace with DB in production)
-_users = {
-    "BADGE001": {
-        "badge_id": "BADGE001",
-        "name": "Inspector Dev",
-        "role": "INVESTIGATOR",
-        "hashed_password": _hash_pw("password123"),
-    },
-    "BADGE000": {
-        "badge_id": "BADGE000",
-        "name": "Supervisor Admin",
-        "role": "SUPERVISOR",
-        "hashed_password": _hash_pw("admin123"),
-    },
-}
-
-
-class RegisterRequest(BaseModel):
-    badge_id: str
-    name: str
-    role: str = "INVESTIGATOR"
-    password: str
-
-
-@router.post("/register")
-async def register(req: RegisterRequest):
-    if req.badge_id in _users:
-        raise HTTPException(status_code=400, detail="Badge ID already exists")
-    _users[req.badge_id] = {
-        "badge_id": req.badge_id,
-        "name": req.name,
-        "role": req.role,
-        "hashed_password": _hash_pw(req.password),
+    user = await authenticate_user(db, badge_id, password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    token = create_access_token(user)
+    return {
+        "token": token,
+        "access_token": token,
+        "token_type": "bearer",
+        "role": user.role,
+        "name": user.name,
+        "badge_id": user.badge_id
     }
-    return {"status": "registered", "badge_id": req.badge_id}
 
-
-@router.post("/login")
-async def login(form: OAuth2PasswordRequestForm = Depends()):
-    user = _users.get(form.username)
-    if not user or not _verify_pw(form.password, user["hashed_password"]):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    token_data = {
-        "sub": user["badge_id"],
-        "name": user["name"],
-        "role": user["role"],
-        "exp": datetime.now(timezone.utc) + timedelta(hours=TOKEN_EXPIRE_HOURS),
-    }
-    token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
-    return {"access_token": token, "token_type": "bearer"}
+@router.post("/logout")
+async def logout(db: AsyncSession = Depends(get_db), current_user = Depends(get_current_user)):
+    # Increment token_version to invalidate existing tokens
+    current_user.token_version += 1
+    db.add(current_user)
+    await db.commit()
+    return {"message": "Successfully logged out"}
