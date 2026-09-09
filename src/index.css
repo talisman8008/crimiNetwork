@@ -4615,3 +4615,44 @@ a.rank-row:hover .rank-name {
     max-height: 34vh;
   }
 }
+
+/* String colour key, pinned to the corner of the board so a board someone else built can be
+   read without guessing what the colours mean. */
+.board-legend {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 20;
+  padding: 9px 11px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(2px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  pointer-events: none;
+}
+
+.board-legend-title {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+  margin-bottom: 6px;
+}
+
+.board-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+  padding: 2px 0;
+}
+
+.board-legend-swatch {
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}

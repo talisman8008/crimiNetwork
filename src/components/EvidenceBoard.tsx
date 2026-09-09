@@ -42,6 +42,15 @@ const colorHex: Record<StringColor, string> = {
 
 const colors: StringColor[] = ["red", "yellow", "green", "blue"];
 
+/** What a string of each colour means, so a board someone else built can still be read. These
+ *  are the usual pinboard conventions rather than anything the data enforces. */
+const colorMeaning: Record<StringColor, string> = {
+  red: "Direct link",
+  yellow: "Financial",
+  green: "Communication",
+  blue: "Movement / co-location",
+};
+
 /** Card width. The string anchor is derived from this, so the two cannot drift apart. */
 const PIN_WIDTH = 170;
 
@@ -216,7 +225,8 @@ export default function EvidenceBoard({ caseId, entities }: EvidenceBoardProps) 
               key={c}
               className={`board-color-btn ${connectColor === c ? "active" : ""}`}
               style={{ background: colorHex[c] }}
-              title={`${c} string`}
+              title={colorMeaning[c]}
+              aria-label={`${colorMeaning[c]} string`}
               onClick={() => {
                 setConnectColor((prev) => (prev === c ? null : c));
                 setPendingFrom(null);
@@ -390,6 +400,16 @@ export default function EvidenceBoard({ caseId, entities }: EvidenceBoardProps) 
                     />
                   )}
                 </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="board-legend" aria-label="String colour key">
+            <div className="board-legend-title">String key</div>
+            {colors.map((c) => (
+              <div key={c} className="board-legend-row">
+                <span className="board-legend-swatch" style={{ background: colorHex[c] }} />
+                {colorMeaning[c]}
               </div>
             ))}
           </div>
