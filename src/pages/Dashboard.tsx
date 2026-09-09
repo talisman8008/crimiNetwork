@@ -50,12 +50,12 @@ export default function Dashboard() {
   const openAlerts = alerts.filter((a) => a.status !== "dismissed");
 
   const stats = [
-    { label: "Entities on record", value: entities.length, delta: "5.6%", up: true },
-    { label: "Links established", value: relationships.length, delta: "4.2%", up: true },
-    { label: "Active investigations", value: cases.filter((c) => c.status !== "closed").length, delta: "1", up: true },
-    { label: "Cross-case entities", value: crossCaseCount, delta: "6.5%", up: true },
-    { label: "Open alerts", value: openAlerts.length, delta: "3.1%", up: false },
-    { label: "Evidence sources", value: dataSources.length, delta: "2", up: true },
+    { label: "Entities on record", value: entities.length },
+    { label: "Links established", value: relationships.length },
+    { label: "Active investigations", value: cases.filter((c) => c.status !== "closed").length },
+    { label: "Cross-case entities", value: crossCaseCount },
+    { label: "Open alerts", value: openAlerts.length },
+    { label: "Evidence sources", value: dataSources.length },
   ];
 
   // Alerts by status, in the order an officer clears them.
@@ -139,10 +139,6 @@ export default function Dashboard() {
               <div className="stat-tile-label">{s.label}</div>
               <div className="stat-tile-row">
                 <span className="stat-tile-value">{s.value.toLocaleString("en-IN")}</span>
-                <span className={`stat-tile-delta ${s.up ? "up" : "down"}`}>
-                  {s.up ? "↑" : "↓"} {s.delta}
-                </span>
-                <span className="stat-tile-period">last week</span>
               </div>
             </div>
           ))}
