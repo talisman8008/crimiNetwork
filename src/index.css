@@ -4426,3 +4426,131 @@ a.rank-row:hover .rank-name {
 .board-canvas .board-pin-body {
   transition: opacity var(--ease);
 }
+
+/* ---------------------------------------------------------------------------
+   Sidebar as an icon rail that opens on hover.
+
+   It is taken out of flow and the main column is inset by the collapsed width, so opening it
+   floats over the page instead of reflowing every layout underneath — a graph that re-fits
+   itself each time the pointer crosses the rail is unusable.
+   --------------------------------------------------------------------------- */
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 64px;
+  height: 100vh;
+  padding: 18px 12px 14px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  z-index: 400;
+  transition: width var(--ease), box-shadow var(--ease);
+}
+
+.sidebar:hover,
+.sidebar:focus-within {
+  width: 236px;
+  box-shadow: var(--shadow-lg);
+}
+
+.app-main {
+  margin-left: 64px;
+}
+
+/* Everything that is words rather than a glyph fades out when the rail is closed. It keeps its
+   box so the icons do not shift position as the labels arrive. */
+.sidebar-brand > div,
+.sidebar-group-label,
+.sidebar-link > span:not(.sidebar-badge),
+.sidebar-search > span,
+.sidebar-help > span,
+.sidebar-user-text,
+.sidebar-logout,
+.sidebar-case {
+  opacity: 0;
+  white-space: nowrap;
+  transition: opacity var(--ease);
+}
+
+.sidebar:hover .sidebar-brand > div,
+.sidebar:hover .sidebar-group-label,
+.sidebar:hover .sidebar-link > span:not(.sidebar-badge),
+.sidebar:hover .sidebar-search > span,
+.sidebar:hover .sidebar-help > span,
+.sidebar:hover .sidebar-user-text,
+.sidebar:hover .sidebar-logout,
+.sidebar:hover .sidebar-case,
+.sidebar:focus-within .sidebar-brand > div,
+.sidebar:focus-within .sidebar-group-label,
+.sidebar:focus-within .sidebar-link > span:not(.sidebar-badge),
+.sidebar:focus-within .sidebar-search > span,
+.sidebar:focus-within .sidebar-help > span,
+.sidebar:focus-within .sidebar-user-text,
+.sidebar:focus-within .sidebar-logout,
+.sidebar:focus-within .sidebar-case {
+  opacity: 1;
+}
+
+/* Rows keep the icon pinned where it sits when closed, so nothing slides sideways on open. */
+.sidebar-link,
+.sidebar-search,
+.sidebar-help {
+  position: relative;
+  padding-left: 10px;
+  padding-right: 10px;
+  min-width: 212px;
+}
+
+.sidebar-brand {
+  min-width: 212px;
+  padding-left: 3px;
+}
+
+.sidebar-user {
+  min-width: 212px;
+}
+
+/* The alert count is the one label worth keeping while closed, so it rides on the icon. */
+.sidebar-badge {
+  position: absolute;
+  top: 3px;
+  left: 22px;
+  margin-left: 0;
+  padding: 0 4px;
+  min-width: 15px;
+  font-size: 9px;
+  line-height: 15px;
+  transition: none;
+}
+
+.sidebar:hover .sidebar-badge,
+.sidebar:focus-within .sidebar-badge {
+  position: static;
+  margin-left: auto;
+  padding: 1px 5px;
+  min-width: 18px;
+  font-size: 10px;
+  line-height: normal;
+}
+
+/* A closed rail has no room for a case chip, so it collapses rather than clipping. */
+.sidebar-case {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-width: 0;
+  overflow: hidden;
+  transition: opacity var(--ease), max-height var(--ease);
+}
+
+.sidebar:hover .sidebar-case,
+.sidebar:focus-within .sidebar-case {
+  max-height: 70px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-width: 1px;
+}

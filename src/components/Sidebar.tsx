@@ -84,7 +84,7 @@ export default function Sidebar() {
 
       <button className="sidebar-search" onClick={() => navigate("/entities")}>
         <IconSearch />
-        Search entities
+        <span>Search entities</span>
       </button>
 
       {activeCase && (
@@ -133,7 +133,7 @@ export default function Sidebar() {
       <div className="sidebar-foot">
         <button className="sidebar-help" onClick={startTour}>
           <IconHelp />
-          Show me around
+          <span>Show me around</span>
         </button>
         <div className="sidebar-user">
           <span className="sidebar-avatar">{role === "supervisor" ? "SUP" : "INV"}</span>
