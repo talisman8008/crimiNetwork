@@ -24,6 +24,20 @@ export const typeColor: Record<EntityType, string> = {
 
 const BG = "#f0f2f5";
 const RISK_HIGH = "#b91c1c";
+
+/** The canvas sits on a near-white ground, where the platform's own arrow and open-hand cursors
+ *  are pale enough to lose. These are drawn dark with a white keyline so they read on it, and
+ *  the accent one marks "there is a node under you" before you click. */
+function arrowCursor(fill: string): string {
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22">` +
+    `<path d="M4 2 L4 17.4 L8.2 13.4 L10.7 19.2 L13.1 18.2 L10.7 12.5 L16 12.5 Z" ` +
+    `fill="${fill}" stroke="#ffffff" stroke-width="1.4" stroke-linejoin="round"/></svg>`;
+  return `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}") 4 2, default`;
+}
+
+const CURSOR_IDLE = arrowCursor("#0f2c4e");
+const CURSOR_NODE = arrowCursor("#1d4ed8");
 const LABEL_FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, Helvetica, sans-serif';
 
 interface Node2D {
@@ -347,12 +361,33 @@ export default function GraphView2D({
 
     const onDown = (e: PointerEvent) => {
       drag.current = { x: e.clientX, y: e.clientY, moved: false };
+      canvas.style.cursor = "grabbing";
       canvas.setPointerCapture(e.pointerId);
+    };
+
+    /** Nearest node under a point in canvas coordinates, or null. */
+    const nodeAt = (mx: number, my: number): Node2D | null => {
+      let hit: Node2D | null = null;
+      let best = Infinity;
+      for (const nd of nodesRef.current) {
+        const r = nd.radius * Math.max(0.65, Math.min(1.5, camera.current.zoom)) + 4;
+        const dist = Math.hypot(nd.sx - mx, nd.sy - my);
+        if (dist <= r && dist < best) {
+          best = dist;
+          hit = nd;
+        }
+      }
+      return hit;
     };
 
     const onMove = (e: PointerEvent) => {
       const d = drag.current;
-      if (!d) return;
+      if (!d) {
+        const rect = canvas.getBoundingClientRect();
+        const over = nodeAt(e.clientX - rect.left, e.clientY - rect.top);
+        canvas.style.cursor = over ? CURSOR_NODE : CURSOR_IDLE;
+        return;
+      }
       const dx = e.clientX - d.x;
       const dy = e.clientY - d.y;
       if (Math.abs(dx) + Math.abs(dy) > 3) d.moved = true;
@@ -366,22 +401,12 @@ export default function GraphView2D({
     const onUp = (e: PointerEvent) => {
       const d = drag.current;
       drag.current = null;
+      canvas.style.cursor = CURSOR_IDLE;
       if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
       if (!d || d.moved) return;
 
       const rect = canvas.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
-      let hit: Node2D | null = null;
-      let best = Infinity;
-      for (const nd of nodesRef.current) {
-        const r = nd.radius * Math.max(0.65, Math.min(1.5, camera.current.zoom)) + 4;
-        const dist = Math.hypot(nd.sx - mx, nd.sy - my);
-        if (dist <= r && dist < best) {
-          best = dist;
-          hit = nd;
-        }
-      }
+      const hit = nodeAt(e.clientX - rect.left, e.clientY - rect.top);
       onSelect(hit ? hit.id : null);
     };
 
@@ -406,7 +431,7 @@ export default function GraphView2D({
   return (
     <>
       <div ref={wrapRef} style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }}>
-        <canvas ref={canvasRef} style={{ display: "block", cursor: "grab", touchAction: "none" }} />
+        <canvas ref={canvasRef} style={{ display: "block", cursor: CURSOR_IDLE, touchAction: "none" }} />
       </div>
 
       <div className="icon-dock icon-dock-bottom-left">
