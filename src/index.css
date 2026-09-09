@@ -4393,3 +4393,36 @@ a.rank-row:hover .rank-name {
 .board-pin-person input:focus {
   background: var(--accent-soft);
 }
+
+/* Strings are pinned on top of the cards, the way they would be on a real board. The SVG is a
+   sibling that paints before the pins, so without this a string between two nearby cards
+   disappeared behind them. */
+.board-canvas > svg {
+  z-index: 15;
+}
+
+.board-pin {
+  z-index: 5;
+}
+
+.board-connect-cancel {
+  padding: 3px 9px;
+  font-family: inherit;
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.board-connect-cancel:hover {
+  color: var(--risk-high);
+  border-color: var(--risk-high);
+}
+
+/* Connect mode makes every card click-through, so say so plainly rather than leaving someone
+   wondering why the board has stopped accepting typing. */
+.board-canvas .board-pin-body {
+  transition: opacity var(--ease);
+}
