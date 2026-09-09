@@ -52,35 +52,57 @@ export default function NotificationsPanel() {
 
       {open && (
         <div className="notif-panel">
-          <div className="notif-panel-header">Alerts &amp; upcoming</div>
+          <section className="notif-col">
+            <div className="notif-col-header">
+              <span>Active alerts</span>
+              <span className="notif-col-count">{activeAlerts.length}</span>
+            </div>
+            <div className="notif-col-body">
+              {activeAlerts.length === 0 && <div className="notif-empty">No active alerts.</div>}
+              {activeAlerts.map((a) => (
+                <button key={a.id} className="notif-row" onClick={() => go("/alerts")}>
+                  <SeverityBadge severity={a.severity} />
+                  <div className="notif-row-body">
+                    <div className="notif-row-title">{a.title}</div>
+                    <div className="notif-row-sub">
+                      {a.patternType} &middot; {formatDate(a.detectedOn)}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+            {activeAlerts.length > 0 && (
+              <button className="notif-col-foot" onClick={() => go("/alerts")}>
+                View all alerts
+              </button>
+            )}
+          </section>
 
-          <div className="notif-section-title">Upcoming court dates</div>
-          {hearings.length === 0 && <div className="notif-empty">No upcoming hearings.</div>}
-          {hearings.map((h) => (
-            <button key={h.id} className="notif-row" onClick={() => go("/court-dates")}>
-              <IconScale />
-              <div className="notif-row-body">
-                <div className="notif-row-title">{h.hearingType}</div>
-                <div className="notif-row-sub">
-                  {h.court} &middot; {formatDate(h.date)}
-                </div>
-              </div>
-            </button>
-          ))}
-
-          <div className="notif-section-title">Active alerts</div>
-          {activeAlerts.length === 0 && <div className="notif-empty">No active alerts.</div>}
-          {activeAlerts.map((a) => (
-            <button key={a.id} className="notif-row" onClick={() => go("/alerts")}>
-              <SeverityBadge severity={a.severity} />
-              <div className="notif-row-body">
-                <div className="notif-row-title">{a.title}</div>
-                <div className="notif-row-sub">
-                  {a.patternType} &middot; {formatDate(a.detectedOn)}
-                </div>
-              </div>
-            </button>
-          ))}
+          <section className="notif-col">
+            <div className="notif-col-header">
+              <span>Upcoming court dates</span>
+              <span className="notif-col-count">{hearings.length}</span>
+            </div>
+            <div className="notif-col-body">
+              {hearings.length === 0 && <div className="notif-empty">No upcoming hearings.</div>}
+              {hearings.map((h) => (
+                <button key={h.id} className="notif-row" onClick={() => go("/court-dates")}>
+                  <IconScale />
+                  <div className="notif-row-body">
+                    <div className="notif-row-title">{h.hearingType}</div>
+                    <div className="notif-row-sub">
+                      {h.court} &middot; {formatDate(h.date)}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+            {hearings.length > 0 && (
+              <button className="notif-col-foot" onClick={() => go("/court-dates")}>
+                View all hearings
+              </button>
+            )}
+          </section>
         </div>
       )}
     </div>

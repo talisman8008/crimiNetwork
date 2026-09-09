@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
-import GraphView3D, { typeColor as typeSwatch } from "../components/GraphView3D";
+import GraphView2D, { typeColor as typeSwatch } from "../components/GraphView2D";
 import EntityDetailPanel from "../components/EntityDetailPanel";
 import EvidenceBoard from "../components/EvidenceBoard";
 import {
@@ -379,7 +379,7 @@ export default function NetworkGraph() {
                 </div>
               </div>
               {filteredEntities.length > 0 ? (
-                <GraphView3D
+                <GraphView2D
                   entities={filteredEntities}
                   relationships={filteredRelationships}
                   selectedId={selectedId}

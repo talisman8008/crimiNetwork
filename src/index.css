@@ -189,8 +189,10 @@ table {
 }
 
 .sidebar-brand img {
-  width: 30px;
-  height: 30px;
+  height: 32px;
+  width: auto;
+  max-width: 36px;
+  object-fit: contain;
 }
 
 .sidebar-brand strong {
@@ -1999,7 +2001,7 @@ a.rank-row:hover .rank-name {
 .board-pin {
   position: absolute;
   width: 148px;
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   box-shadow: 0 2px 6px rgba(15, 23, 42, 0.1), 0 6px 16px rgba(15, 23, 42, 0.08);
   cursor: grab;
   user-select: none;
@@ -2095,6 +2097,7 @@ a.rank-row:hover .rank-name {
 }
 
 .board-pin input,
+.board-pin select,
 .board-pin textarea {
   border: none;
   background: transparent;
@@ -2822,29 +2825,31 @@ a.rank-row:hover .rank-name {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  border: none;
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: background-color var(--ease);
+  transition: background-color var(--ease), color var(--ease), border-color var(--ease);
 }
 
 .notif-bell:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--surface-sunken);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
 }
 
 .notif-bell svg {
-  width: 17px;
-  height: 17px;
+  width: 16px;
+  height: 16px;
 }
 
 .notif-badge {
   position: absolute;
-  top: -2px;
-  right: -2px;
+  top: -5px;
+  right: -5px;
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
@@ -2856,43 +2861,88 @@ a.rank-row:hover .rank-name {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid var(--navy-800);
+  border: 2px solid var(--surface);
 }
 
+/* Two independent columns — alerts on the left, hearings on the right — so the two kinds of
+   thing that need an officer are read side by side rather than stacked and scrolled past. */
 .notif-panel {
   position: absolute;
   top: calc(100% + 12px);
   right: 0;
-  width: 340px;
-  max-height: 70vh;
-  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 560px;
+  max-width: calc(100vw - 32px);
   background: var(--surface);
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-lg);
   z-index: 55;
-  padding-bottom: 6px;
+  overflow: hidden;
 }
 
-.notif-panel-header {
+.notif-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.notif-col + .notif-col {
+  border-left: 1px solid var(--border);
+}
+
+.notif-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   padding: 12px 16px;
-  font-size: var(--fs-base);
+  font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--text-primary);
   border-bottom: 1px solid var(--border);
+  background: var(--surface-sunken);
 }
 
-.notif-section-title {
-  padding: 10px 16px 4px;
+.notif-col-count {
+  min-width: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--navy-100);
+  color: var(--navy-800);
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.notif-col-body {
+  flex: 1;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.notif-col-foot {
+  padding: 9px 16px;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: none;
+  font-family: inherit;
   font-size: var(--fs-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-tertiary);
   font-weight: 600;
+  color: var(--accent-strong);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--ease);
+}
+
+.notif-col-foot:hover {
+  background: var(--surface-sunken);
 }
 
 .notif-empty {
-  padding: 2px 16px 10px;
+  padding: 8px 16px 12px;
   font-size: var(--fs-sm);
   color: var(--text-tertiary);
 }
@@ -4320,4 +4370,291 @@ a.rank-row:hover .rank-name {
   .chart-card-wide {
     grid-column: auto;
   }
+}
+
+/* Evidence board repairs -------------------------------------------------- */
+
+/* The entity picker was falling through to the native select widget, which sits on a paper
+   card looking like a form control from another application. */
+.board-pin-person select.role-input {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 3px 18px 3px 6px;
+  margin-bottom: 5px;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  background-color: var(--surface-sunken);
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%2364748b' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 5px center;
+  background-size: 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.board-pin-person select.role-input:hover {
+  border-color: var(--border-strong);
+  color: var(--text-secondary);
+}
+
+/* An empty photo well was a flat grey rectangle with nothing to say it could be clicked. */
+.board-pin-person-photo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  font-family: inherit;
+  font-size: 10px;
+  cursor: pointer;
+  transition: border-color var(--ease), color var(--ease), background-color var(--ease);
+}
+
+.board-pin-person-photo:hover {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+  background-color: var(--accent-soft);
+}
+
+.board-pin-person-photo.has-photo {
+  border-style: solid;
+  border-color: var(--border);
+}
+
+.board-pin-person-photo.has-photo:hover {
+  background-color: transparent;
+}
+
+/* Slightly wider cards: at 148px the name, the entity picker and the role note were all
+   truncating against each other. */
+.board-pin {
+  width: 170px;
+}
+
+.board-pin-person input {
+  padding: 1px 2px;
+  border-radius: 3px;
+}
+
+.board-pin-person input:focus {
+  background: var(--accent-soft);
+}
+
+/* Strings are pinned on top of the cards, the way they would be on a real board. The SVG is a
+   sibling that paints before the pins, so without this a string between two nearby cards
+   disappeared behind them. */
+.board-canvas > svg {
+  z-index: 15;
+}
+
+.board-pin {
+  z-index: 5;
+}
+
+.board-connect-cancel {
+  padding: 3px 9px;
+  font-family: inherit;
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.board-connect-cancel:hover {
+  color: var(--risk-high);
+  border-color: var(--risk-high);
+}
+
+/* Connect mode makes every card click-through, so say so plainly rather than leaving someone
+   wondering why the board has stopped accepting typing. */
+.board-canvas .board-pin-body {
+  transition: opacity var(--ease);
+}
+
+/* ---------------------------------------------------------------------------
+   Sidebar as an icon rail that opens on hover.
+
+   It is taken out of flow and the main column is inset by the collapsed width, so opening it
+   floats over the page instead of reflowing every layout underneath — a graph that re-fits
+   itself each time the pointer crosses the rail is unusable.
+   --------------------------------------------------------------------------- */
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 64px;
+  height: 100vh;
+  padding: 18px 12px 14px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  z-index: 400;
+  transition: width var(--ease), box-shadow var(--ease);
+}
+
+.sidebar:hover,
+.sidebar:focus-within {
+  width: 236px;
+  box-shadow: var(--shadow-lg);
+}
+
+.app-main {
+  margin-left: 64px;
+}
+
+/* Everything that is words rather than a glyph fades out when the rail is closed. It keeps its
+   box so the icons do not shift position as the labels arrive. */
+.sidebar-brand > div,
+.sidebar-group-label,
+.sidebar-link > span:not(.sidebar-badge),
+.sidebar-search > span,
+.sidebar-help > span,
+.sidebar-user-text,
+.sidebar-logout,
+.sidebar-case {
+  opacity: 0;
+  white-space: nowrap;
+  transition: opacity var(--ease);
+}
+
+.sidebar:hover .sidebar-brand > div,
+.sidebar:hover .sidebar-group-label,
+.sidebar:hover .sidebar-link > span:not(.sidebar-badge),
+.sidebar:hover .sidebar-search > span,
+.sidebar:hover .sidebar-help > span,
+.sidebar:hover .sidebar-user-text,
+.sidebar:hover .sidebar-logout,
+.sidebar:hover .sidebar-case,
+.sidebar:focus-within .sidebar-brand > div,
+.sidebar:focus-within .sidebar-group-label,
+.sidebar:focus-within .sidebar-link > span:not(.sidebar-badge),
+.sidebar:focus-within .sidebar-search > span,
+.sidebar:focus-within .sidebar-help > span,
+.sidebar:focus-within .sidebar-user-text,
+.sidebar:focus-within .sidebar-logout,
+.sidebar:focus-within .sidebar-case {
+  opacity: 1;
+}
+
+/* Rows keep the icon pinned where it sits when closed, so nothing slides sideways on open. */
+.sidebar-link,
+.sidebar-search,
+.sidebar-help {
+  position: relative;
+  padding-left: 10px;
+  padding-right: 10px;
+  min-width: 212px;
+}
+
+.sidebar-brand {
+  min-width: 212px;
+  padding-left: 3px;
+}
+
+.sidebar-user {
+  min-width: 212px;
+}
+
+/* The alert count is the one label worth keeping while closed, so it rides on the icon. */
+.sidebar-badge {
+  position: absolute;
+  top: 3px;
+  left: 22px;
+  margin-left: 0;
+  padding: 0 4px;
+  min-width: 15px;
+  font-size: 9px;
+  line-height: 15px;
+  transition: none;
+}
+
+.sidebar:hover .sidebar-badge,
+.sidebar:focus-within .sidebar-badge {
+  position: static;
+  margin-left: auto;
+  padding: 1px 5px;
+  min-width: 18px;
+  font-size: 10px;
+  line-height: normal;
+}
+
+/* A closed rail has no room for a case chip, so it collapses rather than clipping. */
+.sidebar-case {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-width: 0;
+  overflow: hidden;
+  transition: opacity var(--ease), max-height var(--ease);
+}
+
+.sidebar:hover .sidebar-case,
+.sidebar:focus-within .sidebar-case {
+  max-height: 70px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-width: 1px;
+}
+
+/* On a narrow viewport the two columns stack, and each keeps its own short scroll. */
+@media (max-width: 620px) {
+  .notif-panel {
+    grid-template-columns: 1fr;
+  }
+  .notif-col + .notif-col {
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+  .notif-col-body {
+    max-height: 34vh;
+  }
+}
+
+/* String colour key, pinned to the corner of the board so a board someone else built can be
+   read without guessing what the colours mean. */
+.board-legend {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 20;
+  padding: 9px 11px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(2px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  pointer-events: none;
+}
+
+.board-legend-title {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+  margin-bottom: 6px;
+}
+
+.board-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+  padding: 2px 0;
+}
+
+.board-legend-swatch {
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+  flex-shrink: 0;
 }

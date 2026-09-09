@@ -42,6 +42,18 @@ const colorHex: Record<StringColor, string> = {
 
 const colors: StringColor[] = ["red", "yellow", "green", "blue"];
 
+/** What a string of each colour means, so a board someone else built can still be read. These
+ *  are the usual pinboard conventions rather than anything the data enforces. */
+const colorMeaning: Record<StringColor, string> = {
+  red: "Direct link",
+  yellow: "Financial",
+  green: "Communication",
+  blue: "Movement / co-location",
+};
+
+/** Card width. The string anchor is derived from this, so the two cannot drift apart. */
+const PIN_WIDTH = 170;
+
 function newId(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
@@ -154,6 +166,10 @@ export default function EvidenceBoard({ caseId, entities }: EvidenceBoardProps) 
     } else {
       setBoard((prev) => ({ ...prev, strings: [...prev.strings, { id: newId(), from: pendingFrom, to: id, color: connectColor }] }));
       setPendingFrom(null);
+      // Leave connect mode once the string is tied. While it is on, cards are click-through so
+      // they can be used as link targets, which also makes them impossible to type into — and
+      // a mode you did not notice entering is a mode you cannot work out how to leave.
+      setConnectColor(null);
     }
   }
 
@@ -179,8 +195,9 @@ export default function EvidenceBoard({ caseId, entities }: EvidenceBoardProps) 
     reader.readAsDataURL(file);
   }
 
+  /** Where a string ties on: the pin head, centred on the card's top edge. */
   function anchor(pin: Pin) {
-    return { x: pin.x + 74, y: pin.y };
+    return { x: pin.x + PIN_WIDTH / 2, y: pin.y };
   }
 
   return (
@@ -208,7 +225,8 @@ export default function EvidenceBoard({ caseId, entities }: EvidenceBoardProps) 
               key={c}
               className={`board-color-btn ${connectColor === c ? "active" : ""}`}
               style={{ background: colorHex[c] }}
-              title={`${c} string`}
+              title={colorMeaning[c]}
+              aria-label={`${colorMeaning[c]} string`}
               onClick={() => {
                 setConnectColor((prev) => (prev === c ? null : c));
                 setPendingFrom(null);
@@ -216,9 +234,20 @@ export default function EvidenceBoard({ caseId, entities }: EvidenceBoardProps) 
             />
           ))}
           {connectColor && (
-            <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-              {pendingFrom ? "Click a second pin to link" : "Click a pin to start a string"}
-            </span>
+            <>
+              <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+                {pendingFrom ? "Click a second pin to link" : "Click a pin to start a string"}
+              </span>
+              <button
+                className="board-connect-cancel"
+                onClick={() => {
+                  setConnectColor(null);
+                  setPendingFrom(null);
+                }}
+              >
+                Cancel
+              </button>
+            </>
           )}
         </div>
         <button className="btn" style={{ marginLeft: "auto" }} onClick={clearBoard}>
@@ -229,7 +258,17 @@ export default function EvidenceBoard({ caseId, entities }: EvidenceBoardProps) 
 
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
         <div className="board-canvas-wrap">
-          <div className="board-canvas" style={{ cursor: connectColor ? "crosshair" : "default" }}>
+          <div
+            className="board-canvas"
+            style={{ cursor: connectColor ? "crosshair" : "default" }}
+            onPointerDown={(e) => {
+              // A click on bare board is the natural way to abandon a half-drawn string.
+              if (connectColor && e.target === e.currentTarget) {
+                setConnectColor(null);
+                setPendingFrom(null);
+              }
+            }}
+          >
             <svg width={2200} height={1400} style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none" }}>
               {board.strings.map((s) => {
                 const a = pinById.get(s.from);
@@ -257,7 +296,7 @@ export default function EvidenceBoard({ caseId, entities }: EvidenceBoardProps) 
               <div
                 key={pin.id}
                 className={`board-pin board-pin-${pin.type} ${draggingId === pin.id ? "dragging" : ""} ${pendingFrom === pin.id ? "pending" : ""}`}
-                style={{ left: pin.x, top: pin.y, transform: `rotate(${pin.rotation}deg)` }}
+                style={{ left: pin.x, top: pin.y, width: PIN_WIDTH, transform: `rotate(${pin.rotation}deg)` }}
                 onPointerDown={(e) => handlePointerDown(e, pin)}
                 onPointerMove={handlePointerMove}
                 onPointerUp={() => handlePointerUp(pin)}
@@ -276,11 +315,16 @@ export default function EvidenceBoard({ caseId, entities }: EvidenceBoardProps) 
                 <div className="board-pin-body" style={{ pointerEvents: connectColor ? "none" : undefined }}>
                   {pin.type === "person" && (
                     <>
-                      <div
-                        className="board-pin-person-photo"
+                      <button
+                        type="button"
+                        className={`board-pin-person-photo ${pin.photo ? "has-photo" : ""}`}
                         style={pin.photo ? { backgroundImage: `url(${pin.photo})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+                        onPointerDown={(e) => e.stopPropagation()}
                         onClick={() => openPhotoPicker(pin.id)}
-                      />
+                        aria-label={pin.photo ? "Replace photograph" : "Add a photograph"}
+                      >
+                        {!pin.photo && <span>Add photo</span>}
+                      </button>
                       <input
                         value={pin.name ?? ""}
                         onChange={(e) => updatePin(pin.id, { name: e.target.value })}
@@ -356,6 +400,16 @@ export default function EvidenceBoard({ caseId, entities }: EvidenceBoardProps) 
                     />
                   )}
                 </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="board-legend" aria-label="String colour key">
+            <div className="board-legend-title">String key</div>
+            {colors.map((c) => (
+              <div key={c} className="board-legend-row">
+                <span className="board-legend-swatch" style={{ background: colorHex[c] }} />
+                {colorMeaning[c]}
               </div>
             ))}
           </div>

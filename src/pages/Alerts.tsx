@@ -68,7 +68,6 @@ export default function Alerts() {
                         <span className="status-dot" style={{ background: statusColor[a.status] }} />
                         {a.status}
                       </span>
-                      <span className="tag">{a.patternType}</span>
                     </div>
                     <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{formatDate(a.detectedOn)}</span>
                   </div>
