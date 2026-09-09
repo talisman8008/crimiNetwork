@@ -34,7 +34,6 @@ sys.modules['nlp.entity_resolution'] = MagicMock()
 # Mock graph module
 mock_graph = MagicMock()
 mock_graph.router = _graph_router
-sys.modules['graph'] = MagicMock()
 sys.modules['graph.router'] = mock_graph
 sys.modules['graph.builder'] = MagicMock()
 sys.modules['graph.algorithms'] = MagicMock()
@@ -44,7 +43,6 @@ sys.modules['graph.algorithms.louvain_communities'] = MagicMock()
 # Mock alerts module
 mock_alerts = MagicMock()
 mock_alerts.router = _alerts_router
-sys.modules['alerts'] = MagicMock()
 sys.modules['alerts.router'] = mock_alerts
 
 # Mock reports module
@@ -62,6 +60,7 @@ sys.modules['copilot.router'] = mock_copilot
 # Mock db.neo4j
 mock_neo4j = MagicMock()
 mock_neo4j.create_schema = AsyncMock()
+mock_neo4j.run_query = AsyncMock(return_value=[])
 sys.modules['db.neo4j'] = mock_neo4j
 
 # Mock db.chromadb
@@ -374,6 +373,7 @@ async def test_upload_and_job_lifecycle(client):
 @pytest.mark.asyncio
 async def test_upload_and_graph_builder_call(client):
     import asyncio
+    from unittest.mock import patch
     token = await get_token(client)
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -381,18 +381,17 @@ async def test_upload_and_graph_builder_call(client):
     csv_content = b"sender_name,receiver_name,transaction_date,amount\nJohn,Jane,2025-12-25,100.50\n"
     files = {"file": ("test_fin.csv", csv_content, "text/csv")}
     data = {"source_type": "financial"}
-    resp = await client.post("/api/cases/c-1/upload", files=files, data=data, headers=headers)
-    assert resp.status_code == 200
-    job_id = resp.json()["job_id"]
-
-    # Wait for background task
-    await asyncio.sleep(0.5)
+    with patch("ingestion.service.nlp_process", new_callable=AsyncMock) as mock_nlp_process:
+        resp = await client.post("/api/cases/c-1/upload", files=files, data=data, headers=headers)
+        assert resp.status_code == 200
+        job_id = resp.json()["job_id"]
+    
+        # Wait for background task
+        await asyncio.sleep(0.5)
 
     # Verify mock was called
-    import sys
-    mock_nlp_ref = sys.modules['nlp.router']
-    mock_nlp_ref.process.assert_called()
-    args, kwargs = mock_nlp_ref.process.call_args
+    mock_nlp_process.assert_called()
+    args, kwargs = mock_nlp_process.call_args
     assert args[0] == "c-1" # case_id
     assert args[2] == "financial" # source_type
     

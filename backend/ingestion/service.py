@@ -67,6 +67,15 @@ async def process_file_background(job_id: str, file_path: str, source_type: str,
             # Handoff to NLP
             await nlp_process(case_id, parsed_output, source_type)
 
+            # Analytics pipeline
+            job.status = "analytics"
+            job.progress = 80
+            db.add(job)
+            await db.commit()
+
+            from graph.analytics import run_post_ingestion_analytics
+            await run_post_ingestion_analytics(case_id)
+
             # Update to complete
             job.status = "complete"
             job.progress = 100

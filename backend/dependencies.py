@@ -49,3 +49,18 @@ async def require_supervisor(user: User = Depends(get_current_user)) -> User:
     if user.role != "SUPERVISOR":
         raise HTTPException(status_code=403, detail="Supervisor access required")
     return user
+
+async def verify_case_access(case_id: str, user: User, db: AsyncSession):
+    if case_id == "all":
+        if user.role != "SUPERVISOR":
+            raise HTTPException(status_code=403, detail="Supervisor access required for case_id=all")
+        return
+    
+    from db.models import Case
+    result = await db.execute(select(Case).where(Case.id == case_id))
+    case = result.scalars().first()
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+    
+    if user.role == "INVESTIGATOR" and case.assigned_to != user.badge_id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this case")

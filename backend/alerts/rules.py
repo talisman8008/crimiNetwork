@@ -5,7 +5,7 @@ from typing import Optional
 async def check_communication_spike(case_id: str):
     """Alert if any node's call frequency spikes 2x+ their rolling average."""
     results = await run_query("""
-        MATCH (p:Person {case_id: $case_id})-[r:CALLED]-()
+        MATCH (p:Phone {case_id: $case_id})-[r:CALLED]-()
         WHERE r.date IS NOT NULL
         WITH p, r.date as date, count(r) as daily
         WITH p, avg(daily) as avg_daily,

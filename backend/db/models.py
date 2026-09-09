@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Text, Float
+from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Text, Float, Boolean
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -68,3 +68,18 @@ class ProcessingJob(Base):
 
     case = relationship("Case", back_populates="processing_jobs")
     uploaded_file = relationship("UploadedFile", back_populates="jobs")
+
+class Alert(Base):
+    __tablename__ = "alerts"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    case_id = Column(String(36), ForeignKey("cases.id"), nullable=False)
+    alert_type = Column(String(50), nullable=False)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    severity = Column(String(20), default="MEDIUM") # HIGH, MEDIUM, LOW
+    entity_ids_json = Column(Text, nullable=False) # JSON array of node IDs
+    viewed = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    case = relationship("Case")

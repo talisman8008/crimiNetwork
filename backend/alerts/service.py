@@ -1,53 +1,67 @@
-from dataclasses import dataclass
-from datetime import datetime
+import json
 from typing import List, Optional
-import uuid
-from db.neo4j import run_query
+from sqlalchemy.future import select
+from db.database import AsyncSessionLocal
+from db.models import Alert as DBAlert
 
-# In-memory store for hackathon (replace with DB in production)
-_alerts = {}
-
-@dataclass
-class Alert:
-    id: str
-    case_id: str
-    severity: str
-    title: str
-    description: str
-    entity_ids: List[str]
-    alert_type: str
-    timestamp: str
-    viewed: bool = False
-
-async def create_alert(case_id: str, data: dict) -> Alert:
-    alert = Alert(
-        id=str(uuid.uuid4()),
-        case_id=case_id,
-        severity=data.get('severity', 'MEDIUM'),
-        title=data['title'],
-        description=data['description'],
-        entity_ids=data.get('entity_ids', []),
-        alert_type=data.get('alert_type', 'general'),
-        timestamp=datetime.now().isoformat(),
-        viewed=False
-    )
+async def create_alert(case_id: str, data: dict) -> Optional[DBAlert]:
+    alert_type = data.get('alert_type', 'general')
+    entity_ids = sorted(data.get('entity_ids', []))
     
-    if case_id not in _alerts:
-        _alerts[case_id] = []
-    _alerts[case_id].append(alert)
-    
-    print(f"🔔 Alert created [{alert.severity}]: {alert.title}")
-    return alert
+    async with AsyncSessionLocal() as db:
+        # Deduplication check
+        query = select(DBAlert).where(
+            DBAlert.case_id == case_id,
+            DBAlert.alert_type == alert_type
+        )
+        result = await db.execute(query)
+        existing_alerts = result.scalars().all()
+        for ea in existing_alerts:
+            if json.loads(ea.entity_ids_json) == entity_ids:
+                return None # Duplicate
 
-async def get_alerts(case_id: str, severity: Optional[str] = None) -> List[Alert]:
-    alerts = _alerts.get(case_id, [])
-    if severity:
-        alerts = [a for a in alerts if a.severity == severity]
-    return sorted(alerts, key=lambda a: a.timestamp, reverse=True)
+        alert = DBAlert(
+            case_id=case_id,
+            alert_type=alert_type,
+            title=data['title'],
+            description=data['description'],
+            severity=data.get('severity', 'MEDIUM'),
+            entity_ids_json=json.dumps(entity_ids)
+        )
+        db.add(alert)
+        await db.commit()
+        await db.refresh(alert)
+        
+        print(f"[ALERT] Alert created [{alert.severity}]: {alert.title}")
+        return alert
 
-async def mark_viewed(alert_id: str):
-    for case_alerts in _alerts.values():
-        for alert in case_alerts:
-            if alert.id == alert_id:
-                alert.viewed = True
-                return
+async def get_alerts(case_id: str, severity: Optional[str] = None):
+    async with AsyncSessionLocal() as db:
+        query = select(DBAlert).where(DBAlert.case_id == case_id)
+        if severity:
+            query = query.where(DBAlert.severity == severity)
+        result = await db.execute(query)
+        alerts = result.scalars().all()
+        
+        # Convert DB models to dict for response
+        return [{
+            "id": a.id,
+            "case_id": a.case_id,
+            "alert_type": a.alert_type,
+            "title": a.title,
+            "description": a.description,
+            "severity": a.severity,
+            "entity_ids": json.loads(a.entity_ids_json),
+            "viewed": a.viewed,
+            "timestamp": a.created_at.isoformat()
+        } for a in sorted(alerts, key=lambda x: x.created_at, reverse=True)]
+
+async def mark_viewed(case_id: str, alert_id: str) -> bool:
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(select(DBAlert).where(DBAlert.id == alert_id, DBAlert.case_id == case_id))
+        alert = result.scalars().first()
+        if alert:
+            alert.viewed = True
+            await db.commit()
+            return True
+        return False

@@ -4,7 +4,9 @@ from db.neo4j import run_query
 from .hidden_links import find_hidden_paths
 from .cross_case import find_cross_case_matches
 from .algorithms.temporal import get_timeline_snapshots, detect_activity_spikes
-from dependencies import get_current_user
+from sqlalchemy.ext.asyncio import AsyncSession
+from db.database import get_db
+from dependencies import get_current_user, verify_case_access
 
 router = APIRouter(prefix="/api", tags=["graph"])
 
@@ -16,8 +18,10 @@ async def get_graph(
     community_id: Optional[int] = Query(None),
     date_from: Optional[str] = Query(None),
     date_to: Optional[str] = Query(None),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
+    await verify_case_access(case_id, user, db)
     type_filter = entity_types.split(",") if entity_types else None
     
     if case_id == "all":
@@ -114,8 +118,10 @@ async def get_hidden_links(
     node_a: str = Query(...),
     node_b: str = Query(...),
     max_hops: int = Query(3, ge=1, le=4),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
+    await verify_case_access(case_id, user, db)
     return await find_hidden_paths(case_id, node_a, node_b, max_hops)
 
 @router.get("/cases/{case_id}/graph/timeline")
@@ -124,8 +130,10 @@ async def get_timeline(
     date_from: str = Query(...),
     date_to: str = Query(...),
     interval: str = Query("week"),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
+    await verify_case_access(case_id, user, db)
     snapshots = await get_timeline_snapshots(case_id, date_from, date_to, interval)
     spikes = await detect_activity_spikes(case_id)
     
@@ -155,8 +163,10 @@ async def get_timeline(
 async def get_cross_case(
     case_id: str,
     entity_id: str,
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
+    await verify_case_access(case_id, user, db)
     matches = await find_cross_case_matches(entity_id, case_id)
     return {"matched_cases": matches}
 
@@ -164,8 +174,10 @@ async def get_cross_case(
 async def get_entity(
     case_id: str,
     entity_id: str,
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
+    await verify_case_access(case_id, user, db)
     result = await run_query("""
         MATCH (n {id: $entity_id, case_id: $case_id})
         OPTIONAL MATCH (n)-[r]-(connected {case_id: $case_id})
