@@ -14,7 +14,8 @@ neo4j
 networkx
 python-louvain
 scikit-learn
-torch
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.6.0+cpu
 torch-geometric
 sentence-transformers
 transformers

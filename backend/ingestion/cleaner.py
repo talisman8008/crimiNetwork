@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 from dateutil import parser as date_parser
 
 def clean_text(raw_text: str) -> str:
@@ -37,8 +38,13 @@ def normalize_date(date_str: str) -> str:
     if not date_str:
         return ""
     try:
-        # dateutil parser handles many formats
-        parsed_date = date_parser.parse(str(date_str), dayfirst=True)
+        value = str(date_str).strip()
+        # Never apply day-first parsing to an ISO date. dateutil otherwise reads
+        # 2026-06-10 as 6 October when dayfirst=True.
+        if re.match(r"^\d{4}-\d{2}-\d{2}", value):
+            return datetime.strptime(value[:10], "%Y-%m-%d").strftime("%Y-%m-%d")
+        # Indian CDR/FIR inputs such as 10/06/2026 remain day-first.
+        parsed_date = date_parser.parse(value, dayfirst=True)
         return parsed_date.strftime("%Y-%m-%d")
     except (ValueError, TypeError):
         return ""

@@ -53,6 +53,11 @@ async def process_file_background(job_id: str, file_path: str, source_type: str,
             else:
                 raise ValueError(f"Unknown source type: {source_type}")
 
+            # Parsers receive the generated storage path, but investigators need
+            # the original uploaded filename in graph evidence and RAG citations.
+            uploaded_file = await db.get(UploadedFile, job.file_id)
+            parsed_output["source_file"] = uploaded_file.filename if uploaded_file else os.path.basename(file_path)
+
             # Update to nlp
             job.status = "nlp"
             job.progress = 60
