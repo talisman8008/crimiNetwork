@@ -22,66 +22,66 @@ async def get_graph(
     db: AsyncSession = Depends(get_db)
 ):
     await verify_case_access(case_id, user, db)
-    type_filter = entity_types.split(",") if entity_types else None
+    type_filter = [t.upper() for t in entity_types.split(",")] if entity_types else None
     
-    if case_id == "all":
-        cypher = """
-            MATCH (n)
-            WHERE NOT n:Case
-            OPTIONAL MATCH (n)-[r]-(m)
-            WHERE type(r) <> 'PART_OF'
-            AND ($min_conf = 0 OR coalesce(r.confidence, 1.0) >= $min_conf)
-            RETURN DISTINCT n.id as id, n.name as label,
-                   labels(n)[0] as type,
-                   coalesce(n.pagerank, 0) as centrality,
-                   coalesce(n.community_id, 0) as community_id,
-                   coalesce(n.anomaly_score, 0) as anomaly_score,
-                   coalesce(n.confidence, 0.5) as confidence,
-                   coalesce(n.degree, 0) as connection_count
-        """
-        edge_cypher = """
-            MATCH (a)-[r]->(b)
-            WHERE type(r) <> 'PART_OF' AND NOT a:Case AND NOT b:Case
-            AND coalesce(r.confidence, 1.0) >= $min_conf
-            RETURN a.id + '_' + type(r) + '_' + b.id as id,
-                   a.id as source, b.id as target,
-                   type(r) as type,
-                   coalesce(r.confidence, 0.5) as confidence,
-                   coalesce(r.frequency, 1) as frequency,
-                   r.source_file as source_file,
-                   r.source_row as source_row,
-                   r.date as date
-        """
-        params = {"min_conf": min_confidence}
-    else:
-        cypher = """
-            MATCH (n {case_id: $case_id})
-            WHERE NOT n:Case
-            OPTIONAL MATCH (n)-[r]-(m {case_id: $case_id})
-            WHERE type(r) <> 'PART_OF'
-            AND ($min_conf = 0 OR coalesce(r.confidence, 1.0) >= $min_conf)
-            RETURN DISTINCT n.id as id, n.name as label,
-                   labels(n)[0] as type,
-                   coalesce(n.pagerank, 0) as centrality,
-                   coalesce(n.community_id, 0) as community_id,
-                   coalesce(n.anomaly_score, 0) as anomaly_score,
-                   coalesce(n.confidence, 0.5) as confidence,
-                   coalesce(n.degree, 0) as connection_count
-        """
-        edge_cypher = """
-            MATCH (a {case_id: $case_id})-[r]->(b {case_id: $case_id})
-            WHERE type(r) <> 'PART_OF'
-            AND coalesce(r.confidence, 1.0) >= $min_conf
-            RETURN a.id + '_' + type(r) + '_' + b.id as id,
-                   a.id as source, b.id as target,
-                   type(r) as type,
-                   coalesce(r.confidence, 0.5) as confidence,
-                   coalesce(r.frequency, 1) as frequency,
-                   r.source_file as source_file,
-                   r.source_row as source_row,
-                   r.date as date
-        """
-        params = {"case_id": case_id, "min_conf": min_confidence}
+    node_conditions = ["NOT n:Case"]
+    edge_conditions = ["NOT a:Case", "NOT b:Case", "type(r) <> 'PART_OF'", "coalesce(r.confidence, 1.0) >= $min_conf"]
+    
+    params = {"min_conf": min_confidence}
+
+    if case_id != "all":
+        node_conditions.append("n.case_id = $case_id")
+        edge_conditions.append("a.case_id = $case_id")
+        edge_conditions.append("b.case_id = $case_id")
+        params["case_id"] = case_id
+
+    if type_filter:
+        node_conditions.append("(toupper(labels(n)[0]) IN $types OR toupper(n.entity_type) IN $types)")
+        edge_conditions.append("(toupper(labels(a)[0]) IN $types OR toupper(a.entity_type) IN $types)")
+        edge_conditions.append("(toupper(labels(b)[0]) IN $types OR toupper(b.entity_type) IN $types)")
+        params["types"] = type_filter
+        
+    if community_id is not None:
+        node_conditions.append("coalesce(n.community_id, 0) = $community_id")
+        edge_conditions.append("coalesce(a.community_id, 0) = $community_id")
+        edge_conditions.append("coalesce(b.community_id, 0) = $community_id")
+        params["community_id"] = community_id
+        
+    if date_from:
+        edge_conditions.append("(r.date IS NULL OR r.date >= $date_from)")
+        params["date_from"] = date_from
+        
+    if date_to:
+        edge_conditions.append("(r.date IS NULL OR r.date <= $date_to)")
+        params["date_to"] = date_to
+
+    node_where = " AND ".join(node_conditions)
+    edge_where = " AND ".join(edge_conditions)
+    
+    cypher = f"""
+        MATCH (n)
+        WHERE {node_where}
+        RETURN DISTINCT n.id as id, n.name as label,
+               labels(n)[0] as type,
+               coalesce(n.pagerank, 0) as centrality,
+               coalesce(n.community_id, 0) as community_id,
+               coalesce(n.anomaly_score, 0) as anomaly_score,
+               coalesce(n.confidence, 0.5) as confidence,
+               coalesce(n.degree, 0) as connection_count
+    """
+    
+    edge_cypher = f"""
+        MATCH (a)-[r]->(b)
+        WHERE {edge_where}
+        RETURN a.id + '_' + type(r) + '_' + b.id as id,
+               a.id as source, b.id as target,
+               type(r) as type,
+               coalesce(r.confidence, 0.5) as confidence,
+               coalesce(r.frequency, 1) as frequency,
+               r.source_file as source_file,
+               r.source_row as source_row,
+               r.date as date
+    """
 
     nodes = await run_query(cypher, params)
     

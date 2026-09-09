@@ -349,3 +349,56 @@ async def test_graph_all_cases_supervisor_ok(client):
 
     resp = await client.get("/api/cases/all/graph", headers=headers)
     assert resp.status_code == 200
+
+
+# ──────────────── 8. Graph Filters & Validation ────────────────
+
+@pytest.mark.asyncio
+async def test_graph_filters_params(client):
+    """Test that graph filters are correctly passed to Neo4j query parameters."""
+    token = await get_token(client, "BADGE001", "password123")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    with patch("graph.router.run_query", new_callable=AsyncMock, return_value=[]) as mock_rq:
+        # Test entity_types
+        resp = await client.get("/api/cases/c-1/graph?entity_types=Person,Phone", headers=headers)
+        assert resp.status_code == 200
+        # run_query is called twice (nodes, edges)
+        assert mock_rq.call_args_list[0][0][1]["types"] == ["PERSON", "PHONE"]
+        assert mock_rq.call_args_list[1][0][1]["types"] == ["PERSON", "PHONE"]
+        
+        mock_rq.reset_mock()
+
+        # Test community_id
+        resp = await client.get("/api/cases/c-1/graph?community_id=42", headers=headers)
+        assert resp.status_code == 200
+        assert mock_rq.call_args_list[0][0][1]["community_id"] == 42
+        assert mock_rq.call_args_list[1][0][1]["community_id"] == 42
+        
+        mock_rq.reset_mock()
+
+        # Test dates
+        resp = await client.get("/api/cases/c-1/graph?date_from=2025-01-01&date_to=2025-12-31", headers=headers)
+        assert resp.status_code == 200
+        assert mock_rq.call_args_list[0][0][1]["date_from"] == "2025-01-01"
+        assert mock_rq.call_args_list[0][0][1]["date_to"] == "2025-12-31"
+
+@pytest.mark.asyncio
+async def test_alert_viewed_wrong_case_404(client):
+    """Marking an alert viewed for the wrong case should return 404."""
+    from alerts.service import create_alert
+    
+    alert = await create_alert("c-other", {
+        "severity": "LOW",
+        "title": "Wrong case alert",
+        "description": "desc",
+        "entity_ids": [],
+        "alert_type": "wrong_case",
+    })
+    
+    token = await get_token(client, "BADGE001", "password123")
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    # BADGE001 tries to mark it viewed on c-1 (which they own) but the alert is in c-other
+    resp = await client.patch(f"/api/cases/c-1/alerts/{alert.id}/viewed", headers=headers)
+    assert resp.status_code == 404
