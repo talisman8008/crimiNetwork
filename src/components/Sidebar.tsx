@@ -1,6 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import {
-  IconAlertTriangle,
   IconCamera,
   IconDatabase,
   IconFolder,
@@ -19,7 +18,6 @@ import { useAuth } from "../lib/auth";
 import { useActiveCase } from "../lib/activeCase";
 import { useOnboarding } from "../lib/onboarding";
 import { getCaseById } from "../data/mockData";
-import { alerts } from "../data/mockData";
 
 /** Every destination in one rail. Thirteen flat items would be a wall, so they are grouped by
  *  the question an officer is asking: where am I working, whose case is it, what is the evidence,
@@ -56,10 +54,9 @@ const groups: {
   },
   {
     label: "Oversight",
-    items: [
-      { to: "/alerts", label: "Alerts", icon: IconAlertTriangle },
-      { to: "/access-log", label: "Access Log", icon: IconLock },
-    ],
+    // Alerts is deliberately not here: it is reached from the notification bell, where its
+    // count lives, so a second entry in the rail was a duplicate. The /alerts route stays.
+    items: [{ to: "/access-log", label: "Access Log", icon: IconLock }],
   },
 ];
 
@@ -70,7 +67,6 @@ export default function Sidebar() {
   const navigate = useNavigate();
 
   const activeCase = activeCaseId ? getCaseById(activeCaseId) : undefined;
-  const openAlerts = alerts.filter((a) => a.status !== "dismissed").length;
 
   return (
     <aside className="sidebar">
@@ -120,9 +116,6 @@ export default function Sidebar() {
                 >
                   <Icon />
                   <span>{label}</span>
-                  {to === "/alerts" && openAlerts > 0 && (
-                    <span className="sidebar-badge">{openAlerts}</span>
-                  )}
                 </NavLink>
               ))}
             </div>
