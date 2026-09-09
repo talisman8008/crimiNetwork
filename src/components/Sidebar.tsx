@@ -71,10 +71,11 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <img src="/netra-logo.svg" alt="" />
+        <img src="/netra-logo.png" alt="" />
         <div>
           <strong>NETRA</strong>
-          <span>Ministry of Home Affairs</span>
+          <span>AI-POWERED CRIMINAL<br/>NETWORK ANALYSIS</span>
+          <span style={{ marginTop: '4px', fontSize: '8px', opacity: 0.8 }}>NCRB | MINISTRY OF HOME AFFAIRS</span>
         </div>
       </div>
 
