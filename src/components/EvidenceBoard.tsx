@@ -276,11 +276,16 @@ export default function EvidenceBoard({ caseId, entities }: EvidenceBoardProps) 
                 <div className="board-pin-body" style={{ pointerEvents: connectColor ? "none" : undefined }}>
                   {pin.type === "person" && (
                     <>
-                      <div
-                        className="board-pin-person-photo"
+                      <button
+                        type="button"
+                        className={`board-pin-person-photo ${pin.photo ? "has-photo" : ""}`}
                         style={pin.photo ? { backgroundImage: `url(${pin.photo})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+                        onPointerDown={(e) => e.stopPropagation()}
                         onClick={() => openPhotoPicker(pin.id)}
-                      />
+                        aria-label={pin.photo ? "Replace photograph" : "Add a photograph"}
+                      >
+                        {!pin.photo && <span>Add photo</span>}
+                      </button>
                       <input
                         value={pin.name ?? ""}
                         onChange={(e) => updatePin(pin.id, { name: e.target.value })}
