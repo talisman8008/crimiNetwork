@@ -31,3 +31,4 @@ datasets
 pytest
 pytest-asyncio
 httpx
+aiosqlite

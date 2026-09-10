@@ -83,3 +83,19 @@ class Alert(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     case = relationship("Case")
+
+class MergeReview(Base):
+    __tablename__ = "merge_reviews"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    case_id = Column(String(36), ForeignKey("cases.id"), nullable=False)
+    pair_id = Column(String(255), nullable=False)
+    entity_a_id = Column(String(255), nullable=False)
+    entity_b_id = Column(String(255), nullable=False)
+    decision = Column(String(20), nullable=False)
+    similarity = Column(Float, nullable=True)
+    reviewed_by = Column(String(50), nullable=True)
+    reviewed_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+    )

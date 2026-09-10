@@ -169,5 +169,5 @@ async def reject_entities(
     user=Depends(get_current_user),
 ):
     """Reject merge of two entities -- they stay separate."""
-    await reject_merge(request.pair_id)
+    await reject_merge(request.pair_id,case_id)
     return {"status": "rejected", "pair_id": request.pair_id}
