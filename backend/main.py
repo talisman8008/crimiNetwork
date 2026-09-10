@@ -1,5 +1,6 @@
 # backend/main.py
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from db.neo4j import create_schema
 from graph.router import router as graph_router
 from alerts.router import router as alerts_router
@@ -11,7 +12,13 @@ from nlp.router import router as nlp_router         # Dev 2
 from copilot.router import router as copilot_router # Dev 2
 
 app = FastAPI(title="Criminal Network Analysis API")
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 from db.database import engine, Base, AsyncSessionLocal
 from auth.service import seed_demo_users
 from cases.service import seed_demo_cases
