@@ -2,10 +2,12 @@ import { Outlet } from "react-router-dom";
 import CommandPalette from "./CommandPalette";
 import NotificationsPanel from "./NotificationsPanel";
 import CaseAssistantWidget from "./CaseAssistantWidget";
+import { useActiveCase } from "../lib/activeCase";
 import Sidebar from "./Sidebar";
 import GuidedTour from "./GuidedTour";
 
 export default function Layout() {
+  const { activeCaseId } = useActiveCase();
   return (
     <div className="app-shell">
       <Sidebar />
@@ -20,8 +22,9 @@ export default function Layout() {
         </main>
       </div>
       <CommandPalette />
-      <CaseAssistantWidget />
+
       <GuidedTour />
+      {activeCaseId && <CaseAssistantWidget caseId={activeCaseId} />}
     </div>
   );
 }

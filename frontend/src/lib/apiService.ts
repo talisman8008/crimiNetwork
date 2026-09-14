@@ -289,7 +289,7 @@ export async function fetchGraph(
 }
 
 export async function fetchAlerts(caseId: string): Promise<Alert[]> {
-    const raw = await apiGet<RawAlert[]>(`/api/alerts/cases/${caseId}/alerts`);
+    const raw = await apiGet<RawAlert[]>(`/api/cases/${caseId}/alerts`);
     return (raw ?? []).map(buildAlert);
 }
 
@@ -300,7 +300,7 @@ export async function markAlertViewed(
     alertId: string
 ): Promise<void> {
     const res = await fetch(
-        `${API_BASE}/api/alerts/cases/${caseId}/alerts/${alertId}/viewed`,
+        `${API_BASE}/api/cases/${caseId}/alerts/${alertId}/viewed`,
         {
             method: "PATCH",
             headers: {

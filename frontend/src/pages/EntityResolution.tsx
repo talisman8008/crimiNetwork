@@ -1,11 +1,15 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
-import { entities, getCaseById } from "../data/mockData";
-import { findMergeCandidates, type MergeDecision } from "../lib/entityResolution";
+import { getCaseById } from "../data/mockData";
+import type { MergeDecision } from "../lib/entityResolution";
 import { useLocalStorage } from "../lib/useLocalStorage";
 import { EntityIcon, formatDate, RiskBadge } from "../components/ui";
 import { useAuth } from "../lib/auth";
+import { useActiveCase } from "../lib/activeCase";
+import { useEntityResolutionQueue } from "../hooks/useCaseData";
+import { useCaseGraph } from "../hooks/useCaseData";
+import type { Entity } from "../data/types";
 
 interface DecisionRecord {
   decision: MergeDecision;
@@ -22,23 +26,35 @@ function today(): string {
  *  Nothing merges automatically. */
 export default function EntityResolution() {
   const { officerId } = useAuth();
+  const { activeCaseId } = useActiveCase();
+  const { queue, loading, error, approve, reject } = useEntityResolutionQueue(activeCaseId);
+  const { entities } = useCaseGraph(activeCaseId);
   const [decisions, setDecisions] = useLocalStorage<Record<string, DecisionRecord>>("netra-merge-decisions", {});
 
-  const candidates = useMemo(() => findMergeCandidates(entities), []);
-  const pending = candidates.filter((c) => !decisions[c.id]);
-  const resolved = candidates.filter((c) => decisions[c.id]);
+  // Resolve entity IDs from the backend pairs to full Entity objects via the loaded graph.
+  const byId = useMemo(() => {
+    const m = new Map<string, Entity>();
+    for (const e of entities) m.set(e.id, e);
+    return m;
+  }, [entities]);
 
-  function decide(id: string, decision: MergeDecision) {
+  const pairs = queue?.pairs ?? [];
+  const pending = pairs.filter((p) => !decisions[p.pair_id]);
+  const resolved = pairs.filter((p) => decisions[p.pair_id]);
+
+  function decide(pairId: string, decision: MergeDecision) {
     setDecisions((prev) => ({
       ...prev,
-      [id]: { decision, by: officerId ?? "unknown", at: today() },
+      [pairId]: { decision, by: officerId ?? "unknown", at: today() },
     }));
+    if (decision === "approved") approve(pairId);
+    else reject(pairId);
   }
 
-  function undo(id: string) {
+  function undo(pairId: string) {
     setDecisions((prev) => {
       const next = { ...prev };
-      delete next[id];
+      delete next[pairId];
       return next;
     });
   }
@@ -61,17 +77,37 @@ export default function EntityResolution() {
           same person. Nothing is merged until you confirm it.
         </p>
 
-        {pending.length === 0 && (
+        {!activeCaseId && (
+          <div className="card">
+            <div className="empty-state">Open a case to review its merge queue.</div>
+          </div>
+        )}
+
+        {activeCaseId && loading && (
+          <div className="card">
+            <div className="empty-state">Loading merge queue&hellip;</div>
+          </div>
+        )}
+
+        {activeCaseId && error && (
+          <div className="card">
+            <div className="empty-state">Could not load the merge queue: {error}</div>
+          </div>
+        )}
+
+        {activeCaseId && !loading && !error && pending.length === 0 && (
           <div className="card">
             <div className="empty-state">No candidate duplicates awaiting review.</div>
           </div>
         )}
 
-        {pending.map((c) => {
-          const pct = Math.round(c.confidence * 100);
+        {pending.map((p) => {
+          const primary = byId.get(p.entity_a);
+          const duplicate = byId.get(p.entity_b);
+          const pct = Math.round(p.similarity * 100);
           const band = pct >= 80 ? "high" : pct >= 65 ? "medium" : "low";
           return (
-            <div className="card" key={c.id} style={{ marginBottom: 16 }}>
+            <div className="card" key={p.pair_id} style={{ marginBottom: 16 }}>
               <div className="card-header">
                 <h2>Possible duplicate</h2>
                 <span className={`badge badge-risk-${band === "high" ? "high" : band === "medium" ? "medium" : "low"}`}>
@@ -83,39 +119,18 @@ export default function EntityResolution() {
                   <div className="merge-record">
                     <div className="merge-record-tag">Keep as primary</div>
                     <div className="merge-record-head">
-                      <EntityIcon type={c.primary.type} />
+                      {primary && <EntityIcon type={primary.type} />}
                       <div>
-                        <div className="merge-record-name">{c.primary.label}</div>
+                        <div className="merge-record-name">{primary?.label ?? p.entity_a}</div>
                         <div className="merge-record-sub">
-                          {c.primary.caseIds.map((id) => getCaseById(id)?.code).filter(Boolean).join(", ")}
+                          {(primary?.caseIds ?? []).map((id) => getCaseById(id)?.code).filter(Boolean).join(", ")}
                         </div>
                       </div>
                     </div>
                     <dl className="merge-fields">
-                      {c.primary.dob && (
-                        <>
-                          <dt>Date of birth</dt>
-                          <dd>{formatDate(c.primary.dob)}</dd>
-                        </>
-                      )}
-                      {c.primary.aliases?.length ? (
-                        <>
-                          <dt>Aliases</dt>
-                          <dd>{c.primary.aliases.join(", ")}</dd>
-                        </>
-                      ) : null}
-                      {c.primary.lastKnownLocation && (
-                        <>
-                          <dt>Location</dt>
-                          <dd>{c.primary.lastKnownLocation}</dd>
-                        </>
-                      )}
                       <dt>Risk</dt>
-                      <dd>
-                        <RiskBadge level={c.primary.riskLevel} />
-                      </dd>
+                      <dd>{primary ? <RiskBadge level={primary.riskLevel} /> : "-"}</dd>
                     </dl>
-                    {c.primary.notes && <p className="merge-record-note">{c.primary.notes}</p>}
                   </div>
 
                   <div className="merge-joiner">=?</div>
@@ -123,39 +138,18 @@ export default function EntityResolution() {
                   <div className="merge-record">
                     <div className="merge-record-tag merge-record-tag-dup">Would be merged in</div>
                     <div className="merge-record-head">
-                      <EntityIcon type={c.duplicate.type} />
+                      {duplicate && <EntityIcon type={duplicate.type} />}
                       <div>
-                        <div className="merge-record-name">{c.duplicate.label}</div>
+                        <div className="merge-record-name">{duplicate?.label ?? p.entity_b}</div>
                         <div className="merge-record-sub">
-                          {c.duplicate.caseIds.map((id) => getCaseById(id)?.code).filter(Boolean).join(", ")}
+                          {(duplicate?.caseIds ?? []).map((id) => getCaseById(id)?.code).filter(Boolean).join(", ")}
                         </div>
                       </div>
                     </div>
                     <dl className="merge-fields">
-                      {c.duplicate.dob && (
-                        <>
-                          <dt>Date of birth</dt>
-                          <dd>{formatDate(c.duplicate.dob)}</dd>
-                        </>
-                      )}
-                      {c.duplicate.aliases?.length ? (
-                        <>
-                          <dt>Aliases</dt>
-                          <dd>{c.duplicate.aliases.join(", ")}</dd>
-                        </>
-                      ) : null}
-                      {c.duplicate.lastKnownLocation && (
-                        <>
-                          <dt>Location</dt>
-                          <dd>{c.duplicate.lastKnownLocation}</dd>
-                        </>
-                      )}
                       <dt>Risk</dt>
-                      <dd>
-                        <RiskBadge level={c.duplicate.riskLevel} />
-                      </dd>
+                      <dd>{duplicate ? <RiskBadge level={duplicate.riskLevel} /> : "-"}</dd>
                     </dl>
-                    {c.duplicate.notes && <p className="merge-record-note">{c.duplicate.notes}</p>}
                   </div>
                 </div>
 
@@ -163,24 +157,28 @@ export default function EntityResolution() {
                   Why these were matched
                 </div>
                 <ul className="merge-signals">
-                  {c.signals.map((s) => (
-                    <li key={s.label} className={s.supports ? "supports" : "conflicts"}>
-                      <span className="merge-signal-mark">{s.supports ? "✓" : "✕"}</span>
-                      <span>
-                        <strong>{s.label}:</strong> {s.detail}
-                      </span>
-                    </li>
-                  ))}
+                  <li className="supports">
+                    <span className="merge-signal-mark">&#10003;</span>
+                    <span>
+                      <strong>Similarity:</strong> {pct}% match score
+                    </span>
+                  </li>
+                  <li className="supports">
+                    <span className="merge-signal-mark">&#10003;</span>
+                    <span>
+                      <strong>Suggested action:</strong> {p.suggested_action}
+                    </span>
+                  </li>
                 </ul>
 
                 <div className="merge-actions">
-                  <button className="btn btn-primary" onClick={() => decide(c.id, "approved")}>
+                  <button className="btn btn-primary" onClick={() => decide(p.pair_id, "approved")}>
                     Confirm same person
                   </button>
-                  <button className="btn" onClick={() => decide(c.id, "rejected")}>
+                  <button className="btn" onClick={() => decide(p.pair_id, "rejected")}>
                     Not the same
                   </button>
-                  <Link className="btn" to={`/profile/${c.duplicate.id}`}>
+                  <Link className="btn" to={`/profile/${p.entity_b}`}>
                     Inspect record
                   </Link>
                 </div>
@@ -205,12 +203,14 @@ export default function EntityResolution() {
                 </tr>
               </thead>
               <tbody>
-                {resolved.map((c) => {
-                  const d = decisions[c.id];
+                {resolved.map((p) => {
+                  const d = decisions[p.pair_id];
+                  const primary = byId.get(p.entity_a);
+                  const duplicate = byId.get(p.entity_b);
                   return (
-                    <tr key={c.id}>
+                    <tr key={p.pair_id}>
                       <td>
-                        {c.primary.label} &harr; {c.duplicate.label}
+                        {(primary?.label ?? p.entity_a)} &harr; {(duplicate?.label ?? p.entity_b)}
                       </td>
                       <td>
                         <span className={`badge ${d.decision === "approved" ? "badge-risk-low" : "badge-neutral"}`}>
@@ -222,7 +222,7 @@ export default function EntityResolution() {
                         {formatDate(d.at)}
                       </td>
                       <td style={{ textAlign: "right" }}>
-                        <button className="btn" onClick={() => undo(c.id)}>
+                        <button className="btn" onClick={() => undo(p.pair_id)}>
                           Undo
                         </button>
                       </td>

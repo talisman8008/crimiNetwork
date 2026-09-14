@@ -1,0 +1,107 @@
+FICTIONAL / SYNTHETIC DATA — FOR TESTING AND DEMONSTRATION PURPOSES ONLY
+All names, addresses, phone numbers, vehicle numbers, and events are entirely fictional.
+Any resemblance to real persons or real data is purely coincidental.
+
+========================================================================
+FIRST INFORMATION REPORT
+========================================================================
+
+FIR No.          : 0187/2026
+Police Station   : Kurla Police Station, Mumbai
+District         : Mumbai Suburban
+State            : Maharashtra
+
+Date of Occurrence : 19/03/2026
+Time of Occurrence : 14:40 hrs
+Date of Report     : 20/03/2026
+Time of Report     : 10:15 hrs
+
+------------------------------------------------------------------------
+COMPLAINANT DETAILS
+------------------------------------------------------------------------
+
+Name    : Deepak Marathe S/o Vishwas Marathe
+Address : Office No. 201, Marathe Transport Co., Kurla Station Road East,
+          Kurla East, Mumbai - 400024
+Phone   : +91-90000-00022
+
+------------------------------------------------------------------------
+ACCUSED DETAILS
+------------------------------------------------------------------------
+
+Accused No. 1:
+Name    : Rajan Kumar @ Raju
+S/o     : Late Suresh Kumar
+R/o     : Flat No. 204, Sai Krupa CHS, Four Bungalows,
+          Andheri West, Mumbai - 400053
+Phone   : +91-90000-22233
+
+Accused No. 2:
+Name    : Vikram Naik
+S/o     : Prakash Naik
+R/o     : Chawl No. 7, Kamani Nagar, Kurla West, Mumbai - 400070
+Phone   : +91-90000-55566
+
+------------------------------------------------------------------------
+SECTIONS APPLIED
+------------------------------------------------------------------------
+
+IPC Section 392 (Robbery)
+IPC Section 34 (Acts done by several persons in furtherance of
+                Common Intention)
+
+------------------------------------------------------------------------
+VEHICLE INVOLVED
+------------------------------------------------------------------------
+
+Vehicle No. : MH-03-CZ-8890
+Type        : Two-wheeler, motorcycle, black coloured
+Registered Owner: Suresh Gawde S/o Ramesh Gawde,
+                  R/o Chawl No. 3, Tagore Nagar, Kurla East,
+                  Mumbai - 400024
+                  Phone: +91-90000-77788
+Note: Registered owner Suresh Gawde states vehicle was borrowed by
+      accused Vikram Naik on the date of the incident.
+
+------------------------------------------------------------------------
+STATEMENT OF COMPLAINANT
+------------------------------------------------------------------------
+
+The complainant, Deepak Marathe, a transport contractor, states that
+on 19/03/2026 at approximately 14:40 hrs he was proceeding on foot
+from Kurla Station East towards his office carrying a cash collection
+bag containing Rs. 1,20,000.
+
+Two persons arrived on motorcycle no. MH-03-CZ-8890, one riding pillion.
+The pillion rider snatched the complainant's bag and the motorcycle sped
+away in the direction of LBS Marg. A local witness, Kamla Devi W/o
+Raju Devi, vegetable vendor near the station approach, states she heard
+the pillion rider being addressed as Raju by the other person on the
+motorcycle.
+
+Subsequently, from CCTV footage obtained from Kurla Station premises,
+the accused have been tentatively identified as Rajan Kumar @ Raju and
+Vikram Naik. Vehicle registration MH-03-CZ-8890 was traced to Suresh
+Gawde of Tagore Nagar, Kurla East, who upon questioning confirmed he
+had lent the motorcycle to Vikram Naik on the morning of 19/03/2026.
+
+Suresh Gawde is being examined further in connection with possible
+knowledge of the accused's intentions.
+
+Investigating officers note a possible linkage with FIR No. 0112/2026
+registered at Andheri Police Station, wherein the same first accused
+Rajan Kumar @ Raju Bhai is named. Said linkage is under examination.
+
+------------------------------------------------------------------------
+INVESTIGATING OFFICER
+------------------------------------------------------------------------
+
+Name   : Inspector Suhas Patil
+Badge  : MH-PI-2287
+Station: Kurla Police Station
+
+------------------------------------------------------------------------
+FIR registered at Kurla Police Station on 20/03/2026 at 10:15 hrs.
+CCTV footage secured. Suresh Gawde's statement being recorded.
+Vehicle MH-03-CZ-8890 seized for forensic examination.
+========================================================================

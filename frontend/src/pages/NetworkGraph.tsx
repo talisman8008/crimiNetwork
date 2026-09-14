@@ -4,6 +4,7 @@ import PageHeader from "../components/PageHeader";
 import GraphView2D, { typeColor as typeSwatch } from "../components/GraphView2D";
 import EntityDetailPanel from "../components/EntityDetailPanel";
 import EvidenceBoard from "../components/EvidenceBoard";
+import { useCaseGraph } from "../hooks/useCaseData";
 import {
   cases,
   entities,
@@ -57,7 +58,9 @@ export default function NetworkGraph() {
   const [timelineStep, setTimelineStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   const playTimer = useRef<number | null>(null);
-
+  const { entities: liveEntities, relationships: liveRelationships } = useCaseGraph(
+    caseId === "all" ? null : caseId
+  );
   const { workspaces, save: saveWorkspace } = useCaseWorkspaces();
   const restoredFor = useRef<string | null>(null);
 
@@ -101,19 +104,18 @@ export default function NetworkGraph() {
   }, [caseId, selectedId, relationType, sourceFilter, dateFrom, dateTo, activeTypes, tab, timelineOn, timelineStep, search]);
 
   const filteredEntities = useMemo(() => {
-    return entities.filter((e) => {
-      if (caseId !== "all" && !e.caseIds.includes(caseId)) return false;
+    return liveEntities.filter((e) => {
       if (!activeTypes.has(e.type)) return false;
       if (search && !e.label.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     });
-  }, [caseId, activeTypes, search]);
+  }, [liveEntities, activeTypes, search]);
 
   const filteredIds = useMemo(() => new Set(filteredEntities.map((e) => e.id)), [filteredEntities]);
 
   const filteredRelationships = useMemo(
     () =>
-      relationships.filter((r) => {
+      liveRelationships.filter((r) => {
         if (!filteredIds.has(r.source) || !filteredIds.has(r.target)) return false;
         if (relationType !== "all" && r.type !== relationType) return false;
         if (sourceFilter !== "all" && r.evidenceSource !== sourceFilter) return false;
@@ -121,7 +123,7 @@ export default function NetworkGraph() {
         if (dateTo && r.observedOn > dateTo) return false;
         return true;
       }),
-    [filteredIds, relationType, sourceFilter, dateFrom, dateTo],
+    [liveRelationships, filteredIds, relationType, sourceFilter, dateFrom, dateTo],
   );
 
   const communityResult = useMemo(

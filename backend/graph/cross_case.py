@@ -92,9 +92,20 @@ async def run_cross_case_scan_all():
             if matches:
                 from alerts.service import create_alert
                 for match in matches:
+                    matched_id = match["matched_entity"]["id"]
+                    await run_query("""
+                        MATCH (a {id: $a_id}), (b {id: $b_id})
+                        MERGE (a)-[r:SAME_AS]-(b)
+                        SET r.confidence = $conf, r.match_type = $mtype
+                    """, {
+                        "a_id": entity["id"],
+                        "b_id": matched_id,
+                        "conf": match["confidence"],
+                        "mtype": match["match_type"],
+                    })
                     await create_alert(case['case_id'], {
                         "severity": "HIGH",
-                        "title": f"Cross-case entity match detected",
+                        "title": "Cross-case entity match detected",
                         "description": (
                             f"Entity also appears in {match.get('case_name', match.get('matched_case_id'))} "
                             f"with {match['confidence']:.0%} confidence."

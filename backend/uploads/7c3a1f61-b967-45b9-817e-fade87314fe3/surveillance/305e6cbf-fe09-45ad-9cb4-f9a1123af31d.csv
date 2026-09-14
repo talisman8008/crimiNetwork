@@ -1,0 +1,7 @@
+report_id,case_id,report_date,report_time,location,observed_persons,vehicle_numbers,activity_description,reporting_officer,duration_minutes,confidence,source_file
+SR001,CASE_001,2026-03-11,21:40,Mankhurd Bus Depot,Vikram,MH-03-CT-1120,Subject observed meeting two associates near depot gate; brief exchange of a bag,SI R. Kadam,25,0.70,surveillance_2026.csv
+SR002,CASE_001,2026-03-12,23:05,Shivaji Nagar Chowk,"Rajan, unidentified male",,Rajan seen conversing with an unidentified male near tea stall; male left on foot toward Govandi station,ASI P. Naik,18,0.70,surveillance_2026.csv
+SR003,CASE_001,2026-03-13,20:15,Chembur Naka,Unidentified occupants,MH-02-BQ-4471,Vehicle parked for extended period with engine running; two occupants remained inside,SI R. Kadam,40,0.70,surveillance_2026.csv
+SR004,CASE_001,2026-03-14,22:50,Dharavi Naka,"Rajan, Vikram",MH-03-CT-1120,Both subjects observed together near naka discussing near a parked auto-rickshaw stand,PSI M. Deshmukh,30,0.70,surveillance_2026.csv
+SR005,CASE_001,2026-03-15,19:30,Mankhurd Bus Depot,Vikram,,Subject seen loitering near depot entrance before boarding a local bus,ASI P. Naik,15,0.70,surveillance_2026.csv
+SR006,CASE_001,2026-03-16,21:10,Govandi Railway Station,"Rajan, unidentified male",,Follow-up sighting of Rajan with same unidentified male from earlier report; both entered station together,SI R. Kadam,22,0.70,surveillance_2026.csv

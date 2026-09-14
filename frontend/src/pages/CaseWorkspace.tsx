@@ -2,11 +2,8 @@ import { Link, useNavigate } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 import {
   alerts,
-  cases,
-  entitiesForCase,
   getCaseById,
   linkedCasesFor,
-  relationshipsForCase,
   topConnectedEntities,
 } from "../data/mockData";
 import { courtDatesForCase } from "../data/courtData";
@@ -16,6 +13,7 @@ import { eventsForCase } from "../data/timelineData";
 import { caseStatusColor, EntityIcon, formatDate, RiskBadge, SeverityBadge } from "../components/ui";
 import EventTimeline from "../components/EventTimeline";
 import { useActiveCase } from "../lib/activeCase";
+import { useCase, useCaseGraph, useCases } from "../hooks/useCaseData";
 import { IconChevronRight } from "../components/icons";
 
 const severityColor: Record<string, string> = {
@@ -39,12 +37,14 @@ function initials(name: string): string {
 export default function CaseWorkspace() {
   const { activeCaseId, openCase } = useActiveCase();
   const navigate = useNavigate();
-  const c = activeCaseId ? getCaseById(activeCaseId) : undefined;
+  const { cases } = useCases();
+  const { case: c, loading: caseLoading } = useCase(activeCaseId);
+  const { entities: caseEntities, relationships: caseLinks } = useCaseGraph(activeCaseId);
 
   if (!c) {
     return (
       <>
-        <PageHeader eyebrow="Workspace" title="No case open" />
+        <PageHeader eyebrow="Workspace" title={caseLoading ? "Loading case…" : "No case open"} />
         <div className="content">
           <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 18, maxWidth: "60ch" }}>
             Open a case to bring its people, alerts, hearings and recorded activity together here.
@@ -72,8 +72,6 @@ export default function CaseWorkspace() {
     );
   }
 
-  const caseEntities = entitiesForCase(c.id);
-  const caseLinks = relationshipsForCase(c.id);
   const team = officersForCase(c.id);
   const caseAlerts = alerts.filter((a) => a.caseId === c.id && a.status !== "dismissed");
   const hearings = courtDatesForCase(c.id);

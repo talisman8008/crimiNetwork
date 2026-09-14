@@ -1,12 +1,14 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
-import { cases, crossCaseEntities, entitiesForCase, getCaseById, linkedCasesFor, relationshipsForCase } from "../data/mockData";
+import { crossCaseEntities, entitiesForCase, getCaseById, linkedCasesFor, relationshipsForCase } from "../data/mockData";
 import { caseStatusColor, EntityIcon, formatDate, RiskBadge } from "../components/ui";
 import { IconChevronRight } from "../components/icons";
 import { courtDatesForCase } from "../data/courtData";
 import { officersForCase } from "../data/officersData";
 import { describeWorkspace, useCaseWorkspaces } from "../lib/caseWorkspace";
 import { getEntityById as lookupEntity } from "../data/mockData";
+import { useCases } from "../hooks/useCaseData";
+import { useActiveCase } from "../lib/activeCase";
 
 const priorityColor: Record<string, string> = {
   high: "var(--risk-high)",
@@ -15,13 +17,23 @@ const priorityColor: Record<string, string> = {
 };
 
 export default function Cases() {
+  const { cases, loading, error } = useCases();
+  const { openCase } = useActiveCase();
+  const navigate = useNavigate();
   const bridgeEntities = crossCaseEntities();
   const { workspaces } = useCaseWorkspaces();
+
+  function handleOpen(caseId: string) {
+    openCase(caseId);
+    navigate(`/network?case=${caseId}`);
+  }
 
   return (
     <>
       <PageHeader eyebrow="Investigations" title="Cases" />
       <div className="content">
+        {loading && <div className="empty-state">Loading cases&hellip;</div>}
+        {error && <div className="empty-state">Could not load cases: {error}</div>}
         {bridgeEntities.length > 0 && (
           <div className="card" style={{ marginBottom: 20 }}>
             <div className="card-header">
@@ -235,10 +247,10 @@ export default function Cases() {
                       <Link to={`/dossier/${c.id}`} className="btn" target="_blank" rel="noopener noreferrer">
                         Print dossier
                       </Link>
-                      <Link to={`/network?case=${c.id}`} className="btn btn-primary">
+                      <button onClick={() => handleOpen(c.id)} className="btn btn-primary">
                         {workspaces[c.id] ? "Resume case" : "Open in graph"}
                         <IconChevronRight />
-                      </Link>
+                      </button>
                     </div>
                   </div>
                 </div>

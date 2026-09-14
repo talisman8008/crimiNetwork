@@ -214,3 +214,45 @@ async def get_entity(
             "centrality_rank": node.get('pagerank_percentile', 0),
         }
     }
+
+@router.get("/cases/{case_id}/cross-case")
+async def get_case_cross_links(
+    case_id: str,
+    user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    await verify_case_access(case_id, user, db)
+    rows = await run_query("""
+        MATCH (a {case_id: $case_id})-[r:SAME_AS]-(b)
+        WHERE b.case_id <> $case_id
+        OPTIONAL MATCH (c:Case {id: b.case_id})
+        RETURN a.id AS entity_id, a.name AS entity_name,
+               b.id AS matched_id, b.name AS matched_name,
+               b.case_id AS other_case_id,
+               coalesce(c.name, b.case_id) AS other_case_name,
+               r.confidence AS confidence, r.match_type AS match_type
+        ORDER BY r.confidence DESC
+    """, {"case_id": case_id})
+    return {"links": rows}
+@router.get("/cases/{case_id}/linked")
+async def get_linked_cases(
+    case_id: str,
+    user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    await verify_case_access(case_id, user, db)
+    rows = await run_query("""
+        MATCH (a {case_id: $case_id})-[r:SAME_AS]-(b)
+        WHERE b.case_id <> $case_id
+        RETURN b.case_id AS other_case_id,
+               collect(DISTINCT {
+                   entity_id: a.id,
+                   entity_name: a.name,
+                   matched_id: b.id,
+                   matched_name: b.name,
+                   confidence: r.confidence
+               }) AS shared_entities,
+               count(DISTINCT a.id) AS shared_count
+        ORDER BY shared_count DESC
+    """, {"case_id": case_id})
+    return {"linked_cases": rows}    

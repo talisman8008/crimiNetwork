@@ -1,0 +1,113 @@
+FICTIONAL / SYNTHETIC DATA — FOR TESTING AND DEMONSTRATION PURPOSES ONLY
+All names, addresses, phone numbers, vehicle numbers, and events are entirely fictional.
+Any resemblance to real persons or real data is purely coincidental.
+
+========================================================================
+FIRST INFORMATION REPORT
+========================================================================
+
+FIR No.          : 0441/2026
+Police Station   : Malad Police Station, Mumbai
+District         : Mumbai Suburban
+State            : Maharashtra
+Case ID          : CASE_002
+
+Date of Occurrence : 03/08/2026
+Time of Occurrence : 20:00 hrs (approx)
+Date of Report     : 04/08/2026
+Time of Report     : 14:20 hrs
+
+------------------------------------------------------------------------
+COMPLAINANT DETAILS
+------------------------------------------------------------------------
+
+Name    : Inspector Firoz Khan (Acting on information received)
+Badge   : MH-PI-7743
+Station : Malad Police Station
+
+------------------------------------------------------------------------
+ACCUSED DETAILS
+------------------------------------------------------------------------
+
+Accused No. 1:
+Name    : Imran Sheikh @ Immu Sheikh
+S/o     : Yakub Sheikh
+R/o     : Room No. 12, Azad Nagar, Andheri West, Mumbai - 400058
+Phone   : +91-90000-33344
+
+(NOTE FOR INVESTIGATORS: This is the same Imran Sheikh named in
+FIR Nos. 0112/2026 and 0245/2026 at Andheri and Dadar PS respectively.
+Cross-case linkage to be examined by Crime Branch.)
+
+Accused No. 2:
+Name    : Salim Qureshi @ Salim Bhai
+S/o     : Altaf Qureshi
+R/o     : Room No. 8, Noor Manzil, Link Road, Malad West,
+          Mumbai - 400064
+Phone   : +91-90000-99911
+
+------------------------------------------------------------------------
+SECTIONS APPLIED
+------------------------------------------------------------------------
+
+NDPS Act Section 8(c) (Prohibition — production, manufacture, possession,
+                        sale, purchase, transport of narcotic drugs)
+NDPS Act Section 21 (Punishment for contravention in relation to
+                     manufactured drugs and preparations)
+NDPS Act Section 29 (Abetment and criminal conspiracy)
+
+------------------------------------------------------------------------
+VEHICLE INVOLVED
+------------------------------------------------------------------------
+
+Vehicle No. : MH-07-KL-3305
+Type        : Two-wheeler, black coloured motorcycle
+
+------------------------------------------------------------------------
+CIRCUMSTANCES
+------------------------------------------------------------------------
+
+On the basis of specific information received on 03/08/2026 regarding
+movement of contraband near the Malad West Link Road area, Inspector
+Firoz Khan MH-PI-7743 led a raiding party comprising Sub-Inspector
+Rekha Nair MH-PSI-9921 and Head Constable Dinesh More MH-HC-1145.
+
+The accused Imran Sheikh and Salim Qureshi were intercepted at
+approximately 20:00 hrs near Evershine Nagar, Malad West, arriving
+on motorcycle no. MH-07-KL-3305. Upon search in the presence of
+independent panchas, a total of 480 grams of a white powdery substance
+suspected to be a manufactured narcotic drug was recovered from a
+concealed carrier bag in possession of the accused Salim Qureshi.
+
+The second accused Imran Sheikh was found in possession of a mobile
+phone with call records showing repeated communication with Salim
+Qureshi over the preceding fortnight. The mobile phone bearing number
++91-90000-33344, registered in the name of Imran Sheikh, is seized
+as material evidence.
+
+The recovered substance has been sent to the Government Chemical
+Analyser for examination and confirmation. Both accused have been
+placed under arrest under the provisions of the NDPS Act.
+
+Subsequent inquiries reveal that the accused Imran Sheikh has been
+previously named in FIR No. 0112/2026 at Andheri Police Station
+(Sections 384 and 506 IPC) and FIR No. 0245/2026 at Dadar Police
+Station (Sections 420 and 120B IPC). Crime Branch has been informed
+and a request for consolidated investigation is under consideration.
+
+Salim Qureshi has no prior criminal record on file at this station.
+His antecedents and associates are being verified.
+
+------------------------------------------------------------------------
+INVESTIGATING OFFICER
+------------------------------------------------------------------------
+
+Name   : Inspector Firoz Khan
+Badge  : MH-PI-7743
+Station: Malad Police Station
+
+------------------------------------------------------------------------
+FIR No. 0441/2026 registered at Malad Police Station on 04/08/2026
+at 14:20 hrs. Both accused in judicial custody. Recovered substance
+sent for chemical analysis. Crime Branch informed of cross-case links.
+========================================================================

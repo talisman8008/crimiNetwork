@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
+  IconAlertTriangle,
   IconCamera,
   IconDatabase,
   IconFolder,
@@ -17,56 +19,73 @@ import {
 import { useAuth } from "../lib/auth";
 import { useActiveCase } from "../lib/activeCase";
 import { useOnboarding } from "../lib/onboarding";
-import { getCaseById } from "../data/mockData";
+import { cases, getCaseById } from "../data/mockData";
 
-/** Every destination in one rail. Thirteen flat items would be a wall, so they are grouped by
- *  the question an officer is asking: where am I working, whose case is it, what is the evidence,
- *  and who touched the system. */
-const groups: {
-  label: string;
-  items: { to: string; label: string; icon: typeof IconGrid; end?: boolean; supervisorOnly?: boolean }[];
-}[] = [
-  {
-    label: "Analysis",
-    items: [
-      { to: "/workspace", label: "Workspace", icon: IconFolder },
-      { to: "/network", label: "Network", icon: IconNetwork },
-      { to: "/", label: "Dashboard", icon: IconGrid, end: true },
-      { to: "/entities", label: "Database", icon: IconDatabase },
-    ],
-  },
-  {
-    label: "Casework",
-    items: [
-      { to: "/cases", label: "Cases", icon: IconFolder },
-      { to: "/court-dates", label: "Court Dates", icon: IconScale },
-      { to: "/resolution", label: "Merge Review", icon: IconUsers },
-      { to: "/supervisor", label: "Oversight", icon: IconShield, supervisorOnly: true },
-    ],
-  },
-  {
-    label: "Evidence",
-    items: [
-      { to: "/map", label: "Location Map", icon: IconMapPin },
-      { to: "/cctv", label: "CCTV Footage", icon: IconCamera },
-      { to: "/sources", label: "Data Sources", icon: IconDatabase },
-    ],
-  },
-  {
-    label: "Oversight",
-    // Alerts is deliberately not here: it is reached from the notification bell, where its
-    // count lives, so a second entry in the rail was a duplicate. The /alerts route stays.
-    items: [{ to: "/access-log", label: "Access Log", icon: IconLock }],
-  },
+type NavItem = { to: string; label: string; icon: typeof IconGrid; end?: boolean; supervisorOnly?: boolean };
+
+/** Case-scoped tools — only rendered when an investigation is open. */
+const investigateItems: NavItem[] = [
+  { to: "/workspace", label: "Workspace", icon: IconFolder },
+  { to: "/network", label: "Network Graph", icon: IconNetwork },
+  { to: "/map", label: "Location Map", icon: IconMapPin },
+  { to: "/alerts", label: "Alerts", icon: IconAlertTriangle },
+  { to: "/resolution", label: "Merge Review", icon: IconUsers },
 ];
+
+/** Always-visible pages that work without an active case or have their own case filters. */
+const commandCenterItems: NavItem[] = [
+  { to: "/", label: "Dashboard", icon: IconGrid, end: true },
+  { to: "/cases", label: "Cases", icon: IconFolder },
+  { to: "/court-dates", label: "Court Calendar", icon: IconScale },
+  { to: "/cctv", label: "CCTV Footage", icon: IconCamera },
+  { to: "/entities", label: "Entity Registry", icon: IconSearch },
+];
+
+/** Infrastructure, compliance, and supervisor tools. */
+const administrationItems: NavItem[] = [
+  { to: "/supervisor", label: "Supervisor Console", icon: IconShield, supervisorOnly: true },
+  { to: "/sources", label: "Data Sources", icon: IconDatabase },
+  { to: "/access-log", label: "Access Log", icon: IconLock },
+];
+
+function NavGroup({
+  label,
+  items,
+  role,
+}: {
+  label: string;
+  items: NavItem[];
+  role: string;
+}) {
+  const visible = items.filter((i) => !i.supervisorOnly || role === "supervisor");
+  if (visible.length === 0) return null;
+  return (
+    <div className="sidebar-group">
+      <div className="sidebar-group-label">{label}</div>
+      {visible.map(({ to, label: linkLabel, icon: Icon, end }) => (
+        <NavLink
+          key={to}
+          to={to}
+          end={end}
+          className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}
+        >
+          <Icon />
+          <span>{linkLabel}</span>
+        </NavLink>
+      ))}
+    </div>
+  );
+}
 
 export default function Sidebar() {
   const { role, logout } = useAuth();
-  const { activeCaseId, closeCase } = useActiveCase();
+  const { activeCaseId, openCase, closeCase } = useActiveCase();
   const { startTour } = useOnboarding();
   const navigate = useNavigate();
+  const [switcherOpen, setSwitcherOpen] = useState(false);
 
   const activeCase = activeCaseId ? getCaseById(activeCaseId) : undefined;
+  const otherCases = cases.filter((c) => c.id !== activeCaseId);
 
   return (
     <aside className="sidebar">
@@ -87,41 +106,69 @@ export default function Sidebar() {
       {activeCase && (
         <div className="sidebar-case">
           <div className="sidebar-case-label">Working on</div>
-          <div className="sidebar-case-code mono">{activeCase.code}</div>
           <button
-            className="sidebar-case-close"
-            onClick={() => {
-              closeCase();
-              navigate("/");
-            }}
-            aria-label="Close case and return to caseload"
+            className="sidebar-case-code mono"
+            onClick={() => navigate("/workspace")}
+            title="Go to workspace"
           >
-            <IconX />
+            {activeCase.code}
           </button>
+          <div className="sidebar-case-title">{activeCase.title}</div>
+          <div className="sidebar-case-actions">
+            <button
+              className="sidebar-case-action"
+              onClick={() => setSwitcherOpen(!switcherOpen)}
+              aria-expanded={switcherOpen}
+              aria-label="Switch case"
+            >
+              ⇄ Switch
+            </button>
+            <button
+              className="sidebar-case-action sidebar-case-action--close"
+              onClick={() => {
+                closeCase();
+                setSwitcherOpen(false);
+                navigate("/");
+              }}
+              aria-label="Close case and return to dashboard"
+            >
+              ✕ Close
+            </button>
+          </div>
+
+          {switcherOpen && otherCases.length > 0 && (
+            <div className="sidebar-case-switcher">
+              <div className="sidebar-case-switcher-label">Switch to</div>
+              {otherCases.map((c) => (
+                <button
+                  key={c.id}
+                  className="sidebar-case-switcher-item"
+                  onClick={() => {
+                    openCase(c.id);
+                    setSwitcherOpen(false);
+                    navigate("/workspace");
+                  }}
+                >
+                  <span className="mono sidebar-case-switcher-code">{c.code}</span>
+                  <span className="sidebar-case-switcher-title">{c.title}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       <nav className="sidebar-nav" aria-label="Main navigation">
-        {groups.map((group) => {
-          const items = group.items.filter((i) => !i.supervisorOnly || role === "supervisor");
-          if (items.length === 0) return null;
-          return (
-            <div key={group.label} className="sidebar-group">
-              <div className="sidebar-group-label">{group.label}</div>
-              {items.map(({ to, label, icon: Icon, end }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  end={end}
-                  className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}
-                >
-                  <Icon />
-                  <span>{label}</span>
-                </NavLink>
-              ))}
-            </div>
-          );
-        })}
+        {/* ── Investigate: only when a case is open ── */}
+        {activeCaseId && (
+          <NavGroup label="Investigate" items={investigateItems} role={role} />
+        )}
+
+        {/* ── Command Center: always available ── */}
+        <NavGroup label="Command Center" items={commandCenterItems} role={role} />
+
+        {/* ── Administration: infra & compliance ── */}
+        <NavGroup label="Administration" items={administrationItems} role={role} />
       </nav>
 
       <div className="sidebar-foot">
@@ -149,3 +196,4 @@ export default function Sidebar() {
     </aside>
   );
 }
+

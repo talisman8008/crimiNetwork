@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { alerts as allAlerts } from "../data/mockData";
 import { upcomingCourtDates } from "../data/courtData";
 import { formatDate, SeverityBadge } from "./ui";
 import { IconBell, IconScale } from "./icons";
 import type { AlertSeverity } from "../data/types";
+import { useActiveCase } from "../lib/activeCase";
+import { useCaseAlerts } from "../hooks/useCaseData";
 
 const severityOrder: Record<AlertSeverity, number> = { high: 0, medium: 1, low: 2 };
 
@@ -14,8 +15,10 @@ export default function NotificationsPanel() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
+  const { activeCaseId } = useActiveCase();
+  const { alerts, loading: alertsLoading, error: alertsError } = useCaseAlerts(activeCaseId);
 
-  const activeAlerts = allAlerts
+  const activeAlerts = alerts
     .filter((a) => a.status !== "dismissed")
     .sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity] || (a.detectedOn < b.detectedOn ? 1 : -1))
     .slice(0, 5);
@@ -58,8 +61,13 @@ export default function NotificationsPanel() {
               <span className="notif-col-count">{activeAlerts.length}</span>
             </div>
             <div className="notif-col-body">
-              {activeAlerts.length === 0 && <div className="notif-empty">No active alerts.</div>}
-              {activeAlerts.map((a) => (
+              {!activeCaseId && <div className="notif-empty">No active case</div>}
+              {activeCaseId && alertsLoading && <div className="notif-empty">Loading alerts&hellip;</div>}
+              {activeCaseId && !alertsLoading && alertsError && <div className="notif-empty">Could not load alerts.</div>}
+              {activeCaseId && !alertsLoading && !alertsError && activeAlerts.length === 0 && (
+                <div className="notif-empty">No active alerts.</div>
+              )}
+              {activeCaseId && !alertsLoading && !alertsError && activeAlerts.map((a) => (
                 <button key={a.id} className="notif-row" onClick={() => go("/alerts")}>
                   <SeverityBadge severity={a.severity} />
                   <div className="notif-row-body">
@@ -71,7 +79,7 @@ export default function NotificationsPanel() {
                 </button>
               ))}
             </div>
-            {activeAlerts.length > 0 && (
+            {activeCaseId && !alertsLoading && !alertsError && activeAlerts.length > 0 && (
               <button className="notif-col-foot" onClick={() => go("/alerts")}>
                 View all alerts
               </button>

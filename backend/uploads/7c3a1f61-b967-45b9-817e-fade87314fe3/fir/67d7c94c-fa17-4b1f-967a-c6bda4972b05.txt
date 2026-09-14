@@ -1,0 +1,112 @@
+FICTIONAL / SYNTHETIC DATA — FOR TESTING AND DEMONSTRATION PURPOSES ONLY
+All names, addresses, phone numbers, vehicle numbers, and events are entirely fictional.
+Any resemblance to real persons or real data is purely coincidental.
+
+========================================================================
+FIRST INFORMATION REPORT
+========================================================================
+
+FIR No.          : 0334/2026
+Police Station   : Govandi Police Station, Mumbai
+District         : Mumbai Suburban
+State            : Maharashtra
+
+Date of Occurrence : 08/07/2026
+Time of Occurrence : 02:15 hrs
+Date of Report     : 09/07/2026
+Time of Report     : 06:30 hrs
+
+------------------------------------------------------------------------
+INFORMANT DETAILS
+------------------------------------------------------------------------
+
+Name    : Head Constable Rajendra Yadav
+Badge   : MH-HC-8821
+Station : Govandi Police Station
+
+(Note: FIR registered on basis of police action following tip-off;
+ no separate civilian complainant.)
+
+------------------------------------------------------------------------
+ACCUSED DETAILS
+------------------------------------------------------------------------
+
+Accused No. 1:
+Name    : Vikram Naik
+S/o     : Prakash Naik
+R/o     : Chawl No. 7, Kamani Nagar, Kurla West, Mumbai - 400070
+Phone   : +91-90000-55566
+
+Accused No. 2:
+Name    : Rajan Kumar @ Raju Bhai @ Rajan
+S/o     : Late Suresh Kumar
+R/o     : Flat No. 204, Sai Krupa CHS, Four Bungalows,
+          Andheri West, Mumbai - 400053
+Phone   : +91-90000-11122
+
+------------------------------------------------------------------------
+SECTIONS APPLIED
+------------------------------------------------------------------------
+
+IPC Section 399 (Making preparation to commit robbery or dacoity)
+IPC Section 402 (Assembling for purpose of committing dacoity)
+
+------------------------------------------------------------------------
+VEHICLE INTERCEPTED
+------------------------------------------------------------------------
+
+Vehicle No. : MH-02-GH-9915
+Type        : Four-wheeler, grey coloured van
+Driver      : Arun Tawde S/o Ganesh Tawde, R/o Chawl No. 2,
+              Motilal Nagar, Goregaon West, Mumbai - 400104
+              Phone: +91-90000-88811
+
+------------------------------------------------------------------------
+CIRCUMSTANCES OF ARREST
+------------------------------------------------------------------------
+
+Acting on a tip-off received at approximately 01:30 hrs on 09/07/2026,
+a police party led by Inspector Kamalkar Shinde MH-PI-6630 and including
+Head Constable Rajendra Yadav MH-HC-8821 intercepted vehicle no.
+MH-02-GH-9915 at the junction of Shivaji Nagar Road and Pipeline Road,
+Govandi, at approximately 02:15 hrs.
+
+The vehicle was found to contain the following:
+- Three iron rods approximately 2 feet in length
+- Two country-made cutting tools
+- One black polythene bag containing nylon rope
+- A handwritten sketch which appears to depict the layout of
+  premises in the vicinity of a fictional warehouse at MIDC,
+  Andheri East (not named for operational reasons)
+
+The two accused, Vikram Naik and Rajan Kumar @ Raju Bhai, were
+found in the vehicle along with driver Arun Tawde. All three were
+taken into custody for questioning. Recovered items have been listed
+in the panchnama drawn up at the scene in the presence of independent
+witnesses: Shyam Lal S/o Haridas Lal, and Govind Parab S/o Narayan
+Parab, both of Govandi.
+
+Investigating officers note that the driver Arun Tawde was previously
+encountered as the driver of vehicle MH-02-BQ-4471 in connection with
+FIR No. 0112/2026 (Andheri PS) and vehicle MH-04-EF-6602 in connection
+with FIR No. 0298/2026 (Bandra PS). His repeated association with the
+accused persons is being examined.
+
+All three accused are being held for questioning. Coordination with
+Andheri, Kurla, Dadar, and Bandra Police Stations is underway to
+examine links to FIR Nos. 0112, 0187, 0245, and 0298 as part of
+the same organised criminal group.
+
+------------------------------------------------------------------------
+INVESTIGATING OFFICER
+------------------------------------------------------------------------
+
+Name   : Inspector Kamalkar Shinde
+Badge  : MH-PI-6630
+Station: Govandi Police Station
+
+------------------------------------------------------------------------
+FIR registered at Govandi Police Station on 09/07/2026 at 06:30 hrs.
+Recovered materials sent to forensic laboratory.
+Panchnama on record. All three accused in police custody.
+========================================================================

@@ -1,0 +1,16 @@
+record_id,case_id,platform,username,display_name,post_date,post_time,content,post_url,location_tagged,mentions,hashtags,phone_in_bio,confidence,source_file
+REC_001,CASE_001,Instagram,raju_bhai_official,Rajan Kumar,2026-06-08,09:15,"Early business meeting. Long day ahead.",instagram.com/p/fake101,"Bandra, Mumbai",,,,0.45,social_intel_2026.csv
+REC_002,CASE_001,Facebook,immu_sheikh,Imran Sheikh,2026-06-08,09:32,"Meeting done. Now waiting for the next delivery.",facebook.com/posts/fake102,"Bandra, Mumbai",,,+91-90000-44455,0.45,social_intel_2026.csv
+REC_003,CASE_001,Twitter/X,vikram_nk,Vikram Naik,2026-06-09,18:40,"Collections took longer than expected today.",x.com/vikram_nk/status/fake103,"Andheri, Mumbai",,,,0.45,social_intel_2026.csv
+REC_004,CASE_001,Instagram,raju_bhai_official,Rajan Kumar,2026-06-10,14:05,"Another delivery sorted. Moving on.",instagram.com/p/fake104,"Andheri, Mumbai",@vikram_nk,#workmode,,0.45,social_intel_2026.csv
+REC_005,CASE_001,Twitter/X,vikram_nk,Vikram Naik,2026-06-10,14:18,"Good meeting. Things are moving as planned.",x.com/vikram_nk/status/fake105,"Andheri, Mumbai",@raju_bhai_official,#business,,0.45,social_intel_2026.csv
+REC_006,CASE_001,Facebook,immu_sheikh,Imran Sheikh,2026-06-11,20:10,"Busy with collections and a few people to meet.",facebook.com/posts/fake106,"Kurla, Mumbai",,,+91-90000-44455,0.45,social_intel_2026.csv
+REC_007,CASE_001,Instagram,raju_bhai_official,Rajan Kumar,2026-06-12,11:25,"Quiet place for an important business discussion.",instagram.com/p/fake107,"Bandra, Mumbai",,,,0.45,social_intel_2026.csv
+REC_008,CASE_001,Facebook,immu_sheikh,Imran Sheikh,2026-06-12,11:41,"Some meetings don't need too many words.",facebook.com/posts/fake108,"Bandra, Mumbai",,,+91-90000-44455,0.45,social_intel_2026.csv
+REC_009,CASE_001,Twitter/X,vikram_nk,Vikram Naik,2026-06-13,16:30,"Delivery schedule changed again. Adjusting.",x.com/vikram_nk/status/fake109,"Bandra, Mumbai",,,,0.45,social_intel_2026.csv
+REC_010,CASE_001,Instagram,raju_bhai_official,Rajan Kumar,2026-06-13,16:47,"Met the right people. That's enough for today.",instagram.com/p/fake110,"Bandra, Mumbai",@vikram_nk,#meeting,,0.45,social_intel_2026.csv
+REC_011,CASE_001,Facebook,immu_sheikh,Imran Sheikh,2026-06-14,08:55,"Morning collection before the city gets busy.",facebook.com/posts/fake111,"Bandra, Mumbai",,,+91-90000-44455,0.45,social_intel_2026.csv
+REC_012,CASE_001,Instagram,raju_bhai_official,Rajan Kumar,2026-06-14,09:10,"One last meeting. Then switching off for a while.",instagram.com/p/fake112,"Bandra, Mumbai",,,,0.45,social_intel_2026.csv
+REC_013,CASE_001,Twitter/X,vikram_nk,Vikram Naik,2026-06-14,09:28,"Everything that needed to be collected is collected.",x.com/vikram_nk/status/fake113,"Bandra, Mumbai",@raju_bhai_official,#done,,0.45,social_intel_2026.csv
+REC_014,CASE_001,Facebook,immu_sheikh,Imran Sheikh,2026-06-16,19:20,"No updates. Just handling regular business.",facebook.com/posts/fake114,"Mumbai, Maharashtra",,,+91-90000-44455,0.45,social_intel_2026.csv
+REC_015,CASE_001,Twitter/X,vikram_nk,Vikram Naik,2026-06-18,22:05,"Some plans are better discussed offline.",x.com/vikram_nk/status/fake115,"Navi Mumbai, Maharashtra",,,,0.45,social_intel_2026.csv

@@ -1,0 +1,107 @@
+FICTIONAL / SYNTHETIC DATA — FOR TESTING AND DEMONSTRATION PURPOSES ONLY
+All names, addresses, phone numbers, vehicle numbers, and events are entirely fictional.
+Any resemblance to real persons or real data is purely coincidental.
+
+========================================================================
+FIRST INFORMATION REPORT
+========================================================================
+
+FIR No.          : 0298/2026
+Police Station   : Bandra Police Station, Mumbai
+District         : Mumbai Suburban
+State            : Maharashtra
+
+Date of Occurrence : 14/06/2026
+Time of Occurrence : 21:30 hrs
+Date of Report     : 15/06/2026
+Time of Report     : 08:50 hrs
+
+------------------------------------------------------------------------
+COMPLAINANT DETAILS
+------------------------------------------------------------------------
+
+Name    : Rohit D'Souza S/o Anthony D'Souza
+Address : Bar and Restaurant, Shop No. 8, Sea View Complex,
+          Hill Road, Bandra West, Mumbai - 400050
+Phone   : +91-90000-00044
+
+------------------------------------------------------------------------
+ACCUSED DETAILS
+------------------------------------------------------------------------
+
+Accused No. 1:
+Name    : Rajan @ Raju Bhai
+S/o     : Late Suresh Kumar
+R/o     : Flat No. 204, Sai Krupa CHS, Four Bungalows,
+          Andheri West, Mumbai - 400053
+Phone   : +91-90000-11122
+
+Accused No. 2:
+Name    : Imran Sheikh @ Immu Sheikh
+S/o     : Yakub Sheikh
+R/o     : Room No. 12, Azad Nagar, Andheri West, Mumbai - 400058
+Phone   : +91-90000-44455
+
+------------------------------------------------------------------------
+SECTIONS APPLIED
+------------------------------------------------------------------------
+
+IPC Section 387 (Putting person in fear of death or grievous hurt in
+                  order to commit extortion)
+IPC Section 506(2) (Criminal Intimidation — threat of death or
+                    grievous hurt)
+
+------------------------------------------------------------------------
+VEHICLE INVOLVED
+------------------------------------------------------------------------
+
+Vehicle No. : MH-04-EF-6602
+Type        : Four-wheeler, silver coloured hatchback
+Driver      : Arun Tawde S/o Ganesh Tawde, R/o Chawl No. 2,
+              Motilal Nagar, Goregaon West, Mumbai - 400104
+              Phone: +91-90000-88811
+
+------------------------------------------------------------------------
+STATEMENT OF COMPLAINANT
+------------------------------------------------------------------------
+
+The complainant, Rohit D'Souza, owner of a bar and restaurant at
+Hill Road Bandra West, states that on 14/06/2026 at approximately
+21:30 hrs, two persons arrived at his establishment in vehicle no.
+MH-04-EF-6602 driven by one Arun Tawde who waited outside.
+
+The first accused Raju Bhai, and the second accused Imran Sheikh,
+entered the establishment after closing hours and in the presence of
+two staff members threatened the complainant that unless a monthly
+sum of Rs. 50,000 was paid commencing immediately, the establishment
+would be set on fire and the complainant and his family members would
+face grave consequences.
+
+The complainant states that this is the second such visit, the first
+having occurred approximately one month prior, around mid-May 2026,
+on which occasion a verbal warning only was delivered by the same
+first accused accompanied by a different associate whose identity is
+not yet established. During that first visit, the complainant was
+contacted by the accused on phone number +91-90000-66677 approximately
+two hours prior, purportedly to verify the complainant's presence at
+the establishment.
+
+Staff members present on 14/06/2026, namely Santosh Kale S/o Bhikaji
+Kale R/o Dharavi, and Rekha Pawar W/o Dilip Pawar R/o Mahim, have
+given corroborating statements. Both witnesses identified the vehicle
+and described the accused.
+
+------------------------------------------------------------------------
+INVESTIGATING OFFICER
+------------------------------------------------------------------------
+
+Name   : Sub-Inspector Meera Joshi
+Badge  : MH-PSI-5519
+Station: Bandra Police Station
+
+------------------------------------------------------------------------
+FIR registered at Bandra Police Station on 15/06/2026 at 08:50 hrs.
+Statements of witnesses Santosh Kale and Rekha Pawar recorded.
+Local beat officers directed to increase patrolling in the vicinity.
+Call records for +91-90000-66677 to be requisitioned from service provider.
+========================================================================

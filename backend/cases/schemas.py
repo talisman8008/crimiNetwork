@@ -31,6 +31,7 @@ class CaseResponse(BaseModel):
     fir_number: Optional[str]
     status: CaseStatus
     entity_count: int
+    link_count: int
     last_updated: datetime
     sources_uploaded: List[str]
     assigned_to: Optional[str]

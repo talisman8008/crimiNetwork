@@ -1,0 +1,105 @@
+FICTIONAL / SYNTHETIC DATA — FOR TESTING AND DEMONSTRATION PURPOSES ONLY
+All names, addresses, phone numbers, vehicle numbers, and events are entirely fictional.
+Any resemblance to real persons or real data is purely coincidental.
+
+========================================================================
+FIRST INFORMATION REPORT
+========================================================================
+
+FIR No.          : 0112/2026
+Police Station   : Andheri Police Station, Mumbai
+District         : Mumbai Suburban
+State            : Maharashtra
+
+Date of Occurrence : 03/02/2026
+Time of Occurrence : 23:15 hrs
+Date of Report     : 04/02/2026
+Time of Report     : 09:30 hrs
+
+------------------------------------------------------------------------
+COMPLAINANT DETAILS
+------------------------------------------------------------------------
+
+Name    : Priya Contractor W/o Arvind Contractor
+Address : Shop No. 3, Shivam Complex, Near Andheri Metro Station,
+          Andheri West, Mumbai - 400058
+Phone   : +91-90000-00011
+
+------------------------------------------------------------------------
+ACCUSED DETAILS
+------------------------------------------------------------------------
+
+Accused No. 1:
+Name    : Rajan Kumar @ Raju Bhai
+S/o     : Late Suresh Kumar
+R/o     : Flat No. 204, Sai Krupa CHS, Four Bungalows,
+          Andheri West, Mumbai - 400053
+Phone   : +91-90000-11122
+
+Accused No. 2:
+Name    : Imran Sheikh @ Immu Sheikh
+S/o     : Yakub Sheikh
+R/o     : Room No. 12, Azad Nagar, Andheri West, Mumbai - 400058
+Phone   : +91-90000-33344
+
+------------------------------------------------------------------------
+SECTIONS APPLIED
+------------------------------------------------------------------------
+
+IPC Section 384 (Extortion)
+IPC Section 506 (Criminal Intimidation)
+
+------------------------------------------------------------------------
+VEHICLE INVOLVED
+------------------------------------------------------------------------
+
+Vehicle No. : MH-02-BQ-4471
+Type        : Four-wheeler, dark coloured sedan
+Driver      : Arun Tawde S/o Ganesh Tawde, R/o Chawl No. 2,
+              Motilal Nagar, Goregaon West, Mumbai - 400104
+              Phone: +91-90000-88811
+
+------------------------------------------------------------------------
+STATEMENT OF COMPLAINANT
+------------------------------------------------------------------------
+
+The complainant, Priya Contractor, states that on the intervening night
+of 03/02/2026 at approximately 23:15 hrs, two persons arrived in vehicle
+no. MH-02-BQ-4471 outside her electronics shop at Shivam Complex near
+Andheri Metro Station.
+
+The said vehicle was driven by one Arun Tawde, who remained seated in
+the vehicle throughout the incident. The two accused alighted from the
+vehicle and entered the shop premises. The first accused identified
+himself as Raju Bhai and demanded a sum of Rs. 25,000 as monthly
+protection money, threatening that failure to comply would result in
+damage to property and harm to the complainant and her family members.
+
+The complainant states that she recognised the first accused by his
+voice as Raju Bhai from a previous alleged encounter at a neighbouring
+shopkeeper's premises approximately three weeks prior. The second
+accused, identified subsequently as Imran Sheikh, stood near the
+entrance and did not speak but appeared to act as a lookout.
+
+Upon the complainant's refusal, the first accused overturned a display
+rack and warned that this was only a demonstration of what would follow.
+Both accused then left in the waiting vehicle.
+
+CCTV footage from a nearby ATM kiosk is stated to be under collection
+by the Investigating Officer. A local shopkeeper, Mahesh Soni S/o
+Kishore Soni R/o Flat No. 7, Ganesh Apartment, Andheri West, is
+stated to have witnessed the departure of the accused vehicle.
+
+------------------------------------------------------------------------
+INVESTIGATING OFFICER
+------------------------------------------------------------------------
+
+Name   : Sub-Inspector Prakash Rane
+Badge  : MH-PSI-4412
+Station: Andheri Police Station
+
+------------------------------------------------------------------------
+FIR registered at Andheri Police Station on 04/02/2026 at 09:30 hrs.
+Case taken up for investigation. CCTV footage from surrounding premises
+directed to be collected and preserved.
+========================================================================
