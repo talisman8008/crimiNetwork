@@ -5115,3 +5115,82 @@ a.rank-row:hover .rank-name {
     grid-row: auto;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Responsive baseline. The app is desktop-first; these rules keep it usable,
+   not broken, down to a tablet and a large phone. Nothing here should change
+   the desktop layout.
+   --------------------------------------------------------------------------- */
+
+/* Content never forces the page to scroll sideways; wide children scroll inside themselves. */
+.app-main {
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+@media (max-width: 1024px) {
+  .content {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .topbar {
+    padding: 18px 20px 0;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 860px) {
+  /* Graph and its side panel stack instead of squeezing into two columns. */
+  .graph-stage {
+    flex-direction: column;
+  }
+  .graph-canvas-pane {
+    min-height: 320px;
+  }
+  .graph-side-pane {
+    width: auto;
+    border-left: none;
+    border-top: 1px solid var(--border);
+    max-height: 46vh;
+    overflow-y: auto;
+  }
+  .graph-stage.focused {
+    height: auto;
+  }
+  .graph-stage.focused .graph-canvas-pane {
+    flex: 0 0 300px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  /* The assistant widget and any wide dock shrink out of the way. */
+  .assistant-panel {
+    width: calc(100vw - 32px);
+    right: 16px;
+  }
+}
+
+@media (max-width: 680px) {
+  /* Single-column everything; page header stacks its controls under the title. */
+  .stat-grid,
+  .chart-grid,
+  .home-grid,
+  .case-workspace-grid {
+    grid-template-columns: 1fr;
+  }
+  .topbar-right {
+    width: 100%;
+  }
+  .dash-filters {
+    flex-wrap: wrap;
+  }
+  .dash-filters select {
+    flex: 1;
+    min-width: 140px;
+  }
+  /* Tables and other wide blocks scroll within their own box rather than the page. */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
