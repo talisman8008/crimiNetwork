@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
+import SupervisorTasks from "../components/SupervisorTasks";
 import { alerts, cases, entitiesForCase } from "../data/mockData";
 import { caseAssignments, officers, officersForCase } from "../data/officersData";
 import { upcomingCourtDates } from "../data/courtData";
@@ -175,6 +176,8 @@ export default function SupervisorConsole() {
           </div>
 
           <div>
+            <SupervisorTasks />
+
             <div className="card" style={{ marginBottom: 16 }}>
               <div className="card-header">
                 <h2>Available for assignment</h2>
