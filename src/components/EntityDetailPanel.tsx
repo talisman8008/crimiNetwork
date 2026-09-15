@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { corroborationFor, getEntityById, relationshipsFor } from "../data/mockData";
 import { getSocialProfile } from "../data/socialData";
@@ -7,6 +7,7 @@ import { calculateAge, EntityIcon, entitySubLabel, entityTypeLabel, formatDate, 
 import { IconX } from "./icons";
 import NetworkRoleCard from "./NetworkRoleCard";
 import { maskLocation, maskPhone, maskPlate, useRedaction } from "../lib/redaction";
+import { useAnnotations } from "../lib/annotations";
 import { useWatchlist } from "../lib/watchlist";
 
 interface EntityDetailPanelProps {
@@ -64,6 +65,19 @@ export default function EntityDetailPanel({ entity, onClose, onSelectRelated }: 
   const [scanning, setScanning] = useState(false);
   const [scanned, setScanned] = useState(false);
 
+  const { get: getAnnotation, setNotes, setPhoto } = useAnnotations();
+  const annotation = getAnnotation(entity.id);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setPhoto(entity.id, reader.result as string);
+    reader.readAsDataURL(file);
+  }
+
   // group relationships by the entity on the other end, so a pair confirmed via two sources renders as one row
   const groupedConnections = new Map<string, typeof connections>();
   for (const rel of connections) {
@@ -87,7 +101,22 @@ export default function EntityDetailPanel({ entity, onClose, onSelectRelated }: 
       </div>
       <div className="card-body" style={{ overflowY: "auto", flex: 1 }}>
         <div style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 12 }}>
-          <EntityIcon type={entity.type} />
+          {entity.type === "person" ? (
+            <button
+              type="button"
+              className={`mugshot ${annotation.photo ? "has-photo" : ""}`}
+              style={annotation.photo ? { backgroundImage: `url(${annotation.photo})` } : undefined}
+              onClick={() => photoInputRef.current?.click()}
+              aria-label={annotation.photo ? "Replace mugshot" : "Add a mugshot"}
+              title={annotation.photo ? "Replace mugshot" : "Add a mugshot"}
+            >
+              {!annotation.photo && <EntityIcon type={entity.type} />}
+              <span className="mugshot-edit">{annotation.photo ? "Replace" : "Add photo"}</span>
+            </button>
+          ) : (
+            <EntityIcon type={entity.type} />
+          )}
+          <input ref={photoInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handlePhoto} />
           <div style={{ flex: 1 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
               <div style={{ fontWeight: 600, fontSize: 15 }}>{entity.label}</div>
@@ -127,12 +156,17 @@ export default function EntityDetailPanel({ entity, onClose, onSelectRelated }: 
           <NetworkRoleCard entityId={entity.id} />
         </div>
 
+        <div className="section-title">Investigator notes</div>
         {entity.notes && (
-          <>
-            <div className="section-title">Investigator notes</div>
-            <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 16 }}>{entity.notes}</p>
-          </>
+          <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 8 }}>{entity.notes}</p>
         )}
+        <textarea
+          className="entity-notes"
+          value={annotation.notes ?? ""}
+          onChange={(e) => setNotes(entity.id, e.target.value)}
+          placeholder="Add your own note on this entity. Saved on this device."
+        />
+        <div style={{ marginBottom: 16 }} />
 
         <div className="section-title">Connections ({groupedConnections.size})</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: entity.type === "person" ? 16 : 0 }}>

@@ -4846,3 +4846,75 @@ a.rank-row:hover .rank-name {
   border: 1px solid #f0dca8;
   border-radius: 999px;
 }
+
+/* Mugshot on a person's profile — an officer can attach one; the case data carries none. */
+.mugshot {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken) center / cover no-repeat;
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+}
+
+.mugshot.has-photo {
+  border-style: solid;
+}
+
+.mugshot-edit {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 2px 0;
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: center;
+  color: #fff;
+  background: rgba(15, 44, 78, 0.72);
+  opacity: 0;
+  transition: opacity var(--ease);
+}
+
+.mugshot:hover .mugshot-edit {
+  opacity: 1;
+}
+
+.mugshot:not(.has-photo) .mugshot-edit {
+  opacity: 1;
+  background: transparent;
+  color: var(--text-tertiary);
+  bottom: 2px;
+}
+
+/* Editable investigator note. Saved per entity in local storage. */
+.entity-notes {
+  width: 100%;
+  min-height: 64px;
+  padding: 8px 10px;
+  margin-bottom: 4px;
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  resize: vertical;
+}
+
+.entity-notes:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--surface);
+}

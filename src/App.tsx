@@ -21,6 +21,7 @@ import { AuthProvider } from "./lib/auth";
 import { RedactionProvider } from "./lib/redaction";
 import { WatchlistProvider } from "./lib/watchlist";
 import { ActiveCaseProvider } from "./lib/activeCase";
+import { AnnotationsProvider } from "./lib/annotations";
 import { OnboardingProvider } from "./lib/onboarding";
 
 export default function App() {
@@ -29,6 +30,7 @@ export default function App() {
       <RedactionProvider>
         <WatchlistProvider>
           <ActiveCaseProvider>
+          <AnnotationsProvider>
           <OnboardingProvider>
           <BrowserRouter>
             <Routes>
@@ -55,6 +57,7 @@ export default function App() {
             </Routes>
           </BrowserRouter>
           </OnboardingProvider>
+          </AnnotationsProvider>
           </ActiveCaseProvider>
         </WatchlistProvider>
       </RedactionProvider>
