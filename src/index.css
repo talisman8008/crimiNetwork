@@ -5194,3 +5194,149 @@ a.rank-row:hover .rank-name {
     white-space: nowrap;
   }
 }
+
+/* Relationship Validation — the human-in-the-loop review queue for machine-drawn links. */
+.validation-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.validation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.validation-row {
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.validation-row.ruled-confirmed {
+  border-left-color: var(--risk-low);
+}
+.validation-row.ruled-disputed {
+  border-left-color: var(--risk-high);
+}
+.validation-row.ruled-review {
+  border-left-color: var(--risk-medium);
+}
+
+.validation-pair {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.validation-ent {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.validation-ent svg {
+  width: 16px;
+  height: 16px;
+}
+
+.validation-rel {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+  padding: 2px 8px;
+  background: var(--surface-sunken);
+  border-radius: 999px;
+}
+
+.validation-evidence {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.validation-source {
+  font-size: var(--fs-xs);
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  padding: 1px 8px;
+  border-radius: 999px;
+}
+
+.validation-date {
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+}
+
+.validation-desc {
+  margin: 0 0 12px;
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.validation-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.validation-verdict {
+  padding: 5px 12px;
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color var(--ease), color var(--ease), border-color var(--ease);
+}
+
+.validation-verdict.v-confirmed.active {
+  background: var(--risk-low);
+  border-color: var(--risk-low);
+  color: #fff;
+}
+.validation-verdict.v-disputed.active {
+  background: var(--risk-high);
+  border-color: var(--risk-high);
+  color: #fff;
+}
+.validation-verdict.v-review.active {
+  background: var(--risk-medium);
+  border-color: var(--risk-medium);
+  color: #fff;
+}
+
+.validation-note {
+  flex: 1;
+  min-width: 160px;
+  padding: 5px 10px;
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  color: var(--text-primary);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.validation-note:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--surface);
+}

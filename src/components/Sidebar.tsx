@@ -60,6 +60,7 @@ const groups: {
     label: "Oversight",
     items: [
       { to: "/resolution", label: "Identity Resolution", icon: IconUsers },
+      { to: "/validation", label: "Relationship Validation", icon: IconNetwork },
       { to: "/supervisor", label: "Supervisor Console", icon: IconShield, supervisorOnly: true },
       { to: "/access-log", label: "Access Log", icon: IconLock },
     ],

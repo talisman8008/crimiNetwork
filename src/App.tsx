@@ -15,6 +15,7 @@ import PersonProfile from "./pages/PersonProfile";
 import SupervisorConsole from "./pages/SupervisorConsole";
 import CaseWorkspace from "./pages/CaseWorkspace";
 import EntityResolution from "./pages/EntityResolution";
+import ValidationQueue from "./pages/ValidationQueue";
 import CaseDossier from "./pages/CaseDossier";
 import Login from "./pages/Login";
 import RequireAuth from "./components/RequireAuth";
@@ -23,6 +24,7 @@ import { RedactionProvider } from "./lib/redaction";
 import { WatchlistProvider } from "./lib/watchlist";
 import { ActiveCaseProvider } from "./lib/activeCase";
 import { AnnotationsProvider } from "./lib/annotations";
+import { ValidationsProvider } from "./lib/validations";
 import { OnboardingProvider } from "./lib/onboarding";
 
 export default function App() {
@@ -32,6 +34,7 @@ export default function App() {
         <WatchlistProvider>
           <ActiveCaseProvider>
           <AnnotationsProvider>
+          <ValidationsProvider>
           <OnboardingProvider>
           <BrowserRouter>
             <Routes>
@@ -53,12 +56,14 @@ export default function App() {
                   <Route path="workspace" element={<CaseWorkspace />} />
                   <Route path="supervisor" element={<SupervisorConsole />} />
                   <Route path="resolution" element={<EntityResolution />} />
+                  <Route path="validation" element={<ValidationQueue />} />
                 </Route>
                 <Route path="dossier/:caseId" element={<CaseDossier />} />
               </Route>
             </Routes>
           </BrowserRouter>
           </OnboardingProvider>
+          </ValidationsProvider>
           </AnnotationsProvider>
           </ActiveCaseProvider>
         </WatchlistProvider>
