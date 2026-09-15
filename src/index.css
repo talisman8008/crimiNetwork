@@ -5144,6 +5144,11 @@ a.rank-row:hover .rank-name {
   .graph-stage {
     flex-direction: column;
   }
+  /* The decorative stat overlay collides with the zoom dock on a short canvas, and the same
+     counts already sit in the toolbar, so it stands down here. */
+  .graph-stat-stack {
+    display: none;
+  }
   .graph-canvas-pane {
     min-height: 320px;
   }
