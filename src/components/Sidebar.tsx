@@ -35,7 +35,6 @@ const groups: {
       { to: "/network", label: "Network", icon: IconNetwork },
       { to: "/dashboard", label: "Dashboard", icon: IconGrid },
       { to: "/entities", label: "Database", icon: IconDatabase },
-      { to: "/system", label: "Capabilities", icon: IconGrid },
     ],
   },
   {

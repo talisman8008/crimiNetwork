@@ -16,7 +16,6 @@ import SupervisorConsole from "./pages/SupervisorConsole";
 import CaseWorkspace from "./pages/CaseWorkspace";
 import EntityResolution from "./pages/EntityResolution";
 import ValidationQueue from "./pages/ValidationQueue";
-import SystemMap from "./pages/SystemMap";
 import CaseDossier from "./pages/CaseDossier";
 import Login from "./pages/Login";
 import RequireAuth from "./components/RequireAuth";
@@ -58,7 +57,6 @@ export default function App() {
                   <Route path="supervisor" element={<SupervisorConsole />} />
                   <Route path="resolution" element={<EntityResolution />} />
                   <Route path="validation" element={<ValidationQueue />} />
-                  <Route path="system" element={<SystemMap />} />
                 </Route>
                 <Route path="dossier/:caseId" element={<CaseDossier />} />
               </Route>
