@@ -15,15 +15,25 @@ import { IconMinus, IconPlus, IconTarget } from "./icons";
  *  rather than a primary colour: saturation is held back for risk and selection, which are what
  *  an officer is actually scanning the graph for. */
 export const typeColor: Record<EntityType, string> = {
-  person: "#3d5a80",
-  organization: "#7c6a45",
-  location: "#3f6f66",
-  vehicle: "#5b5476",
-  phone: "#7a4f58",
+  person: "#3b6fb5",
+  organization: "#c78a3a",
+  location: "#2f9182",
+  vehicle: "#6d5fc0",
+  phone: "#c05f77",
 };
 
 const BG = "#f0f2f5";
 const RISK_HIGH = "#b91c1c";
+
+/** Darken a hex colour toward black by `amount` (0–1), for a tone-on-tone rim that reads as a
+ *  solid token rather than the white-outlined bubble the flat fill looked like before. */
+function darken(hex: string, amount: number): string {
+  const v = parseInt(hex.slice(1), 16);
+  const r = Math.round(((v >> 16) & 255) * (1 - amount));
+  const g = Math.round(((v >> 8) & 255) * (1 - amount));
+  const b = Math.round((v & 255) * (1 - amount));
+  return `rgb(${r}, ${g}, ${b})`;
+}
 
 /** The canvas sits on a near-white ground, where the platform's own arrow and open-hand cursors
  *  are pale enough to lose. These are drawn dark with a white keyline so they read on it, and
@@ -291,43 +301,70 @@ export default function GraphView2D({
       const r = nd.radius * Math.max(0.65, Math.min(1.5, zoom));
       if (!Number.isFinite(r) || !Number.isFinite(nd.sx) || !Number.isFinite(nd.sy)) continue;
 
-      ctx.globalAlpha = dimmed ? 0.16 : sel && !isSel && !isNeighbour ? 0.45 : 1;
+      ctx.globalAlpha = dimmed ? 0.16 : sel && !isSel && !isNeighbour ? 0.4 : 1;
 
+      // A ring of background colour behind each node so the edges stop cleanly at its rim instead
+      // of visually piercing through it — the single biggest thing that made the old nodes read
+      // as flat pasted-on discs.
+      ctx.beginPath();
+      ctx.fillStyle = BG;
+      ctx.arc(nd.sx, nd.sy, r + 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Soft drop shadow lifts the node off the canvas; kept faint so a dense graph does not turn
+      // muddy. The fill is painted under the shadow, then the shadow is cleared for the rim.
+      const highRisk = nd.entity.riskLevel === "high" && !dimmed;
+      ctx.save();
+      ctx.shadowColor = "rgba(15, 23, 42, 0.22)";
+      ctx.shadowBlur = 5;
+      ctx.shadowOffsetY = 1;
       ctx.beginPath();
       ctx.fillStyle = base;
       ctx.arc(nd.sx, nd.sy, r, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
 
-      // Risk rides on the node's own border, and only at the top level: most entities in a live
-      // case carry some flag, so ringing anything above "low" is a field of targets.
-      const highRisk = nd.entity.riskLevel === "high" && !dimmed;
+      // Tone-on-tone rim (or red at high risk). Reads as a solid token, not a white-outlined ball.
       ctx.beginPath();
-      ctx.strokeStyle = highRisk ? RISK_HIGH : "#ffffff";
-      ctx.lineWidth = highRisk ? 2 : 1.5;
+      ctx.strokeStyle = highRisk ? RISK_HIGH : darken(base, 0.32);
+      ctx.lineWidth = highRisk ? 2 : 1.25;
       ctx.arc(nd.sx, nd.sy, r, 0, Math.PI * 2);
       ctx.stroke();
 
       if (isSel) {
         ctx.beginPath();
         ctx.strokeStyle = "#0f2c4e";
-        ctx.lineWidth = 1.5;
-        ctx.arc(nd.sx, nd.sy, r + 5, 0, Math.PI * 2);
+        ctx.lineWidth = 2;
+        ctx.arc(nd.sx, nd.sy, r + 4, 0, Math.PI * 2);
         ctx.stroke();
       }
 
       const worthLabel = isSel || isNeighbour || nd.radius >= 12;
       if (worthLabel && !dimmed) {
         ctx.globalAlpha = 1;
-        ctx.font = `${isSel ? 600 : 400} 11px ${LABEL_FONT}`;
+        ctx.font = `${isSel ? 600 : 500} 11px ${LABEL_FONT}`;
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
         const label = nd.entity.label;
-        const ty = nd.sy + r + 4;
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = "rgba(240, 242, 245, 0.9)";
-        ctx.strokeText(label, nd.sx, ty);
-        ctx.fillStyle = "#1e293b";
-        ctx.fillText(label, nd.sx, ty);
+        const tw = ctx.measureText(label).width;
+        const ty = nd.sy + r + 5;
+        // A soft rounded chip behind the label keeps it legible over edges without the fuzzy
+        // stroke-outline that made the old labels look haloed.
+        const padX = 5;
+        const chipH = 15;
+        ctx.fillStyle = "rgba(255, 255, 255, 0.86)";
+        const rx = nd.sx - tw / 2 - padX;
+        const rw = tw + padX * 2;
+        const radius = 4;
+        ctx.beginPath();
+        ctx.moveTo(rx + radius, ty);
+        ctx.arcTo(rx + rw, ty, rx + rw, ty + chipH, radius);
+        ctx.arcTo(rx + rw, ty + chipH, rx, ty + chipH, radius);
+        ctx.arcTo(rx, ty + chipH, rx, ty, radius);
+        ctx.arcTo(rx, ty, rx + rw, ty, radius);
+        ctx.fill();
+        ctx.fillStyle = isSel ? "#0f2c4e" : "#334155";
+        ctx.fillText(label, nd.sx, ty + 2);
       }
 
       ctx.globalAlpha = 1;
