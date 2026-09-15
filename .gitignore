@@ -36,3 +36,6 @@ Thumbs.db
 *.png 
 *.jpeg 
 *.md
+
+# Keep the changelog tracked despite the blanket *.md ignore above.
+!CHANGELOG.md
