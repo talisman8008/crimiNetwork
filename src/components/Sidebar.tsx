@@ -83,7 +83,7 @@ export default function Sidebar() {
         </div>
       </div>
 
-      <button className="sidebar-search" onClick={() => navigate("/entities")}>
+      <button className="sidebar-search" onClick={() => window.dispatchEvent(new Event("netra:open-search"))}>
         <IconSearch />
         <span>Search entities</span>
       </button>

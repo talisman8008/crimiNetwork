@@ -28,8 +28,17 @@ export default function CommandPalette() {
         setOpen(false);
       }
     }
+    // The sidebar search opens the same palette rather than routing to the Database, so a quick
+    // look at one entity does not throw the investigator out of what they were doing.
+    function onOpen() {
+      setOpen(true);
+    }
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener("netra:open-search", onOpen);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("netra:open-search", onOpen);
+    };
   }, []);
 
   useEffect(() => {
