@@ -4918,3 +4918,200 @@ a.rank-row:hover .rank-name {
   border-color: var(--accent);
   background: var(--surface);
 }
+
+/* Home / today's briefing — the landing that tells an officer where to look first. */
+.home-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.home-priorities {
+  grid-row: span 2;
+}
+
+.home-panel {
+  padding: 18px 20px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+}
+
+.home-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.home-panel-head h2 {
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.home-panel-note {
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+}
+
+.priority-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.priority-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.priority-rank {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--navy-900);
+  color: #fff;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.priority-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.priority-title {
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.priority-code {
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.priority-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.priority-reason {
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+  padding: 1px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.brief-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.brief-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 4px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.brief-item:last-child {
+  border-bottom: none;
+}
+
+.brief-item:hover {
+  background: var(--surface-sunken);
+}
+
+.brief-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.brief-title {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.brief-sub {
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+  margin-top: 1px;
+}
+
+.hearing-date {
+  flex-shrink: 0;
+  width: 38px;
+  text-align: center;
+  line-height: 1;
+  padding: 4px 0;
+  border-radius: var(--radius-sm);
+  background: var(--navy-100);
+}
+
+.hearing-day {
+  display: block;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--navy-800);
+}
+
+.hearing-mon {
+  display: block;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--navy-700);
+}
+
+.home-empty {
+  padding: 10px 4px;
+  font-size: var(--fs-sm);
+  color: var(--text-tertiary);
+  list-style: none;
+}
+
+.home-foot {
+  display: flex;
+  gap: 10px;
+}
+
+@media (max-width: 1000px) {
+  .home-grid {
+    grid-template-columns: 1fr;
+  }
+  .home-priorities {
+    grid-row: auto;
+  }
+}

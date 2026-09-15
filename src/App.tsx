@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
+import Home from "./pages/Home";
 import NetworkGraph from "./pages/NetworkGraph";
 import Entities from "./pages/Entities";
 import Cases from "./pages/Cases";
@@ -37,7 +38,8 @@ export default function App() {
               <Route path="/login" element={<Login />} />
               <Route element={<RequireAuth />}>
                 <Route path="/" element={<Layout />}>
-                  <Route index element={<Dashboard />} />
+                  <Route index element={<Home />} />
+                  <Route path="dashboard" element={<Dashboard />} />
                   <Route path="network" element={<NetworkGraph />} />
                   <Route path="entities" element={<Entities />} />
                   <Route path="cases" element={<Cases />} />

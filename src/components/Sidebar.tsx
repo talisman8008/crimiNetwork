@@ -4,6 +4,7 @@ import {
   IconDatabase,
   IconFolder,
   IconGrid,
+  IconHome,
   IconHelp,
   IconLock,
   IconMapPin,
@@ -29,9 +30,10 @@ const groups: {
   {
     label: "Analysis",
     items: [
+      { to: "/", label: "Home", icon: IconHome, end: true },
       { to: "/workspace", label: "Workspace", icon: IconFolder },
       { to: "/network", label: "Network", icon: IconNetwork },
-      { to: "/", label: "Dashboard", icon: IconGrid, end: true },
+      { to: "/dashboard", label: "Dashboard", icon: IconGrid },
       { to: "/entities", label: "Database", icon: IconDatabase },
     ],
   },

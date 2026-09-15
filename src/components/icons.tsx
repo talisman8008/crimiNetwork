@@ -263,3 +263,12 @@ export function IconMaximize({ className, style }: IconProps) {
     </svg>
   );
 }
+
+export function IconHome({ className, style }: IconProps) {
+  return (
+    <svg {...base} className={className} style={style}>
+      <path d="M4 11.5 12 4.5l8 7" />
+      <path d="M5.5 10.5V19a1 1 0 0 0 1 1H10v-5h4v5h3.5a1 1 0 0 0 1-1v-8.5" />
+    </svg>
+  );
+}
