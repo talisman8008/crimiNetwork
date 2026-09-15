@@ -168,6 +168,27 @@ export default function NetworkGraph() {
     [filteredRelationships, currentDate],
   );
 
+  // Activity per date, with the days where new links spike well above the run rate marked as
+  // surges. This is what turns the scrubber from a slider into behavioural-anomaly detection:
+  // an officer sees *when* the network suddenly lit up, not just that it grew.
+  const timelineActivity = useMemo(() => {
+    const counts = timelineDates.map(
+      (d) => filteredRelationships.filter((r) => r.observedOn === d).length,
+    );
+    const max = Math.max(...counts, 1);
+    const mean = counts.reduce((a, b) => a + b, 0) / (counts.length || 1);
+    const threshold = Math.max(mean * 1.8, mean + 1);
+    return timelineDates.map((date, i) => ({
+      date,
+      count: counts[i],
+      height: counts[i] / max,
+      surge: counts[i] > 1 && counts[i] >= threshold,
+    }));
+  }, [timelineDates, filteredRelationships]);
+
+  const currentIsSurge = timelineActivity[Math.min(timelineStep, timelineActivity.length - 1)]?.surge ?? false;
+  const surgeCount = useMemo(() => timelineActivity.filter((a) => a.surge).length, [timelineActivity]);
+
   const dimmedNodeIds = useMemo(() => {
     if (!timelineOn || !currentDate) return undefined;
     const connected = new Set<string>();
@@ -441,6 +462,20 @@ export default function NetworkGraph() {
                   </button>
 
                   <div className="timeline-track">
+                    <div className="timeline-hist" aria-hidden="true">
+                      {timelineActivity.map((a, i) => (
+                        <button
+                          key={a.date}
+                          className={`timeline-bar-tick ${i <= timelineStep ? "past" : "future"} ${a.surge ? "surge" : ""} ${i === timelineStep ? "current" : ""}`}
+                          style={{ height: `${20 + a.height * 80}%` }}
+                          onClick={() => {
+                            setPlaying(false);
+                            setTimelineStep(i);
+                          }}
+                          title={`${formatDate(a.date)} · +${a.count} link${a.count === 1 ? "" : "s"}${a.surge ? " · activity surge" : ""}`}
+                        />
+                      ))}
+                    </div>
                     <input
                       type="range"
                       min={0}
@@ -454,15 +489,21 @@ export default function NetworkGraph() {
                     />
                     <div className="timeline-ends">
                       <span className="mono">{formatDate(timelineDates[0])}</span>
+                      {surgeCount > 0 && (
+                        <span className="timeline-surge-legend">
+                          <span className="timeline-surge-dot" /> {surgeCount} activity surge{surgeCount === 1 ? "" : "s"}
+                        </span>
+                      )}
                       <span className="mono">{formatDate(timelineDates[timelineDates.length - 1])}</span>
                     </div>
                   </div>
 
                   <div className="timeline-readout">
                     <div className="timeline-readout-date mono">{currentDate ? formatDate(currentDate) : ""}</div>
-                    <div className="timeline-readout-sub">
+                    <div className={`timeline-readout-sub ${currentIsSurge ? "is-surge" : ""}`}>
+                      {currentIsSurge && <span className="timeline-surge-badge">SURGE</span>}
                       {visibleAtStep.length} of {filteredRelationships.length} links
-                      {newAtStep > 0 && ` · +${newAtStep} today`}
+                      {newAtStep > 0 && ` · +${newAtStep} this day`}
                     </div>
                   </div>
                 </div>

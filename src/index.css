@@ -1290,6 +1290,79 @@ table {
   cursor: pointer;
 }
 
+/* Activity histogram behind the scrubber: each bar is one date, its height the links added that
+   day, so the graph's growth reads as a shape. Surge days stand out in amber. */
+.timeline-hist {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 30px;
+  margin-bottom: 4px;
+}
+
+.timeline-bar-tick {
+  flex: 1;
+  min-width: 2px;
+  padding: 0;
+  border: none;
+  border-radius: 1px 1px 0 0;
+  background: rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+  transition: background-color var(--ease);
+}
+
+.timeline-bar-tick.past {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.timeline-bar-tick.surge {
+  background: rgba(245, 158, 11, 0.55);
+}
+
+.timeline-bar-tick.past.surge {
+  background: #f59e0b;
+}
+
+.timeline-bar-tick.current {
+  background: #22c55e;
+}
+
+.timeline-bar-tick:hover {
+  background: #fff;
+}
+
+.timeline-surge-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.timeline-surge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: #f59e0b;
+}
+
+.timeline-surge-badge {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 5px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #7a3d02;
+  background: #f59e0b;
+  border-radius: 3px;
+  vertical-align: 1px;
+}
+
+.timeline-readout-sub.is-surge {
+  color: #fbbf24;
+  font-weight: 600;
+}
+
 .timeline-ends {
   display: flex;
   justify-content: space-between;
