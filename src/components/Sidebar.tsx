@@ -40,8 +40,6 @@ const groups: {
     items: [
       { to: "/cases", label: "Cases", icon: IconFolder },
       { to: "/court-dates", label: "Court Dates", icon: IconScale },
-      { to: "/resolution", label: "Merge Review", icon: IconUsers },
-      { to: "/supervisor", label: "Oversight", icon: IconShield, supervisorOnly: true },
     ],
   },
   {
@@ -53,10 +51,16 @@ const groups: {
     ],
   },
   {
+    // Human-in-the-loop: everywhere an officer's judgement overrides the machine. Identity
+    // Resolution is where merges are approved; the Supervisor Console is where cases are
+    // assigned and reviewed; the Access Log is the accountability trail.
+    // (Alerts is deliberately absent — it lives on the notification bell where its count sits.)
     label: "Oversight",
-    // Alerts is deliberately not here: it is reached from the notification bell, where its
-    // count lives, so a second entry in the rail was a duplicate. The /alerts route stays.
-    items: [{ to: "/access-log", label: "Access Log", icon: IconLock }],
+    items: [
+      { to: "/resolution", label: "Identity Resolution", icon: IconUsers },
+      { to: "/supervisor", label: "Supervisor Console", icon: IconShield, supervisorOnly: true },
+      { to: "/access-log", label: "Access Log", icon: IconLock },
+    ],
   },
 ];
 

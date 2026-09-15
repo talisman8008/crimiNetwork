@@ -69,7 +69,11 @@ export default function CctvFootagePage() {
 
   return (
     <>
-      <PageHeader eyebrow="Field Evidence" title="CCTV Footage" />
+      <PageHeader
+        eyebrow="Field Evidence"
+        title="CCTV Footage"
+        right={<span className="synthetic-tag">Synthetic footage · for demonstration</span>}
+      />
       <div className="filter-bar">
         <select className="select" value={caseId} onChange={(e) => setCaseId(e.target.value)}>
           <option value="all">All cases</option>

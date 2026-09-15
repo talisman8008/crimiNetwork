@@ -230,7 +230,7 @@ export default function EntityDetailPanel({ entity, onClose, onSelectRelated }: 
                     }, 900);
                   }}
                 >
-                  {scanning ? "Scanning open sources..." : "Scan for social activity"}
+                  {scanning ? "Scanning public sources..." : "Public OSINT"}
                 </button>
               </div>
             )}

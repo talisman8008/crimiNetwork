@@ -4832,3 +4832,17 @@ a.rank-row:hover .rank-name {
 .challenge-ref:hover {
   background: #dcebfb;
 }
+
+/* Honest labelling: the CCTV clips are synthetic, and saying so on the page is better than a
+   judge assuming otherwise. */
+.synthetic-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--risk-medium);
+  background: var(--risk-medium-bg);
+  border: 1px solid #f0dca8;
+  border-radius: 999px;
+}

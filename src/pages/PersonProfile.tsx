@@ -169,7 +169,7 @@ export default function PersonProfile() {
                         }, 900);
                       }}
                     >
-                      {scanning ? "Scanning open sources..." : "Scan for social activity"}
+                      {scanning ? "Scanning public sources..." : "Public OSINT"}
                     </button>
                   )}
                 </div>
