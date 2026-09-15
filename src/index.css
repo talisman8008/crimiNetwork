@@ -4658,3 +4658,177 @@ a.rank-row:hover .rank-name {
   border-radius: 2px;
   flex-shrink: 0;
 }
+
+/* Challenge this case — the adversarial pass. Styled to feel like scrutiny, not celebration:
+   a robustness score, then the specific weaknesses grouped by how damaging they are. */
+.btn-challenge {
+  border-color: var(--risk-medium);
+  color: var(--risk-medium);
+}
+
+.btn-challenge:hover {
+  background: var(--risk-medium-bg);
+}
+
+.btn-challenge.active {
+  background: var(--risk-medium);
+  border-color: var(--risk-medium);
+  color: #fff;
+}
+
+.robustness {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.robustness-score {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.robustness-value {
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.robustness-max {
+  font-size: var(--fs-sm);
+  color: var(--text-tertiary);
+}
+
+.robustness-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.robustness-label {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.robustness-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.robustness-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+}
+
+.robustness-sub {
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+}
+
+.challenge-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.challenge-item {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.challenge-item.sev-high {
+  border-left-color: var(--risk-high);
+}
+
+.challenge-item.sev-medium {
+  border-left-color: var(--risk-medium);
+}
+
+.challenge-item.sev-low {
+  border-left-color: var(--text-tertiary);
+}
+
+.challenge-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.challenge-cat {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.challenge-sev {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+.challenge-sev.sev-high {
+  background: var(--risk-high-bg);
+  color: var(--risk-high);
+}
+
+.challenge-sev.sev-medium {
+  background: var(--risk-medium-bg);
+  color: var(--risk-medium);
+}
+
+.challenge-sev.sev-low {
+  background: var(--surface-sunken);
+  color: var(--text-tertiary);
+}
+
+.challenge-finding {
+  margin: 0 0 6px;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.challenge-refs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.challenge-ref {
+  padding: 2px 8px;
+  font-family: inherit;
+  font-size: var(--fs-xs);
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  border: 1px solid #d7e5fb;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.challenge-ref:hover {
+  background: #dcebfb;
+}

@@ -19,6 +19,7 @@ import { IconCamera, IconFolder, IconNetwork, IconPause, IconPlay, IconScale, Ic
 import { findShortestPath } from "../lib/graphAlgo";
 import { useCaseWorkspaces } from "../lib/caseWorkspace";
 import { communityColor, detectCommunities } from "../lib/communities";
+import { challengeCase, challengeCategoryLabel } from "../lib/challengeCase";
 import { useActiveCase } from "../lib/activeCase";
 import type { EntityType, RelationType, SourceType } from "../data/types";
 import { eventsForCase } from "../data/timelineData";
@@ -53,6 +54,7 @@ export default function NetworkGraph() {
   const [pathFrom, setPathFrom] = useState("");
   const [pathTo, setPathTo] = useState("");
   const [communitiesOn, setCommunitiesOn] = useState(false);
+  const [challengeOpen, setChallengeOpen] = useState(false);
   const [timelineOn, setTimelineOn] = useState(false);
   const [timelineStep, setTimelineStep] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -232,13 +234,28 @@ export default function NetworkGraph() {
   }
 
   const selectedEntity = selectedId ? getEntityById(selectedId) : undefined;
-  const panelMode: "entity" | "pathfinder" | "communities" | "legend" = selectedEntity
+  const panelMode: "entity" | "challenge" | "pathfinder" | "communities" | "legend" = selectedEntity
     ? "entity"
-    : pathfinderOpen
-      ? "pathfinder"
-      : communitiesOn
-        ? "communities"
-        : "legend";
+    : challengeOpen
+      ? "challenge"
+      : pathfinderOpen
+        ? "pathfinder"
+        : communitiesOn
+          ? "communities"
+          : "legend";
+
+  const challengeEvents = useMemo(
+    () =>
+      caseId === "all"
+        ? [...eventsForCase("case-1"), ...eventsForCase("case-2")]
+        : eventsForCase(caseId),
+    [caseId],
+  );
+
+  const challengeResult = useMemo(
+    () => challengeCase(filteredEntities, filteredRelationships, challengeEvents),
+    [filteredEntities, filteredRelationships, challengeEvents],
+  );
 
   const spotlightRole = selectedEntity ? networkRoleFor(selectedEntity.id) : undefined;
   const spotlightConnections = useMemo(() => {
@@ -336,6 +353,17 @@ export default function NetworkGraph() {
             </button>
             <button className={`btn ${timelineOn ? "btn-primary" : ""}`} onClick={toggleTimeline}>
               Timeline
+            </button>
+            <button
+              className={`btn btn-challenge ${challengeOpen ? "active" : ""}`}
+              onClick={() => {
+                setChallengeOpen((v) => !v);
+                setSelectedId(null);
+                setPathfinderOpen(false);
+              }}
+              title="Argue the case from the other side"
+            >
+              Challenge this case
             </button>
             <div style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-tertiary)" }}>
               {filteredEntities.length} entities &middot; {filteredRelationships.length} links
@@ -471,6 +499,80 @@ export default function NetworkGraph() {
                   onClose={() => setSelectedId(null)}
                   onSelectRelated={setSelectedId}
                 />
+              )}
+
+              {panelMode === "challenge" && (
+                <div className="card challenge-card" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+                  <div className="card-header">
+                    <h2>Challenge this case</h2>
+                    <button className="btn" onClick={() => setChallengeOpen(false)}>
+                      Close
+                    </button>
+                  </div>
+                  <div className="card-body" style={{ overflowY: "auto", flex: 1 }}>
+                    <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 14 }}>
+                      NETRA argues the other side: it searches the case's own records for the weaknesses a
+                      defence would exploit, then scores how well it would hold up.
+                    </p>
+
+                    <div className="robustness">
+                      <div className="robustness-score">
+                        <span className="robustness-value mono">{challengeResult.score}</span>
+                        <span className="robustness-max">/ 100</span>
+                      </div>
+                      <div className="robustness-meta">
+                        <div className="robustness-label">Case robustness</div>
+                        <div className="robustness-bar">
+                          <span
+                            style={{
+                              width: `${challengeResult.score}%`,
+                              background:
+                                challengeResult.score >= 75
+                                  ? "var(--risk-low)"
+                                  : challengeResult.score >= 55
+                                    ? "var(--risk-medium)"
+                                    : "var(--risk-high)",
+                            }}
+                          />
+                        </div>
+                        <div className="robustness-sub">
+                          {challengeResult.areasNeedingCorroboration} area
+                          {challengeResult.areasNeedingCorroboration === 1 ? "" : "s"} require additional
+                          corroboration.
+                        </div>
+                      </div>
+                    </div>
+
+                    {challengeResult.challenges.length === 0 ? (
+                      <div className="empty-state">No weaknesses found under the current filters.</div>
+                    ) : (
+                      <div className="challenge-list">
+                        {challengeResult.challenges.map((c, i) => (
+                          <div key={i} className={`challenge-item sev-${c.severity}`}>
+                            <div className="challenge-item-head">
+                              <span className="challenge-cat">{challengeCategoryLabel(c.category)}</span>
+                              <span className={`challenge-sev sev-${c.severity}`}>{c.severity}</span>
+                            </div>
+                            <p className="challenge-finding">{c.finding}</p>
+                            {c.entityIds.length > 0 && (
+                              <div className="challenge-refs">
+                                {c.entityIds.map((id) => {
+                                  const ent = getEntityById(id);
+                                  if (!ent) return null;
+                                  return (
+                                    <button key={id} className="challenge-ref" onClick={() => setSelectedId(id)}>
+                                      {ent.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
 
               {panelMode === "pathfinder" && (
