@@ -8,6 +8,7 @@ import { IconX } from "./icons";
 import NetworkRoleCard from "./NetworkRoleCard";
 import { maskLocation, maskPhone, maskPlate, useRedaction } from "../lib/redaction";
 import { useAnnotations } from "../lib/annotations";
+import { useValidations } from "../lib/validations";
 import { useWatchlist } from "../lib/watchlist";
 
 interface EntityDetailPanelProps {
@@ -68,6 +69,8 @@ export default function EntityDetailPanel({ entity, onClose, onSelectRelated }: 
   const { get: getAnnotation, setNotes, setPhoto } = useAnnotations();
   const annotation = getAnnotation(entity.id);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const { priorityNudge, nudgePriority } = useValidations();
+  const nudge = priorityNudge(entity.id);
 
   function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -130,13 +133,36 @@ export default function EntityDetailPanel({ entity, onClose, onSelectRelated }: 
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12, alignItems: "center" }}>
           <RiskBadge level={entity.riskLevel} />
           {entity.tags.map((t) => (
             <span key={t} className="tag">
               {t}
             </span>
           ))}
+        </div>
+
+        <div className="priority-override">
+          <span className="priority-override-label">Priority</span>
+          <button
+            className="priority-btn"
+            onClick={() => nudgePriority(entity.id, 1)}
+            disabled={nudge >= 2}
+            aria-label="Raise priority"
+          >
+            ▲
+          </button>
+          <span className={`priority-override-value ${nudge > 0 ? "up" : nudge < 0 ? "down" : ""}`}>
+            {nudge === 0 ? "As ranked" : nudge > 0 ? `Raised +${nudge}` : `Lowered ${nudge}`}
+          </span>
+          <button
+            className="priority-btn"
+            onClick={() => nudgePriority(entity.id, -1)}
+            disabled={nudge <= -2}
+            aria-label="Lower priority"
+          >
+            ▼
+          </button>
         </div>
 
         <div className="section-title">Details</div>

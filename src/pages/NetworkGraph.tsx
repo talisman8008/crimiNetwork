@@ -20,6 +20,7 @@ import { findShortestPath } from "../lib/graphAlgo";
 import { useCaseWorkspaces } from "../lib/caseWorkspace";
 import { communityColor, detectCommunities } from "../lib/communities";
 import { challengeCase, challengeCategoryLabel } from "../lib/challengeCase";
+import { useValidations } from "../lib/validations";
 import { useActiveCase } from "../lib/activeCase";
 import type { EntityType, RelationType, SourceType } from "../data/types";
 import { eventsForCase } from "../data/timelineData";
@@ -41,6 +42,7 @@ const allSources: SourceType[] = [
 export default function NetworkGraph() {
   const [searchParams] = useSearchParams();
   const { activeCaseId } = useActiveCase();
+  const { priorityNudge } = useValidations();
   const [tab, setTab] = useState<"graph" | "board">("graph");
   const [caseId, setCaseId] = useState<string>(searchParams.get("case") ?? activeCaseId ?? "all");
   const [activeTypes, setActiveTypes] = useState<Set<EntityType>>(new Set(allTypes));
@@ -203,11 +205,12 @@ export default function NetworkGraph() {
       degree.set(r.target, (degree.get(r.target) ?? 0) + 1);
     });
     return [...degree.entries()]
-      .map(([id, count]) => ({ entity: getEntityById(id), count }))
-      .filter((x): x is { entity: NonNullable<typeof x.entity>; count: number } => !!x.entity)
-      .sort((a, b) => b.count - a.count)
+      .map(([id, count]) => ({ entity: getEntityById(id), count, nudge: priorityNudge(id) }))
+      .filter((x): x is { entity: NonNullable<typeof x.entity>; count: number; nudge: number } => !!x.entity)
+      // An officer's priority override wins over the raw connection count; ties break on count.
+      .sort((a, b) => b.nudge - a.nudge || b.count - a.count)
       .slice(0, 6);
-  }, [filteredRelationships]);
+  }, [filteredRelationships, priorityNudge]);
 
   const pathResult = useMemo(() => {
     if (!pathFrom || !pathTo || pathFrom === pathTo) return null;

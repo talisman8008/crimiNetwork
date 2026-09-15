@@ -5340,3 +5340,60 @@ a.rank-row:hover .rank-name {
   border-color: var(--accent);
   background: var(--surface);
 }
+
+/* Priority override on an entity — an officer bumps who the ranking should lead with. */
+.priority-override {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 7px 10px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.priority-override-label {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+.priority-btn {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  font-size: 9px;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.priority-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.priority-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.priority-override-value {
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  min-width: 76px;
+}
+
+.priority-override-value.up {
+  color: var(--risk-low);
+  font-weight: 600;
+}
+
+.priority-override-value.down {
+  color: var(--text-tertiary);
+}
