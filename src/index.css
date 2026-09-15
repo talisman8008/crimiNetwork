@@ -5397,3 +5397,147 @@ a.rank-row:hover .rank-name {
 .priority-override-value.down {
   color: var(--text-tertiary);
 }
+
+/* System capabilities map — the "how NETRA works" overview, leaves link to the real screens. */
+.sysmap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.sysmap-root {
+  padding: 10px 28px;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: var(--navy-900);
+  border-radius: var(--radius-md);
+}
+
+.sysmap-stem {
+  width: 2px;
+  height: 22px;
+  background: var(--border-strong);
+}
+
+.sysmap-tier {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+}
+
+.sysmap-tier.three {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.sysmap-tier.two {
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 720px;
+}
+
+.sysmap-card {
+  padding: 16px 18px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.sysmap-card-title {
+  font-size: var(--fs-base);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--navy-800);
+  margin: 0 0 2px;
+}
+
+.sysmap-card-blurb {
+  margin: 0 0 12px;
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+}
+
+.sysmap-leaves {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sysmap-leaf {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 10px;
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+  color: var(--text-secondary);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.sysmap-leaf.is-link {
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color var(--ease), background-color var(--ease);
+}
+
+.sysmap-leaf.is-link:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.sysmap-leaf-note {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.sysmap-band {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 28px;
+  width: 100%;
+  max-width: 520px;
+  text-align: center;
+  background: var(--accent-soft);
+  border: 1px solid #d7e5fb;
+  border-radius: var(--radius-md);
+}
+
+.sysmap-band strong {
+  font-size: var(--fs-base);
+  color: var(--accent-strong);
+}
+
+.sysmap-band span {
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+}
+
+.sysmap-foundation {
+  width: 100%;
+}
+
+.sysmap-foundation .sysmap-leaves {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.sysmap-foundation .sysmap-leaf {
+  flex: 1;
+  min-width: 150px;
+}
+
+@media (max-width: 760px) {
+  .sysmap-tier.three,
+  .sysmap-tier.two {
+    grid-template-columns: 1fr;
+  }
+}
