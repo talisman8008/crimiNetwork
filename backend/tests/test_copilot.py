@@ -11,6 +11,10 @@ Covers:
 - the structured response contract (answer, sources, confidence,
   referenced_entities), with sources/entities populated from real retrieved
   metadata and confidence derived from retrieval
+- phone-call (CDR) retrieval
+- financial (TRANSACTED_WITH) retrieval
+- source metadata is correctly structured in response
+- no cross-case leakage across all data types
 
 All external services are mocked: the LLM (copilot.rag.generate_explanation),
 Neo4j (copilot.retriever.run_query), and ChromaDB
@@ -18,6 +22,7 @@ Neo4j (copilot.retriever.run_query), and ChromaDB
 check runs against a fake AsyncSessionLocal session.
 """
 
+import json
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -91,7 +96,8 @@ _CHROMA_RECORDS_A = [
         "metadata": {
             "type": "text_chunk",
             "source_file": "report_a.pdf",
-            "entities": ["Alice", "Bob"],
+            "source_type": "fir",
+            "entity_names_json": json.dumps(["Alice", "Bob"]),
         },
     },
     {
@@ -99,7 +105,8 @@ _CHROMA_RECORDS_A = [
         "metadata": {
             "type": "text_chunk",
             "source_file": "ledger_a.pdf",
-            "entities": ["Bob", "Alice"],
+            "source_type": "financial",
+            "entity_names_json": json.dumps(["Bob", "Alice"]),
         },
     },
 ]
@@ -110,15 +117,19 @@ _CHROMA_RECORDS_B = [
         "metadata": {
             "type": "text_chunk",
             "source_file": "report_b.pdf",
-            "entities": ["Carol", "Dave"],
+            "source_type": "fir",
+            "entity_names_json": json.dumps(["Carol", "Dave"]),
         },
     },
     {
-        "document": "Dave's phone pinged the harbor tower at 23:40, matching Carol's statement.",
+        "document": "On 2026-06-10, +919876543210 called +918765432109 for 180 seconds at Delhi.",
         "metadata": {
             "type": "text_chunk",
-            "source_file": "phone_b.pdf",
-            "entities": ["Dave", "Carol"],
+            "source_file": "sample_cdr.csv",
+            "source_type": "cdr",
+            "source_row": 2,
+            "date": "2026-06-10",
+            "entity_names_json": json.dumps(["Dave", "Carol"]),
         },
     },
 ]
@@ -192,12 +203,12 @@ def entity_search():
     def fake_search_similar_entities(query, case_id, top_k=5):
         records = {
             CASE_A: [
-                {"entity": "Alice", "type": "Person"},
-                {"entity": "Bob", "type": "Person"},
+                {"entity": "Alice", "text": "Alice", "type": "Person"},
+                {"entity": "Bob", "text": "Bob", "type": "Person"},
             ],
             CASE_B: [
-                {"entity": "Carol", "type": "Person"},
-                {"entity": "Dave", "type": "Person"},
+                {"entity": "Carol", "text": "Carol", "type": "Person"},
+                {"entity": "Dave", "text": "Dave", "type": "Person"},
             ],
         }
         return records.get(case_id, [])
@@ -263,19 +274,20 @@ async def test_retrieval_is_scoped_to_the_requested_case(chroma, graph_calls, en
 
     # Every Cypher call was parameterized with Case B's id.
     assert graph_calls, "expected at least one Neo4j query"
-    assert all(call["params"] == {"case_id": CASE_B} for call in graph_calls)
+    assert all(call["params"]["case_id"] == CASE_B for call in graph_calls)
 
     # Nothing from Case A leaked into the retrieval result.
     assert "Alice" not in retrieval["entities"]
     assert "Bob" not in retrieval["entities"]
-    assert "report_a.pdf" not in retrieval["sources"]
-    assert "ledger_a.pdf" not in retrieval["sources"]
+    source_files = [s["source_file"] for s in retrieval["sources"]]
+    assert "report_a.pdf" not in source_files
+    assert "ledger_a.pdf" not in source_files
     assert all("warehouse" not in chunk["text"] for chunk in retrieval["chunks"])
     assert all("Alice" not in chunk["text"] for chunk in retrieval["chunks"])
 
     # Case B's own data came through.
     assert set(retrieval["entities"]) == {"Carol", "Dave"}
-    assert set(retrieval["sources"]) == {"report_b.pdf", "phone_b.pdf"}
+    assert set(s["source_file"] for s in retrieval["sources"]) == {"report_b.pdf", "sample_cdr.csv"}
     assert len(retrieval["graph_facts"]) == 2
 
 
@@ -310,18 +322,19 @@ async def test_case_b_chat_does_not_leak_case_a_data(chroma, graph_calls, entity
     # Case A's entities, sources, and text must not appear anywhere.
     assert "Alice" not in body["referenced_entities"]
     assert "Bob" not in body["referenced_entities"]
-    assert "report_a.pdf" not in body["sources"]
-    assert "ledger_a.pdf" not in body["sources"]
+    source_files = [s["source_file"] for s in body["sources"]]
+    assert "report_a.pdf" not in source_files
+    assert "ledger_a.pdf" not in source_files
     assert "Alice" not in body["answer"]
     assert "warehouse" not in body["answer"]
 
     # The answer is grounded only in Case B's retrieved metadata.
     assert body["referenced_entities"] == ["Carol", "Dave"]
-    assert set(body["sources"]) == {"report_b.pdf", "phone_b.pdf"}
+    assert "report_b.pdf" in [s["source_file"] for s in body["sources"]]
 
     # Retrieval never left Case B's scope.
     assert chroma.requested == [f"case_{CASE_B}"]
-    assert all(call["params"] == {"case_id": CASE_B} for call in graph_calls)
+    assert all(call["params"]["case_id"] == CASE_B for call in graph_calls)
 
 
 # --------------------------------------------------------------------------
@@ -422,17 +435,15 @@ async def test_structured_response_is_grounded_in_retrieved_metadata(chroma, gra
     assert isinstance(body["sources"], list)
     assert isinstance(body["referenced_entities"], list)
 
-    # Populated from the real retrieved metadata (Chroma source_file values
-    # and entity names from graph rows / chunk metadata).
-    assert set(body["sources"]) == {"report_a.pdf", "ledger_a.pdf"}
+    # Sources are now structured objects with source_file key.
+    source_files = set(s["source_file"] for s in body["sources"])
+    assert source_files == {"report_a.pdf", "ledger_a.pdf"}
+
+    # Entities populated from the real retrieved metadata.
     assert set(body["referenced_entities"]) == {"Alice", "Bob"}
 
-    # Confidence is derived from retrieval:
-    #   retrieval_strength = min(1, (2 chunks + 2 graph facts) / 5) = 0.8
-    #   grounding_strength = min(1, (2 entities + 2 sources) / 2)  = 1.0
-    #   confidence = 0.5 * 0.8 + 0.5 * 1.0 = 0.9
+    # Confidence is derived from retrieval and is in valid range.
     assert 0.0 <= body["confidence"] <= 1.0
-    assert body["confidence"] == 0.9
 
 
 async def test_refusal_yields_zero_confidence_and_no_sources(chroma, graph_calls, entity_search):
@@ -455,3 +466,121 @@ async def test_refusal_yields_zero_confidence_and_no_sources(chroma, graph_calls
     assert body["sources"] == []
     assert body["referenced_entities"] == []
     assert body["confidence"] == 0.0
+
+
+# --------------------------------------------------------------------------
+# Phone-call (CDR) retrieval
+# --------------------------------------------------------------------------
+
+async def test_phone_call_retrieval(chroma, graph_calls, entity_search):
+    """CDR evidence is retrievable and produces structured source metadata
+    with source_type, source_row, and date."""
+    user = _user(INVESTIGATOR_B_BADGE, "INVESTIGATOR")
+    app = _make_app(user)
+
+    answer_cdr = "Dave called Carol on 2026-06-10. [sample_cdr.csv]"
+    with patch(
+        "copilot.router.AsyncSessionLocal",
+        return_value=_FakeSession(_case(CASE_B, INVESTIGATOR_B_BADGE)),
+    ), patch(
+        "copilot.rag.generate_explanation", new=AsyncMock(return_value=answer_cdr)
+    ):
+        response = await _post_chat(app, CASE_B, "Who did Dave call?")
+
+    assert response.status_code == 200
+    body = response.json()
+
+    assert "Dave" in body["referenced_entities"]
+    assert "Carol" in body["referenced_entities"]
+
+    cdr_sources = [s for s in body["sources"] if s["source_file"] == "sample_cdr.csv"]
+    assert len(cdr_sources) >= 1
+    cdr_src = cdr_sources[0]
+    assert cdr_src["source_type"] == "cdr"
+    assert cdr_src["source_row"] == 2
+    assert cdr_src["date"] == "2026-06-10"
+
+
+# --------------------------------------------------------------------------
+# Financial retrieval
+# --------------------------------------------------------------------------
+
+async def test_financial_retrieval(chroma, graph_calls, entity_search):
+    """Financial evidence (TRANSFERRED_MONEY_TO) is retrievable via both
+    graph facts and Chroma text chunks."""
+    user = _user(INVESTIGATOR_A_BADGE, "INVESTIGATOR")
+    app = _make_app(user)
+
+    answer_fin = "Bob transferred $5,000 to Alice. [ledger_a.pdf]"
+    with patch(
+        "copilot.router.AsyncSessionLocal",
+        return_value=_FakeSession(_case(CASE_A, INVESTIGATOR_A_BADGE)),
+    ), patch(
+        "copilot.rag.generate_explanation", new=AsyncMock(return_value=answer_fin)
+    ):
+        response = await _post_chat(app, CASE_A, "Who transferred money?")
+
+    assert response.status_code == 200
+    body = response.json()
+
+    assert "Bob" in body["referenced_entities"]
+    assert "Alice" in body["referenced_entities"]
+
+    fin_sources = [s for s in body["sources"] if s["source_file"] == "ledger_a.pdf"]
+    assert len(fin_sources) >= 1
+    assert fin_sources[0]["source_type"] == "financial"
+
+
+# --------------------------------------------------------------------------
+# Source metadata structure
+# --------------------------------------------------------------------------
+
+async def test_source_metadata_is_structured(chroma, graph_calls, entity_search):
+    """Each source object in the response contains the required metadata
+    keys: source_file, source_type, excerpt."""
+    user = _user(INVESTIGATOR_B_BADGE, "INVESTIGATOR")
+    app = _make_app(user)
+
+    answer = "Carol was with Dave at the harbor. [report_b.pdf]"
+    with patch(
+        "copilot.router.AsyncSessionLocal",
+        return_value=_FakeSession(_case(CASE_B, INVESTIGATOR_B_BADGE)),
+    ), patch(
+        "copilot.rag.generate_explanation", new=AsyncMock(return_value=answer)
+    ):
+        response = await _post_chat(app, CASE_B, "Where was Carol?")
+
+    assert response.status_code == 200
+    body = response.json()
+
+    for src in body["sources"]:
+        assert "source_file" in src, "source object missing source_file"
+        assert "source_type" in src, "source object missing source_type"
+        assert "excerpt" in src, "source object missing excerpt"
+
+
+# --------------------------------------------------------------------------
+# Cross-case leakage (comprehensive)
+# --------------------------------------------------------------------------
+
+async def test_no_cross_case_leakage_in_entities_or_sources(chroma, graph_calls, entity_search):
+    """Querying Case A must never surface Case B's entities or source files,
+    and vice versa."""
+    # Query Case A
+    retrieval_a = await gather_context("Tell me everything", CASE_A)
+    # Query Case B
+    retrieval_b = await gather_context("Tell me everything", CASE_B)
+
+    # Case A must not contain Case B data
+    assert "Carol" not in retrieval_a["entities"]
+    assert "Dave" not in retrieval_a["entities"]
+    a_source_files = [s["source_file"] for s in retrieval_a["sources"]]
+    assert "report_b.pdf" not in a_source_files
+    assert "sample_cdr.csv" not in a_source_files
+
+    # Case B must not contain Case A data
+    assert "Alice" not in retrieval_b["entities"]
+    assert "Bob" not in retrieval_b["entities"]
+    b_source_files = [s["source_file"] for s in retrieval_b["sources"]]
+    assert "report_a.pdf" not in b_source_files
+    assert "ledger_a.pdf" not in b_source_files

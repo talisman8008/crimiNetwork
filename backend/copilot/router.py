@@ -32,7 +32,7 @@ class ChatResponse(BaseModel):
     case_id: str
     query: str
     answer: str
-    sources: List[str]
+    sources: List[dict]
     confidence: float = Field(ge=0.0, le=1.0)
     referenced_entities: List[str]
 

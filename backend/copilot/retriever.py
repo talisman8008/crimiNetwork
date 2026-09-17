@@ -19,7 +19,7 @@ raw metadata (chunks, source files, entities, graph facts) so copilot/rag.py
 can ground the structured Copilot response in what was actually retrieved.
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from db.neo4j import run_query
 from nlp.embeddings import search_similar_entities, get_chroma_client
@@ -31,12 +31,45 @@ from nlp.embeddings import search_similar_entities, get_chroma_client
 
 _ENTITY_LIST_KEYS = ("entities",)
 _ENTITY_STRING_KEYS = ("entity", "entity_name")
-_ENTITY_NAME_KEYS = ("entity", "name", "id")
+_ENTITY_NAME_KEYS = ("entity", "name", "text", "id")
+
+
+def _requested_source_type(query: str) -> Optional[str]:
+    """Return an explicit document-type filter requested by the investigator.
+
+    This is intentionally limited to document categories already stored in
+    metadata. It does not depend on any case-specific filename, person, or
+    sample data. Queries without an explicit document type keep the normal
+    cross-source semantic search behavior.
+    """
+    normalized = query.lower()
+
+    if "fir" in normalized or "first information report" in normalized:
+        return "fir"
+    if "cdr" in normalized or "call detail record" in normalized:
+        return "cdr"
+    if (
+        "financial" in normalized
+        or "transaction" in normalized
+        or "transfer" in normalized
+    ):
+        return "financial"
+
+    return None
 
 
 def _entities_from_metadata(meta: Dict[str, Any]) -> List[str]:
     """Entity names attached to a Chroma record, if its metadata carries any."""
+    import json
     found: List[str] = []
+    if "entity_names_json" in meta:
+        try:
+            parsed = json.loads(meta["entity_names_json"])
+            if isinstance(parsed, list):
+                found.extend(str(item) for item in parsed if item)
+        except Exception:
+            pass
+
     for key in _ENTITY_LIST_KEYS:
         value = meta.get(key)
         if isinstance(value, list):
@@ -87,29 +120,27 @@ def _empty_text_result(message: str = "No unstructured text data found.") -> Dic
     return {"context": message, "chunks": [], "sources": [], "entities": []}
 
 
-async def retrieve_from_neo4j(query: str, case_id: str) -> Dict[str, Any]:
-    """
-    Very basic keyword heuristic to grab relevant nodes from graph.
-    In production, this would use an LLM to generate Cypher or vector search on graph.
-
-    Returns:
-        {
-            "context": str,        # formatted block for the prompt
-            "facts": List[dict],   # {"name", "rel", "target"} rows
-            "entities": List[str], # node names/ids seen
-        }
-    """
-    # Both endpoints of every relationship carry {case_id: $case_id}:
-    # `other` so centrality only counts in-case edges, `other2` so no
-    # neighbor node from another case can leak into the context.
-    cypher = """
-        MATCH (p:Person {case_id: $case_id})-[r]->(other {case_id: $case_id})
+async def retrieve_from_neo4j(query: str, case_id: str, chroma_entities: List[str] = None) -> Dict[str, Any]:
+    chroma_entities = chroma_entities or []
+    keywords = [w.lower() for w in query.split() if len(w) > 3]
+    
+    cypher = """\
+        MATCH (p {case_id: $case_id})-[r]-(other {case_id: $case_id})
         WITH p, count(r) as connections
-        ORDER BY connections DESC LIMIT 5
+        ORDER BY
+            CASE WHEN p.name IN $chroma_entities THEN 2
+                 WHEN any(k IN $keywords WHERE toLower(p.name) CONTAINS k OR coalesce(toLower(p.id), '') CONTAINS k) THEN 1
+                 ELSE 0 END DESC,
+            connections DESC
+        LIMIT 5
         OPTIONAL MATCH (p)-[r2]-(other2 {case_id: $case_id})
-        RETURN p.name as name, type(r2) as rel, coalesce(other2.name, other2.id) as target
+        RETURN coalesce(p.name, p.id) as name, type(r2) as rel, coalesce(other2.name, other2.id) as target
     """
-    results = await run_query(cypher, {"case_id": case_id})
+    results = await run_query(cypher, {
+        "case_id": case_id,
+        "chroma_entities": chroma_entities,
+        "keywords": keywords
+    })
 
     if not results:
         return _empty_graph_result()
@@ -168,31 +199,64 @@ async def retrieve_from_chroma(query: str, case_id: str, top_k: int = 3) -> Dict
     if count == 0:
         return _empty_text_result()
 
-    # Search for text_chunk
+    # Search text chunks. When the investigator explicitly asks for a document
+    # category (for example, an FIR), constrain retrieval to that existing
+    # metadata category so unrelated high-similarity rows do not crowd it out.
+    requested_type = _requested_source_type(query)
+    where: Dict[str, Any] = {"type": "text_chunk"}
+    if requested_type:
+        where = {
+            "$and": [
+                {"type": "text_chunk"},
+                {"source_type": requested_type},
+            ]
+        }
+
     results = collection.query(
         query_texts=[query],
         n_results=min(top_k, count),
-        where={"type": "text_chunk"}
+        where=where,
     )
 
     if not results or not results["documents"] or not results["documents"][0]:
         return _empty_text_result("No relevant text passages found.")
 
     chunks: List[Dict[str, Any]] = []
+    sources_dict: Dict[str, Dict[str, Any]] = {}
     metadatas = results.get("metadatas") or []
     for i, doc in enumerate(results["documents"][0]):
         meta = (metadatas[0][i] or {}) if metadatas else {}
-        chunks.append({
+        source_file = meta.get("source_file") or "unknown"
+        source_type = meta.get("source_type") or "unknown"
+        source_row = meta.get("source_row")
+        date = meta.get("date")
+
+        chunk_info: Dict[str, Any] = {
             "text": doc,
-            "source": meta.get("source_file"),
+            "source": source_file,
+            "source_type": source_type,
+            "source_row": source_row,
+            "date": date,
             "entities": _entities_from_metadata(meta),
-        })
+        }
+        chunks.append(chunk_info)
+
+        # Build a unique source object per (file, row, date) triple.
+        source_key = f"{source_file}_{source_row}_{date}" if source_row is not None else source_file
+        if source_key not in sources_dict:
+            sources_dict[source_key] = {
+                "source_file": source_file,
+                "source_type": source_type,
+                "source_row": source_row,
+                "date": date,
+                "excerpt": doc[:200] + "..." if len(doc) > 200 else doc,
+            }
 
     context = "Unstructured Source Text:\n"
     for chunk in chunks:
-        context += f"[Source: {chunk['source'] or 'unknown'}] {chunk['text']}\n"
+        context += f"[Source: {chunk['source']}] {chunk['text']}\n"
 
-    sources = list(dict.fromkeys(chunk["source"] for chunk in chunks if chunk["source"]))
+    sources: List[Dict[str, Any]] = list(sources_dict.values())
     entities = list(dict.fromkeys(
         entity for chunk in chunks for entity in chunk["entities"] if entity
     ))
@@ -205,20 +269,8 @@ async def retrieve_from_chroma(query: str, case_id: str, top_k: int = 3) -> Dict
 
 
 async def gather_context(query: str, case_id: str) -> Dict[str, Any]:
-    """
-    Combine both Neo4j and ChromaDB retrievals (both scoped to case_id).
-
-    Returns everything copilot/rag.py needs to ground the structured response:
-        {
-            "context": str,          # combined context string for the prompt
-            "chunks": List[dict],    # retrieved text chunks (+ source/entities)
-            "sources": List[str],    # unique source files across chunks
-            "entities": List[str],   # entity names from graph + Chroma metadata
-            "graph_facts": List[dict],
-        }
-    """
-    graph = await retrieve_from_neo4j(query, case_id)
     text = await retrieve_from_chroma(query, case_id)
+    graph = await retrieve_from_neo4j(query, case_id, text["entities"])
 
     entities = list(dict.fromkeys(
         entity for entity in graph["entities"] + text["entities"] if entity

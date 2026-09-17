@@ -36,3 +36,9 @@ Thumbs.db
 *.png 
 *.jpeg 
 *.md
+
+# User requested ignores
+backend/uploads/
+uploads/
+chroma_db/
+*.db

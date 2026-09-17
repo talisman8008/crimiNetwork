@@ -99,7 +99,7 @@ def _referenced_entities(candidates: List[str], answer: str) -> List[str]:
 
 def _compute_confidence(
     retrieval: Dict[str, Any],
-    sources: List[str],
+    sources: List[dict],
     referenced_entities: List[str],
 ) -> float:
     """
@@ -139,7 +139,20 @@ async def run_rag(query: str, case_id: str) -> Dict[str, Any]:
 
     if grounded:
         used = _used_chunks(retrieval.get("chunks", []), answer)
-        sources = list(dict.fromkeys(chunk["source"] for chunk in used if chunk.get("source")))
+        
+        # Filter full source objects based on used chunks
+        used_source_keys = set()
+        for c in used:
+             key = f"{c.get('source')}_{c.get('source_row')}_{c.get('date')}" if c.get('source_row') is not None else c.get('source')
+             used_source_keys.add(key)
+             
+        all_sources = retrieval.get("sources", [])
+        sources = []
+        for src in all_sources:
+             key = f"{src.get('source_file')}_{src.get('source_row')}_{src.get('date')}" if src.get('source_row') is not None else src.get('source_file')
+             if key in used_source_keys:
+                 sources.append(src)
+        
         referenced_entities = _referenced_entities(retrieval.get("entities", []), answer)
         confidence = _compute_confidence(retrieval, sources, referenced_entities)
     else:

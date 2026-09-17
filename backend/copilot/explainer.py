@@ -54,7 +54,7 @@ async def generate_explanation(query: str, context: str) -> str:
 
     elif GEMINI_API_KEY:
         genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel("gemini-3.6-flash")
         try:
             response = model.generate_content(prompt)
             return response.text

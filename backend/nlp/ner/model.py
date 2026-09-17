@@ -15,7 +15,7 @@ from typing import List
 from .entities import Entity, apply_regex_fallbacks
 
 MODEL_PATH = "backend/models/ner/indicbert_finetuned/model-best"
-FALLBACK_MODEL = "en_core_web_trf"
+FALLBACK_MODEL = "en_core_web_sm"
 
 _nlp = None
 

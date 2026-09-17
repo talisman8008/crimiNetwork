@@ -69,7 +69,7 @@ def store_entity_in_chromadb(
         ids=[entity_id],
         embeddings=[embedding],
         documents=[text],
-        metadatas=[{**metadata, "case_id": case_id}],
+        metadatas=[{**metadata, "case_id": case_id, "type": "entity"}],
     )
 
 
@@ -107,7 +107,7 @@ def search_similar_entities(
     except Exception:
         return []
 
-    where = {"case_id": case_id}
+    where = {"case_id": case_id, "type": "entity"}
     if entity_type:
         where["entity_type"] = entity_type
 

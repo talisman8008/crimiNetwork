@@ -54,22 +54,75 @@ async def process(case_id: str, parsed_output: dict, source_type: str):
         entities = extract_entities(resolved_text)
         print(f"Extracted {len(entities)} entities")
 
-    # Step 3: Store text chunks in ChromaDB for RAG
+    import json
+
+    # Step 3: Store text chunks in ChromaDB for RAG (bounded overlapping windows)
     if resolved_text:
-        paragraphs = [p.strip() for p in resolved_text.split("\n\n") if p.strip()]
-        for i, para in enumerate(paragraphs):
-            if len(para) > 50:  # skip very short chunks
+        chunk_size = 500
+        overlap = 100
+        chunks = []
+        start = 0
+        while start < len(resolved_text):
+            end = start + chunk_size
+            chunk_text = resolved_text[start:end]
+            chunks.append(chunk_text)
+            start += chunk_size - overlap
+
+        for i, chunk_text in enumerate(chunks):
+            if len(chunk_text.strip()) > 50:
+                chunk_ents = [e.text for e in entities if e.text.lower() in chunk_text.lower()]
                 store_text_chunk_in_chromadb(
                     chunk_id=f"{case_id}_{source_type}_{parsed_output.get('source_file', 'unknown')}_{i}",
-                    text=para,
+                    text=chunk_text,
                     metadata={
                         "source_type": source_type,
                         "source_file": parsed_output.get("source_file", "unknown"),
                         "confidence": confidence,
                         "chunk_index": i,
+                        "entity_names_json": json.dumps(list(set(chunk_ents))),
                     },
                     case_id=case_id,
                 )
+
+    # Step 3b: Store evidence documents for tabular records (CDR, financial)
+    records = parsed_output.get("records", [])
+    for row_idx, record in enumerate(records):
+        if source_type == "cdr":
+            caller = record.get("caller", "")
+            receiver = record.get("receiver", record.get("callee", ""))
+            date = record.get("date", record.get("datetime", ""))
+            duration = record.get("duration", record.get("duration_seconds", ""))
+            location = record.get("location", record.get("tower_location", ""))
+            text = f"On {date}, {caller} called {receiver} for {duration} seconds at {location}."
+            record_date = date
+        elif source_type == "financial":
+            sender = record.get("sender", "")
+            receiver = record.get("receiver", "")
+            date = record.get("date", "")
+            amount = record.get("amount", "")
+            text = f"On {date}, {sender} transferred {amount} to {receiver}."
+            record_date = date
+        else:
+            text = " ".join(f"{k}: {v}" for k, v in record.items())
+            record_date = record.get("date", "")
+
+        row_ents = list(set(
+            e.text for e in entities if e.text.lower() in text.lower()
+        ))
+
+        store_text_chunk_in_chromadb(
+            chunk_id=f"{case_id}_{source_type}_{parsed_output.get('source_file', 'unknown')}_row_{row_idx}",
+            text=text,
+            metadata={
+                "source_type": source_type,
+                "source_file": parsed_output.get("source_file", "unknown"),
+                "confidence": confidence,
+                "source_row": record.get("row_number", row_idx + 1),
+                "date": str(record_date),
+                "entity_names_json": json.dumps(row_ents),
+            },
+            case_id=case_id,
+        )
 
     # Step 4: Store entity embeddings in ChromaDB
     for entity in entities:
