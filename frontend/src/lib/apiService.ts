@@ -96,10 +96,20 @@ export interface GraphFilters {
 
 export interface ResolutionPair {
     pair_id: string;
-    entity_a: string;
-    entity_b: string;
+    entity_a: ResolutionEntitySummary;
+    entity_b: ResolutionEntitySummary;
     similarity: number;
     suggested_action: string;
+}
+
+export interface ResolutionEntitySummary {
+    id: string;
+    name: string;
+    type: string;
+    sources: string[];
+    phones: string[];
+    addresses: string[];
+    appearances: number;
 }
 
 export interface ResolutionQueueResponse {
@@ -282,7 +292,6 @@ export async function fetchGraph(
 
     const qs = params.toString() ? `?${params.toString()}` : "";
     const raw = await apiGet<RawGraphResponse>(`/api/cases/${caseId}/graph${qs}`);
-
     const entities = (raw.nodes ?? []).map((n) => buildEntity(n, caseId));
     const relationships = (raw.edges ?? []).map(buildRelationship);
     return { entities, relationships };

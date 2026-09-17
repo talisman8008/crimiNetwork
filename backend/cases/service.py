@@ -4,7 +4,22 @@ from sqlalchemy.orm import selectinload
 from typing import List, Optional
 
 from db.models import Case, User
+from db.neo4j import run_query
 from cases.schemas import CaseCreate, CaseUpdate
+
+
+# These IDs are the persisted Neo4j investigations. Their labels are display
+# metadata only; the UUIDs remain the stable backend/graph identifiers.
+GRAPH_CASE_DISPLAY = {
+    "7c3a1f61-b967-45b9-817e-fade87314fe3": {
+        "name": "Case 001",
+        "fir_number": "CASE001",
+    },
+    "ea53345e-a74c-4083-bbbb-c34ca9e267f4": {
+        "name": "Case 002",
+        "fir_number": "CASE002",
+    },
+}
 
 async def create_case(db: AsyncSession, case_data: CaseCreate, user: User) -> Case:
     new_case = Case(
@@ -99,3 +114,49 @@ async def seed_demo_cases(db: AsyncSession):
         ]
         db.add_all(demo_cases)
         await db.commit()
+
+
+async def sync_graph_cases(db: AsyncSession):
+    """Create SQL case records for existing Neo4j investigations.
+
+    Neo4j holds the source-of-truth network. If its persisted graph survives
+    while the local SQLite volume is recreated, the graph IDs must be restored
+    to the case registry so authenticated investigators can open it again.
+    """
+    graph_cases = await run_query(
+        "MATCH (c:Case) WHERE c.id IS NOT NULL RETURN DISTINCT c.id AS id, c.name AS name"
+    )
+    if not graph_cases:
+        return
+
+    investigator = (
+        await db.execute(select(User).where(User.badge_id == "BADGE001"))
+    ).scalars().first()
+    assigned_to = investigator.badge_id if investigator else None
+
+    for graph_case in graph_cases:
+        case_id = graph_case["id"]
+        display = GRAPH_CASE_DISPLAY.get(case_id, {})
+        existing = (
+            await db.execute(select(Case).where(Case.id == case_id))
+        ).scalars().first()
+        if existing:
+            # Reconcile records created by an earlier recovery pass. Do not
+            # alter the graph ID or any Neo4j data.
+            if display:
+                existing.name = display["name"]
+                existing.fir_number = display["fir_number"]
+            continue
+
+        db.add(
+            Case(
+                id=case_id,
+                name=display.get("name") or graph_case.get("name") or f"Investigation {case_id[:8]}",
+                fir_number=display.get("fir_number") or f"FIR/{case_id[:8].upper()}",
+                description="Recovered investigation backed by the persisted entity network.",
+                status="active",
+                assigned_to=assigned_to,
+            )
+        )
+
+    await db.commit()

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { corroborationFor, getEntityById, relationshipsFor } from "../data/mockData";
 import { getSocialProfile } from "../data/socialData";
-import type { Entity } from "../data/types";
+import type { Entity, Relationship } from "../data/types";
 import { calculateAge, EntityIcon, entitySubLabel, entityTypeLabel, formatDate, RiskBadge } from "./ui";
 import { IconX } from "./icons";
 import NetworkRoleCard from "./NetworkRoleCard";
@@ -11,6 +11,8 @@ import { useWatchlist } from "../lib/watchlist";
 
 interface EntityDetailPanelProps {
   entity: Entity;
+  relationships?: Relationship[];
+  entityById?: Map<string, Entity>;
   onClose: () => void;
   onSelectRelated: (id: string) => void;
 }
@@ -53,8 +55,10 @@ export function fieldsFor(e: Entity, redacted: boolean): { label: string; value:
   }
 }
 
-export default function EntityDetailPanel({ entity, onClose, onSelectRelated }: EntityDetailPanelProps) {
-  const connections = relationshipsFor(entity.id);
+export default function EntityDetailPanel({ entity, relationships, entityById, onClose, onSelectRelated }: EntityDetailPanelProps) {
+  const connections = relationships
+    ? relationships.filter((relationship) => relationship.source === entity.id || relationship.target === entity.id)
+    : relationshipsFor(entity.id);
   const corroborated = corroborationFor(entity.id);
   const corroboratedIds = new Set(corroborated.map((c) => c.otherId));
   const { redacted } = useRedaction();
@@ -137,7 +141,7 @@ export default function EntityDetailPanel({ entity, onClose, onSelectRelated }: 
         <div className="section-title">Connections ({groupedConnections.size})</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: entity.type === "person" ? 16 : 0 }}>
           {[...groupedConnections.entries()].map(([otherId, rels]) => {
-            const other = getEntityById(otherId);
+            const other = entityById?.get(otherId) ?? getEntityById(otherId);
             if (!other) return null;
             const sources = [...new Set(rels.map((r) => r.evidenceSource))];
             const isCorroborated = corroboratedIds.has(otherId);

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import type { Entity, EntityType, Relationship } from "../data/types";
-import { IconMinus, IconPlus, IconTarget } from "./icons";
 
 /**
  * Flat network view drawn on a 2D canvas.
@@ -160,6 +159,7 @@ interface GraphView2DProps {
   hiddenEdgeIds?: Set<string>;
   dimmedNodeIds?: Set<string>;
   nodeColorOverride?: Map<string, string>;
+  highlightNodeIds?: Set<string>;
 }
 
 export default function GraphView2D({
@@ -171,6 +171,7 @@ export default function GraphView2D({
   hiddenEdgeIds,
   dimmedNodeIds,
   nodeColorOverride,
+  highlightNodeIds,
 }: GraphView2DProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -183,8 +184,8 @@ export default function GraphView2D({
   const nodesRef = useRef<Node2D[]>(nodes);
   nodesRef.current = nodes;
 
-  const live = useRef({ selectedId, highlightEdgeIds, hiddenEdgeIds, dimmedNodeIds, nodeColorOverride, relationships });
-  live.current = { selectedId, highlightEdgeIds, hiddenEdgeIds, dimmedNodeIds, nodeColorOverride, relationships };
+  const live = useRef({ selectedId, highlightEdgeIds, hiddenEdgeIds, dimmedNodeIds, nodeColorOverride, highlightNodeIds, relationships });
+  live.current = { selectedId, highlightEdgeIds, hiddenEdgeIds, dimmedNodeIds, nodeColorOverride, highlightNodeIds, relationships };
 
   useLayoutEffect(() => {
     needsFit.current = true;
@@ -244,7 +245,7 @@ export default function GraphView2D({
     });
 
     const byId = new Map(list.map((nd) => [nd.id, nd]));
-    const { selectedId: sel, highlightEdgeIds: hl, hiddenEdgeIds: hidden, dimmedNodeIds: dim, nodeColorOverride: override, relationships: rels } = live.current;
+    const { selectedId: sel, highlightEdgeIds: hl, hiddenEdgeIds: hidden, dimmedNodeIds: dim, nodeColorOverride: override, highlightNodeIds: highlighted, relationships: rels } = live.current;
 
     const neighbours = new Set<string>();
     if (sel) {
@@ -287,6 +288,7 @@ export default function GraphView2D({
       const base = override?.get(nd.id) ?? typeColor[nd.entity.type];
       const isSel = nd.id === sel;
       const isNeighbour = neighbours.has(nd.id);
+      const isHighlighted = highlighted?.has(nd.id) ?? false;
       const dimmed = dim?.has(nd.id) ?? false;
       const r = nd.radius * Math.max(0.65, Math.min(1.5, zoom));
       if (!Number.isFinite(r) || !Number.isFinite(nd.sx) || !Number.isFinite(nd.sy)) continue;
@@ -307,15 +309,15 @@ export default function GraphView2D({
       ctx.arc(nd.sx, nd.sy, r, 0, Math.PI * 2);
       ctx.stroke();
 
-      if (isSel) {
+      if (isSel || isHighlighted) {
         ctx.beginPath();
-        ctx.strokeStyle = "#0f2c4e";
-        ctx.lineWidth = 1.5;
-        ctx.arc(nd.sx, nd.sy, r + 5, 0, Math.PI * 2);
+        ctx.strokeStyle = isSel ? "#0f2c4e" : "#2563eb";
+        ctx.lineWidth = isSel ? 1.5 : 3;
+        ctx.arc(nd.sx, nd.sy, r + (isSel ? 5 : 4), 0, Math.PI * 2);
         ctx.stroke();
       }
 
-      const worthLabel = isSel || isNeighbour || nd.radius >= 12;
+      const worthLabel = isSel || isNeighbour || isHighlighted || nd.radius >= 12;
       if (worthLabel && !dimmed) {
         ctx.globalAlpha = 1;
         ctx.font = `${isSel ? 600 : 400} 11px ${LABEL_FONT}`;
@@ -434,36 +436,6 @@ export default function GraphView2D({
         <canvas ref={canvasRef} style={{ display: "block", cursor: CURSOR_IDLE, touchAction: "none" }} />
       </div>
 
-      <div className="icon-dock icon-dock-bottom-left">
-        <button
-          className="icon-dock-btn"
-          onClick={() => {
-            needsFit.current = true;
-          }}
-          aria-label="Fit to view"
-          title="Fit to view"
-        >
-          <IconTarget />
-        </button>
-        <button
-          className="icon-dock-btn"
-          onClick={() => {
-            camera.current.zoom = Math.min(3, camera.current.zoom * 1.2);
-          }}
-          aria-label="Zoom in"
-        >
-          <IconPlus />
-        </button>
-        <button
-          className="icon-dock-btn"
-          onClick={() => {
-            camera.current.zoom = Math.max(0.2, camera.current.zoom / 1.2);
-          }}
-          aria-label="Zoom out"
-        >
-          <IconMinus />
-        </button>
-      </div>
     </>
   );
 }

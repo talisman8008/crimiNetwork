@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useParams } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 import { alerts, corroborationFor, getCaseById, getEntityById, relationshipsFor } from "../data/mockData";
 import { cctvFootage } from "../data/cctvData";
@@ -10,17 +10,24 @@ import NetworkRoleCard from "../components/NetworkRoleCard";
 import EventTimeline from "../components/EventTimeline";
 import { eventsForEntity } from "../data/timelineData";
 import { EntityIcon, entityTypeLabel, formatDate, RiskBadge, SeverityBadge } from "../components/ui";
-import { IconChevronRight } from "../components/icons";
 import { useRedaction } from "../lib/redaction";
 import { useWatchlist } from "../lib/watchlist";
 
 export default function PersonProfile() {
   const { entityId } = useParams<{ entityId: string }>();
+  const location = useLocation();
   const entity = entityId ? getEntityById(entityId) : undefined;
   const { redacted } = useRedaction();
   const { isPinned, toggle } = useWatchlist();
   const [scanning, setScanning] = useState(false);
   const [scanned, setScanned] = useState(false);
+  const [activityTab, setActivityTab] = useState<"activity" | "court">("activity");
+
+  useEffect(() => {
+    if (location.search !== "?print=1") return;
+    const printTimer = window.setTimeout(() => window.print(), 350);
+    return () => window.clearTimeout(printTimer);
+  }, [location.search]);
 
   if (!entity) {
     return (
@@ -47,18 +54,17 @@ export default function PersonProfile() {
   return (
     <>
       <PageHeader
-        eyebrow="Profile"
-        title={entity.label}
+        title="PROFILE"
         right={
-          <button className={`btn ${pinned ? "btn-primary" : ""}`} onClick={() => toggle(entity.id)}>
+          <button className={`btn no-print ${pinned ? "btn-primary" : ""}`} onClick={() => toggle(entity.id)}>
             {pinned ? "Watchlisted" : "Add to watchlist"}
           </button>
         }
       />
-      <div className="content">
-        <div className="two-col">
-          <div>
-            <div className="card" style={{ marginBottom: 16 }}>
+      <div className="content profile-content">
+        <div className="profile-bento">
+          <div className="profile-bento-primary">
+            <div className="card profile-identity">
               <div className="card-body" style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
                 <span className="profile-avatar">
                   <EntityIcon type={entity.type} />
@@ -84,7 +90,7 @@ export default function PersonProfile() {
               </div>
             </div>
 
-            <div className="card" style={{ marginBottom: 16 }}>
+            <div className="card profile-details">
               <div className="card-header">
                 <h2>Details</h2>
               </div>
@@ -98,7 +104,7 @@ export default function PersonProfile() {
               </div>
             </div>
 
-            <div className="card" style={{ marginBottom: 16 }}>
+            <div className="card profile-network">
               <div className="card-header">
                 <h2>Why this matters</h2>
               </div>
@@ -107,19 +113,36 @@ export default function PersonProfile() {
               </div>
             </div>
 
-            {activity.length > 0 && (
-              <div className="card" style={{ marginBottom: 16 }}>
+            <div className="card profile-activity">
                 <div className="card-header">
-                  <h2>Recorded activity ({activity.length})</h2>
+                  <div className="profile-card-tabs" role="tablist" aria-label="Activity and court records">
+                    <button className={activityTab === "activity" ? "active" : ""} role="tab" aria-selected={activityTab === "activity"} onClick={() => setActivityTab("activity")}>
+                      Recorded activity ({activity.length})
+                    </button>
+                    <button className={activityTab === "court" ? "active" : ""} role="tab" aria-selected={activityTab === "court"} onClick={() => setActivityTab("court")}>
+                      Court dates ({relatedHearings.length})
+                    </button>
+                  </div>
                 </div>
-                <div className="card-body">
-                  <EventTimeline events={activity} />
-                </div>
+                {activityTab === "activity" ? (
+                  <div className="card-body">
+                    {activity.length > 0 ? <EventTimeline events={activity} /> : <p className="profile-empty">No recorded activity.</p>}
+                  </div>
+                ) : (
+                  <div className="card-body profile-court-tab-body">
+                    {relatedHearings.length === 0 && <p className="profile-empty">No hearings.</p>}
+                    {relatedHearings.map((h) => (
+                      <div key={h.id} className="profile-court-tab-row">
+                        <div>{h.hearingType}</div>
+                        <div>{formatDate(h.date)} &middot; {h.caseCode}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
 
             {entity.notes && (
-              <div className="card" style={{ marginBottom: 16 }}>
+              <div className="card profile-notes">
                 <div className="card-header">
                   <h2>Investigator notes</h2>
                 </div>
@@ -130,7 +153,7 @@ export default function PersonProfile() {
             )}
 
             {entity.type === "person" && (
-              <div className="card">
+              <div className="card profile-social">
                 <div className="card-header">
                   <h2>Social media intelligence</h2>
                 </div>
@@ -177,8 +200,8 @@ export default function PersonProfile() {
             )}
           </div>
 
-          <div>
-            <div className="card" style={{ marginBottom: 16 }}>
+          <div className="profile-bento-secondary">
+            <div className="card profile-connections">
               <div className="card-header">
                 <h2>Connections ({connections.length})</h2>
                 {corroborated.length > 0 && <span className="badge badge-risk-low">{corroborated.length} corroborated</span>}
@@ -203,7 +226,7 @@ export default function PersonProfile() {
               </div>
             </div>
 
-            <div className="card" style={{ marginBottom: 16 }}>
+            <div className="card profile-alerts">
               <div className="card-header">
                 <h2>Related alerts ({relatedAlerts.length})</h2>
               </div>
@@ -221,7 +244,7 @@ export default function PersonProfile() {
               </div>
             </div>
 
-            <div className="card" style={{ marginBottom: 16 }}>
+            <div className="card profile-cctv">
               <div className="card-header">
                 <h2>CCTV sightings ({relatedFootage.length})</h2>
               </div>
@@ -238,26 +261,6 @@ export default function PersonProfile() {
               </div>
             </div>
 
-            <div className="card">
-              <div className="card-header">
-                <h2>Court dates ({relatedHearings.length})</h2>
-                <Link to="/court-dates" className="btn">
-                  View all
-                  <IconChevronRight />
-                </Link>
-              </div>
-              <div className="card-body" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {relatedHearings.length === 0 && <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>No hearings.</p>}
-                {relatedHearings.map((h) => (
-                  <div key={h.id}>
-                    <div style={{ fontSize: 12, fontWeight: 500 }}>{h.hearingType}</div>
-                    <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
-                      {formatDate(h.date)} &middot; {h.caseCode}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </div>

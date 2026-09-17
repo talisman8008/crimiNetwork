@@ -16,6 +16,8 @@ const priorityColor: Record<string, string> = {
   low: "var(--text-tertiary)",
 };
 
+const mockCaseIds = new Set(["c-1", "c-2", "case-1", "case-2"]);
+
 export default function Cases() {
   const { cases, loading, error } = useCases();
   const { openCase } = useActiveCase();
@@ -82,6 +84,7 @@ export default function Cases() {
         )}
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {cases.map((c) => {
+            const isMockCase = mockCaseIds.has(c.id);
             const entityCount = entitiesForCase(c.id).length;
             const linkCount = relationshipsForCase(c.id).length;
             const today = new Date().toISOString().slice(0, 10);
@@ -89,13 +92,14 @@ export default function Cases() {
             const team = officersForCase(c.id);
             const linked = linkedCasesFor(c.id);
             return (
-              <div key={c.id} className="card card-hoverable">
+              <div key={c.id} className={`card card-hoverable${isMockCase ? " case-card-mock" : ""}`}>
                 <div className="card-body" style={{ display: "flex", justifyContent: "space-between", gap: 20 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
                       <span className="mono" style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
                         {c.code}
                       </span>
+                      {isMockCase && <span className="case-card-mock-label">Seeded mock</span>}
                       <span
                         style={{
                           display: "inline-flex",

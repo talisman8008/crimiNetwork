@@ -27,9 +27,13 @@ function ZoomButtons() {
   );
 }
 
-export default function SeverityHeatmap() {
+export default function SeverityHeatmap({ caseId }: { caseId?: string }) {
   const places = entities.filter(
-    (e): e is LocationEntity => e.type === "location" && e.lat != null && e.lng != null,
+    (e): e is LocationEntity =>
+      e.type === "location" &&
+      e.lat != null &&
+      e.lng != null &&
+      (caseId == null || e.caseIds.includes(caseId)),
   );
   const [hovered, setHovered] = useState<string | null>(null);
 

@@ -1,296 +1,198 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
-import {
-  alerts,
-  cases,
-  entitiesForCase,
-  relationshipsForCase,
-  topConnectedEntities,
-  crossCaseEntities,
-  entities,
-  relationships,
-  dataSources,
-} from "../data/mockData";
+import { alerts, cases, entitiesForCase, relationships, relationshipsForCase } from "../data/mockData";
 import { courtDatesForCase } from "../data/courtData";
 import { officersForCase } from "../data/officersData";
 import { eventsForCase } from "../data/timelineData";
-import { caseStatusColor, entityTypeLabel, formatDate, SeverityBadge } from "../components/ui";
-import { Bars, Donut, DonutLegend } from "../components/Charts";
+import { caseStatusColor, formatDate } from "../components/ui";
+import { Bars } from "../components/Charts";
 import SeverityHeatmap from "../components/SeverityHeatmap";
-import type { EntityType } from "../data/types";
-import { describeWorkspace, useCaseWorkspaces } from "../lib/caseWorkspace";
-import { getEntityById } from "../data/mockData";
+import { IconChevronLeft, IconChevronRight, IconSearch } from "../components/icons";
 import { useActiveCase } from "../lib/activeCase";
 import { useAuth } from "../lib/auth";
-
-const severityColor: Record<string, string> = {
-  high: "var(--risk-high)",
-  medium: "var(--risk-medium)",
-  low: "var(--risk-low)",
-};
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { openCase } = useActiveCase();
-  const { workspaces } = useCaseWorkspaces();
   useAuth();
 
-  const crossCaseCount = crossCaseEntities().length;
+  const [caseSearch, setCaseSearch] = useState("");
+  const [caseRailCollapsed, setCaseRailCollapsed] = useState(false);
+  const [selectedCaseId, setSelectedCaseId] = useState(cases[0]?.id ?? "");
 
-  const [district, setDistrict] = useState("All districts");
-  const [period, setPeriod] = useState("All time");
+  const selectedCase = cases.find((c) => c.id === selectedCaseId) ?? cases[0];
+  const selectedEntities = selectedCase ? entitiesForCase(selectedCase.id) : [];
+  const selectedLinks = selectedCase ? relationshipsForCase(selectedCase.id) : [];
+  const selectedAlerts = selectedCase
+    ? alerts.filter((a) => a.caseId === selectedCase.id && a.status !== "dismissed")
+    : [];
+  const selectedEvents = selectedCase ? eventsForCase(selectedCase.id) : [];
+  const nextHearing = selectedCase
+    ? courtDatesForCase(selectedCase.id).find((h) => h.status === "upcoming")
+    : undefined;
+  const investigator = selectedCase
+    ? officersForCase(selectedCase.id).find((officer) => officer.role.includes("Lead")) ?? officersForCase(selectedCase.id)[0]
+    : undefined;
 
-  const districts = useMemo(
-    () => ["All districts", ...new Set(entities.filter((e) => e.type === "location").map((e) => e.label))],
-    [],
-  );
+  const visibleCases = useMemo(() => {
+    const query = caseSearch.trim().toLowerCase();
+    if (!query) return cases;
+    return cases.filter((c) => `${c.code} ${c.title} ${c.station}`.toLowerCase().includes(query));
+  }, [caseSearch]);
 
-  const openAlerts = alerts.filter((a) => a.status !== "dismissed");
-
-  const stats = [
-    { label: "Entities on record", value: entities.length, delta: "5.6%", up: true },
-    { label: "Links established", value: relationships.length, delta: "4.2%", up: true },
-    { label: "Active investigations", value: cases.filter((c) => c.status !== "closed").length, delta: "1", up: true },
-    { label: "Cross-case entities", value: crossCaseCount, delta: "6.5%", up: true },
-    { label: "Open alerts", value: openAlerts.length, delta: "3.1%", up: false },
-    { label: "Evidence sources", value: dataSources.length, delta: "2", up: true },
-  ];
-
-  // Alerts by status, in the order an officer clears them.
-  const alertStatusSlices = useMemo(() => {
-    const by = (s: string) => alerts.filter((a) => a.status === s).length;
-    return [
-      { label: "New", value: by("new"), color: "#2563eb" },
-      { label: "Acknowledged", value: by("acknowledged"), color: "#93b4f5" },
-      { label: "Dismissed", value: by("dismissed"), color: "#111827" },
-    ].filter((s) => s.value > 0);
-  }, []);
-
-  const alertTotal = alertStatusSlices.reduce((a, s) => a + s.value, 0);
-
-  const categorySlices = useMemo(() => {
-    const colors: Record<string, string> = {
-      person: "#2563eb",
-      organization: "#f59e0b",
-      location: "#14b8a6",
-      vehicle: "#a78bfa",
-      phone: "#111827",
-    };
-    return Object.entries(
-      entities.reduce<Record<string, number>>((acc, e) => {
-        acc[e.type] = (acc[e.type] ?? 0) + 1;
-        return acc;
-      }, {}),
-    )
-      .sort((a, b) => b[1] - a[1])
-      .map(([type, value]) => ({ label: entityTypeLabel[type as EntityType], value, color: colors[type] }));
-  }, []);
-
-  const entityTotal = entities.length;
-
-  // Which weekday each link was actually observed on, straight from the evidence dates.
   const linksByDay = useMemo(() => {
     const names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const counts = new Array(7).fill(0);
-    relationships.forEach((r) => {
-      const d = new Date(r.observedOn);
-      if (!Number.isNaN(d.getTime())) counts[d.getDay()] += 1;
+    relationships.forEach((relationship) => {
+      const date = new Date(relationship.observedOn);
+      if (!Number.isNaN(date.getTime())) counts[date.getDay()] += 1;
     });
-    return names.map((label, i) => ({ label, value: counts[i] }));
+    return names.map((label, index) => ({ label, value: counts[index] }));
   }, []);
 
-  function enterCase(caseId: string) {
-    openCase(caseId);
+  function openSelectedCase() {
+    if (!selectedCase) return;
+    openCase(selectedCase.id);
     navigate("/workspace");
   }
 
   return (
     <>
-      <PageHeader
-        title="Dashboard"
-        right={
-          <div className="dash-filters">
-            <select
-              value={district}
-              onChange={(e) => setDistrict(e.target.value)}
-              aria-label="Filter by district"
-            >
-              {districts.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>
-            <select value={period} onChange={(e) => setPeriod(e.target.value)} aria-label="Filter by period">
-              <option>All time</option>
-              <option>Last 7 days</option>
-              <option>Last 30 days</option>
-              <option>This year</option>
-            </select>
-          </div>
-        }
-      />
-      <div className="content" style={{ paddingBottom: 80 }}>
-        <div className="stat-grid">
-          {stats.map((s) => (
-            <div key={s.label} className="stat-tile">
-              <div className="stat-tile-label">{s.label}</div>
-              <div className="stat-tile-row">
-                <span className="stat-tile-value">{s.value.toLocaleString("en-IN")}</span>
-                <span className={`stat-tile-delta ${s.up ? "up" : "down"}`}>
-                  {s.up ? "↑" : "↓"} {s.delta}
-                </span>
-                <span className="stat-tile-period">last week</span>
+      <PageHeader title="Dashboard" />
+      <div className="content dashboard-content">
+        <div className={`dashboard-workspace ${caseRailCollapsed ? "is-case-rail-collapsed" : ""}`}>
+          <aside className="dashboard-case-rail" aria-label="Investigation cases">
+            <div className="dashboard-case-rail-header">
+              {!caseRailCollapsed && <h2>Cases</h2>}
+              <button
+                type="button"
+                className="dashboard-rail-toggle"
+                onClick={() => setCaseRailCollapsed((collapsed) => !collapsed)}
+                aria-label={caseRailCollapsed ? "Expand cases" : "Collapse cases"}
+                title={caseRailCollapsed ? "Expand cases" : "Collapse cases"}
+              >
+                {caseRailCollapsed ? <IconChevronRight /> : <IconChevronLeft />}
+              </button>
+            </div>
+
+            {!caseRailCollapsed && (
+              <>
+                <label className="dashboard-case-search">
+                  <IconSearch />
+                  <input
+                    type="search"
+                    value={caseSearch}
+                    onChange={(event) => setCaseSearch(event.target.value)}
+                    placeholder="Search cases"
+                    aria-label="Search cases"
+                  />
+                </label>
+
+                <div className="dashboard-case-list">
+                  {visibleCases.map((caseItem) => {
+                    const caseAlerts = alerts.filter(
+                      (alert) => alert.caseId === caseItem.id && alert.status !== "dismissed",
+                    );
+                    const isSelected = caseItem.id === selectedCase?.id;
+                    return (
+                      <button
+                        key={caseItem.id}
+                        type="button"
+                        className={`dashboard-case-item ${isSelected ? "is-selected" : ""}`}
+                        onClick={() => setSelectedCaseId(caseItem.id)}
+                        aria-pressed={isSelected}
+                      >
+                        <div className="dashboard-case-item-topline">
+                          <span className="mono">{caseItem.code}</span>
+                          <span className="dashboard-case-status">
+                            <span className="status-dot" style={{ background: caseStatusColor(caseItem.status) }} />
+                            {caseItem.status}
+                          </span>
+                        </div>
+                        <strong>{caseItem.title}</strong>
+                        <span className="dashboard-case-item-meta">
+                          {caseItem.station} · {caseAlerts.length} open alert{caseAlerts.length === 1 ? "" : "s"}
+                        </span>
+                      </button>
+                    );
+                  })}
+                  {visibleCases.length === 0 && <p className="dashboard-case-empty">No cases match that search.</p>}
+                </div>
+              </>
+            )}
+          </aside>
+
+          <div className="dashboard-main-grid">
+            <section className="panel dashboard-investigator-card">
+              <p className="dashboard-card-kicker">Investigator</p>
+              <img className="dashboard-investigator-avatar" src="/investigator-placeholder.svg" alt="" />
+              <h2>{investigator?.name ?? "Unassigned"}</h2>
+              <p>{investigator?.role ?? "No investigator assigned"}</p>
+              <button type="button" className="btn btn-primary dashboard-open-case" onClick={openSelectedCase}>
+                Open case
+                <IconChevronRight />
+              </button>
+            </section>
+
+            <section className="panel chart-card dashboard-activity-card">
+              <div className="dashboard-card-heading">
+                <div>
+                  <p className="dashboard-card-kicker">Activity</p>
+                  <h2 className="chart-card-title">Links observed by day</h2>
+                </div>
+                <span className="dashboard-chart-total">{relationships.length}</span>
               </div>
-            </div>
-          ))}
-        </div>
+              <Bars data={linksByDay} />
+            </section>
 
-        <div className="chart-grid">
-          <section className="panel chart-card">
-            <h2 className="chart-card-title">Alerts by status</h2>
-            <div className="chart-card-body">
-              <Donut slices={alertStatusSlices} total={alertTotal} />
-              <DonutLegend slices={alertStatusSlices} showPercent />
-            </div>
-          </section>
+            <section className="panel chart-card dashboard-location-card">
+              <div className="dashboard-card-heading">
+                <div>
+                  <h2 className="chart-card-title">Case location map</h2>
+                </div>
+                <select
+                  key={selectedCase?.id}
+                  className="dashboard-selected-case"
+                  defaultValue={selectedCase?.code}
+                  aria-label="Selected FIR"
+                >
+                  {cases.map((caseItem) => (
+                    <option key={caseItem.id} value={caseItem.code}>
+                      {caseItem.code}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <SeverityHeatmap caseId={selectedCase?.id} />
+            </section>
 
-          <section className="panel chart-card chart-card-wide">
-            <h2 className="chart-card-title">Severity heatmap</h2>
-            <SeverityHeatmap />
-          </section>
-
-          <section className="panel chart-card">
-            <h2 className="chart-card-title">Links observed by day</h2>
-            <Bars data={linksByDay} />
-          </section>
-
-          <section className="panel chart-card chart-card-wide">
-            <h2 className="chart-card-title">Entities by category</h2>
-            <div className="chart-card-body">
-              <Donut slices={categorySlices} total={entityTotal} />
-              <DonutLegend slices={categorySlices} />
-            </div>
-          </section>
-        </div>
-
-        <h2 className="section-heading">Your caseload</h2>
-        <p className="workspace-intro">
-          Open a case to work inside it. Everything else in the console narrows to that
-          investigation until you close it.
-        </p>
-
-        <div className="case-workspace-grid">
-          {cases.map((c) => {
-            const caseEntities = entitiesForCase(c.id);
-            const caseLinks = relationshipsForCase(c.id);
-            const caseAlerts = alerts.filter((a) => a.caseId === c.id && a.status !== "dismissed");
-            const highCount = caseAlerts.filter((a) => a.severity === "high").length;
-            const team = officersForCase(c.id);
-            const lead = team.find((o) => o.role.includes("Lead")) ?? team[0];
-            const hearings = courtDatesForCase(c.id).filter((h) => h.status === "upcoming");
-            const nextHearing = hearings[0];
-            const events = eventsForCase(c.id);
-            const w = workspaces[c.id];
-            const topThree = topConnectedEntities(50)
-              .filter((t) => t.entity.caseIds.includes(c.id))
-              .slice(0, 3);
-
-            return (
-              <article key={c.id} className="case-workspace">
-                <header className="case-workspace-head">
-                  <div style={{ minWidth: 0 }}>
-                    <div className="case-workspace-code mono">{c.code}</div>
-                    <h2 className="case-workspace-title">{c.title}</h2>
-                    <div className="case-workspace-law">{c.sections.join(" · ")}</div>
-                  </div>
-                  <span className="case-workspace-status">
-                    <span className="status-dot" style={{ background: caseStatusColor(c.status) }} />
-                    {c.status}
+            <section className="panel dashboard-telemetry-card">
+              <div className="dashboard-card-heading">
+                <div>
+                  <p className="dashboard-card-kicker">Telemetry</p>
+                  <h2>Case details</h2>
+                </div>
+                {selectedCase && (
+                  <span className="dashboard-case-status">
+                    <span className="status-dot" style={{ background: caseStatusColor(selectedCase.status) }} />
+                    {selectedCase.status}
                   </span>
-                </header>
-
-                <div className="case-workspace-figures">
-                  <div>
-                    <span className="cw-figure mono">{caseEntities.length}</span>
-                    <span className="cw-figure-label">Entities</span>
-                  </div>
-                  <div>
-                    <span className="cw-figure mono">{caseLinks.length}</span>
-                    <span className="cw-figure-label">Links</span>
-                  </div>
-                  <div>
-                    <span className="cw-figure mono">{events.length}</span>
-                    <span className="cw-figure-label">Logged events</span>
-                  </div>
-                  <div>
-                    <span
-                      className="cw-figure mono"
-                      style={{ color: highCount > 0 ? "var(--risk-high)" : undefined }}
-                    >
-                      {caseAlerts.length}
-                    </span>
-                    <span className="cw-figure-label">Open alerts</span>
-                  </div>
-                </div>
-
-                {caseAlerts.length > 0 && (
-                  <div className="case-workspace-alerts">
-                    {caseAlerts.slice(0, 2).map((a) => (
-                      <div key={a.id} className="cw-alert">
-                        <span className="cw-alert-stripe" style={{ background: severityColor[a.severity] }} />
-                        <span className="cw-alert-title">{a.title}</span>
-                        <SeverityBadge severity={a.severity} />
-                      </div>
-                    ))}
-                  </div>
                 )}
-
-                <dl className="case-workspace-facts">
-                  {lead && (
-                    <>
-                      <dt>Lead officer</dt>
-                      <dd>{lead.name}</dd>
-                    </>
-                  )}
-                  <dt>Team</dt>
-                  <dd>{team.length} assigned</dd>
-                  {topThree.length > 0 && (
-                    <>
-                      <dt>Central figures</dt>
-                      <dd>{topThree.map((t) => t.entity.label).join(", ")}</dd>
-                    </>
-                  )}
-                  {nextHearing && (
-                    <>
-                      <dt>Next hearing</dt>
-                      <dd>
-                        {nextHearing.hearingType} &middot; {formatDate(nextHearing.date)}
-                      </dd>
-                    </>
-                  )}
-                </dl>
-
-                {w && (
-                  <div className="case-workspace-resume">
-                    <span className="resume-dot" />
-                    Left off: {describeWorkspace(w, w.selectedEntityId ? getEntityById(w.selectedEntityId)?.label : undefined)}
-                  </div>
-                )}
-
-                <div className="case-workspace-actions">
-                  <button className="btn btn-primary" onClick={() => enterCase(c.id)}>
-                    {w ? "Resume case" : "Open case"}
-                  </button>
-                  <Link to={`/dossier/${c.id}`} className="btn" target="_blank" rel="noopener noreferrer">
-                    Print dossier
-                  </Link>
-                </div>
-              </article>
-            );
-          })}
+              </div>
+              <dl className="dashboard-telemetry-grid">
+                <div><dt>Entities</dt><dd>{selectedEntities.length}</dd></div>
+                <div><dt>Links</dt><dd>{selectedLinks.length}</dd></div>
+                <div><dt>Recorded events</dt><dd>{selectedEvents.length}</dd></div>
+                <div><dt>Open alerts</dt><dd className={selectedAlerts.length > 0 ? "has-alerts" : ""}>{selectedAlerts.length}</dd></div>
+              </dl>
+              <div className="dashboard-next-hearing">
+                <span>Next hearing</span>
+                <strong>{nextHearing ? `${nextHearing.hearingType} · ${formatDate(nextHearing.date)}` : "No upcoming date"}</strong>
+              </div>
+              <p className="dashboard-telemetry-station">{selectedCase?.station}</p>
+            </section>
+          </div>
         </div>
       </div>
     </>

@@ -19,24 +19,25 @@ import {
 import { useAuth } from "../lib/auth";
 import { useActiveCase } from "../lib/activeCase";
 import { useOnboarding } from "../lib/onboarding";
-import { cases, getCaseById } from "../data/mockData";
+import { cases as seededCases } from "../data/mockData";
+import { useCases } from "../hooks/useCaseData";
 
 type NavItem = { to: string; label: string; icon: typeof IconGrid; end?: boolean; supervisorOnly?: boolean };
 
-/** Case-scoped tools — only rendered when an investigation is open. */
-const investigateItems: NavItem[] = [
-  { to: "/workspace", label: "Workspace", icon: IconFolder },
-  { to: "/network", label: "Network Graph", icon: IconNetwork },
+/** Tools that only make sense after an investigator opens one case. */
+const caseItems: NavItem[] = [
+  { to: "/workspace", label: "Case workspace", icon: IconFolder },
+  { to: "/network", label: "Network analysis", icon: IconNetwork },
   { to: "/map", label: "Location Map", icon: IconMapPin },
   { to: "/alerts", label: "Alerts", icon: IconAlertTriangle },
   { to: "/resolution", label: "Merge Review", icon: IconUsers },
+  { to: "/court-dates", label: "Court dates", icon: IconScale },
 ];
 
-/** Always-visible pages that work without an active case or have their own case filters. */
-const commandCenterItems: NavItem[] = [
+/** Cross-case tools shown before an investigation has been opened. */
+const globalItems: NavItem[] = [
   { to: "/", label: "Dashboard", icon: IconGrid, end: true },
   { to: "/cases", label: "Cases", icon: IconFolder },
-  { to: "/court-dates", label: "Court Calendar", icon: IconScale },
   { to: "/cctv", label: "CCTV Footage", icon: IconCamera },
   { to: "/entities", label: "Entity Registry", icon: IconSearch },
 ];
@@ -80,12 +81,16 @@ function NavGroup({
 export default function Sidebar() {
   const { role, logout } = useAuth();
   const { activeCaseId, openCase, closeCase } = useActiveCase();
+  const { cases: loadedCases } = useCases();
   const { startTour } = useOnboarding();
   const navigate = useNavigate();
   const [switcherOpen, setSwitcherOpen] = useState(false);
 
-  const activeCase = activeCaseId ? getCaseById(activeCaseId) : undefined;
-  const otherCases = cases.filter((c) => c.id !== activeCaseId);
+  // Prefer the live registry so recovered Neo4j investigations display their
+  // real label; keep the local seed only while the registry is loading.
+  const availableCases = loadedCases.length > 0 ? loadedCases : seededCases;
+  const activeCase = activeCaseId ? availableCases.find((caseItem) => caseItem.id === activeCaseId) : undefined;
+  const otherCases = availableCases.filter((caseItem) => caseItem.id !== activeCaseId);
 
   return (
     <aside className="sidebar">
@@ -102,6 +107,22 @@ export default function Sidebar() {
         <IconSearch />
         <span>Search entities</span>
       </button>
+
+      {activeCaseId && (
+        <button
+          className="sidebar-case-exit"
+          onClick={() => {
+            closeCase();
+            setSwitcherOpen(false);
+            navigate("/cases");
+          }}
+          aria-label="Exit current case"
+          title="Exit current case"
+        >
+          <IconX />
+          <span>Exit case</span>
+        </button>
+      )}
 
       {activeCase && (
         <div className="sidebar-case">
@@ -132,7 +153,7 @@ export default function Sidebar() {
               }}
               aria-label="Close case and return to dashboard"
             >
-              ✕ Close
+              Exit case
             </button>
           </div>
 
@@ -159,13 +180,14 @@ export default function Sidebar() {
       )}
 
       <nav className="sidebar-nav" aria-label="Main navigation">
-        {/* ── Investigate: only when a case is open ── */}
-        {activeCaseId && (
-          <NavGroup label="Investigate" items={investigateItems} role={role} />
+        {activeCaseId ? (
+          <>
+            <NavGroup label="Open case" items={caseItems} role={role} />
+            <NavGroup label="Global views" items={globalItems} role={role} />
+          </>
+        ) : (
+          <NavGroup label="Command Center" items={globalItems} role={role} />
         )}
-
-        {/* ── Command Center: always available ── */}
-        <NavGroup label="Command Center" items={commandCenterItems} role={role} />
 
         {/* ── Administration: infra & compliance ── */}
         <NavGroup label="Administration" items={administrationItems} role={role} />

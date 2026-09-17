@@ -21,7 +21,7 @@ app.add_middleware(
 )
 from db.database import engine, Base, AsyncSessionLocal
 from auth.service import seed_demo_users
-from cases.service import seed_demo_cases
+from cases.service import seed_demo_cases, sync_graph_cases
 import os
 
 @app.on_event("startup")
@@ -38,6 +38,8 @@ async def startup():
     # Try creating neo4j schema but don't fail if neo4j isn't up
     try:
         await create_schema()
+        async with AsyncSessionLocal() as db:
+            await sync_graph_cases(db)
     except Exception as e:
         print(f"Neo4j init failed (normal if mocking): {e}")
         

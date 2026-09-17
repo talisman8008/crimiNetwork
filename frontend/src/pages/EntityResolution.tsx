@@ -102,8 +102,8 @@ export default function EntityResolution() {
         )}
 
         {pending.map((p) => {
-          const primary = byId.get(p.entity_a);
-          const duplicate = byId.get(p.entity_b);
+          const primary = byId.get(p.entity_a.id);
+          const duplicate = byId.get(p.entity_b.id);
           const pct = Math.round(p.similarity * 100);
           const band = pct >= 80 ? "high" : pct >= 65 ? "medium" : "low";
           return (
@@ -121,7 +121,7 @@ export default function EntityResolution() {
                     <div className="merge-record-head">
                       {primary && <EntityIcon type={primary.type} />}
                       <div>
-                        <div className="merge-record-name">{primary?.label ?? p.entity_a}</div>
+                        <div className="merge-record-name">{primary?.label ?? p.entity_a.name}</div>
                         <div className="merge-record-sub">
                           {(primary?.caseIds ?? []).map((id) => getCaseById(id)?.code).filter(Boolean).join(", ")}
                         </div>
@@ -140,7 +140,7 @@ export default function EntityResolution() {
                     <div className="merge-record-head">
                       {duplicate && <EntityIcon type={duplicate.type} />}
                       <div>
-                        <div className="merge-record-name">{duplicate?.label ?? p.entity_b}</div>
+                        <div className="merge-record-name">{duplicate?.label ?? p.entity_b.name}</div>
                         <div className="merge-record-sub">
                           {(duplicate?.caseIds ?? []).map((id) => getCaseById(id)?.code).filter(Boolean).join(", ")}
                         </div>
@@ -178,7 +178,7 @@ export default function EntityResolution() {
                   <button className="btn" onClick={() => decide(p.pair_id, "rejected")}>
                     Not the same
                   </button>
-                  <Link className="btn" to={`/profile/${p.entity_b}`}>
+                  <Link className="btn" to={`/profile/${p.entity_b.id}`}>
                     Inspect record
                   </Link>
                 </div>
@@ -205,12 +205,12 @@ export default function EntityResolution() {
               <tbody>
                 {resolved.map((p) => {
                   const d = decisions[p.pair_id];
-                  const primary = byId.get(p.entity_a);
-                  const duplicate = byId.get(p.entity_b);
+                  const primary = byId.get(p.entity_a.id);
+                  const duplicate = byId.get(p.entity_b.id);
                   return (
                     <tr key={p.pair_id}>
                       <td>
-                        {(primary?.label ?? p.entity_a)} &harr; {(duplicate?.label ?? p.entity_b)}
+                        {(primary?.label ?? p.entity_a.name)} &harr; {(duplicate?.label ?? p.entity_b.name)}
                       </td>
                       <td>
                         <span className={`badge ${d.decision === "approved" ? "badge-risk-low" : "badge-neutral"}`}>

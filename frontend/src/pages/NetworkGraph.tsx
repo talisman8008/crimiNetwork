@@ -7,12 +7,7 @@ import EvidenceBoard from "../components/EvidenceBoard";
 import { useCaseGraph } from "../hooks/useCaseData";
 import {
   cases,
-  entities,
   entitiesForCase,
-  getEntityById,
-  networkRoleFor,
-  relationships,
-  relationshipsFor,
 } from "../data/mockData";
 import { cctvFootage } from "../data/cctvData";
 import { EntityIcon, entityTypeLabel, formatDate, RiskBadge } from "../components/ui";
@@ -38,6 +33,14 @@ const allSources: SourceType[] = [
   "Intelligence Agency Reports",
 ];
 
+const graphTypeLabels: Record<EntityType, string> = {
+  person: "People",
+  organization: "Organisation",
+  location: "Location",
+  vehicle: "Vehicle",
+  phone: "Phone",
+};
+
 export default function NetworkGraph() {
   const [searchParams] = useSearchParams();
   const { activeCaseId } = useActiveCase();
@@ -48,12 +51,13 @@ export default function NetworkGraph() {
   const [sourceFilter, setSourceFilter] = useState<SourceType | "all">("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [showKeyPlayers, setShowKeyPlayers] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(searchParams.get("entity"));
   const [pathfinderOpen, setPathfinderOpen] = useState(false);
   const [pathFrom, setPathFrom] = useState("");
   const [pathTo, setPathTo] = useState("");
-  const [communitiesOn, setCommunitiesOn] = useState(false);
+  const [communitiesOn] = useState(false);
   const [timelineOn, setTimelineOn] = useState(false);
   const [timelineStep, setTimelineStep] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -112,6 +116,7 @@ export default function NetworkGraph() {
   }, [liveEntities, activeTypes, search]);
 
   const filteredIds = useMemo(() => new Set(filteredEntities.map((e) => e.id)), [filteredEntities]);
+  const entityById = useMemo(() => new Map(liveEntities.map((entity) => [entity.id, entity])), [liveEntities]);
 
   const filteredRelationships = useMemo(
     () =>
@@ -139,8 +144,6 @@ export default function NetworkGraph() {
     });
     return map;
   }, [communitiesOn, communityResult]);
-
-  const crossCaseInView = useMemo(() => filteredEntities.filter((e) => e.caseIds.length > 1).length, [filteredEntities]);
 
   // Every distinct date on which a relationship was observed, in order. Scrubbing across these
   // replays how the network was actually pieced together from the evidence.
@@ -189,13 +192,6 @@ export default function NetworkGraph() {
     };
   }, [playing, timelineStep, timelineDates.length]);
 
-  function toggleTimeline() {
-    const next = !timelineOn;
-    setTimelineOn(next);
-    setPlaying(false);
-    if (next) setTimelineStep(timelineDates.length - 1);
-  }
-
   const keyPlayers = useMemo(() => {
     const degree = new Map<string, number>();
     filteredRelationships.forEach((r) => {
@@ -203,11 +199,25 @@ export default function NetworkGraph() {
       degree.set(r.target, (degree.get(r.target) ?? 0) + 1);
     });
     return [...degree.entries()]
-      .map(([id, count]) => ({ entity: getEntityById(id), count }))
+      .map(([id, count]) => ({ entity: entityById.get(id), count }))
       .filter((x): x is { entity: NonNullable<typeof x.entity>; count: number } => !!x.entity)
       .sort((a, b) => b.count - a.count)
       .slice(0, 6);
-  }, [filteredRelationships]);
+  }, [filteredRelationships, entityById]);
+
+  function toggleType(type: EntityType) {
+    setActiveTypes((current) => {
+      const next = new Set(current);
+      if (next.has(type)) next.delete(type);
+      else next.add(type);
+      return next;
+    });
+  }
+
+  const highlightedKeyPlayerIds = useMemo(
+    () => (showKeyPlayers ? new Set(keyPlayers.map(({ entity }) => entity.id)) : undefined),
+    [showKeyPlayers, keyPlayers],
+  );
 
   const pathResult = useMemo(() => {
     if (!pathFrom || !pathTo || pathFrom === pathTo) return null;
@@ -219,21 +229,7 @@ export default function NetworkGraph() {
     [pathResult],
   );
 
-  function toggleType(t: EntityType) {
-    setActiveTypes((prev) => {
-      const next = new Set(prev);
-      if (next.has(t)) next.delete(t);
-      else next.add(t);
-      return next;
-    });
-  }
-
-  function openPathfinder() {
-    setPathfinderOpen(true);
-    setSelectedId(null);
-  }
-
-  const selectedEntity = selectedId ? getEntityById(selectedId) : undefined;
+  const selectedEntity = selectedId ? entityById.get(selectedId) : undefined;
   const panelMode: "entity" | "pathfinder" | "communities" | "legend" = selectedEntity
     ? "entity"
     : pathfinderOpen
@@ -242,29 +238,38 @@ export default function NetworkGraph() {
         ? "communities"
         : "legend";
 
-  const spotlightRole = selectedEntity ? networkRoleFor(selectedEntity.id) : undefined;
   const spotlightConnections = useMemo(() => {
     if (!selectedEntity) return [];
     const otherIds = [
-      ...new Set(relationshipsFor(selectedEntity.id).map((r) => (r.source === selectedEntity.id ? r.target : r.source))),
+      ...new Set(liveRelationships.filter((r) => r.source === selectedEntity.id || r.target === selectedEntity.id)
+        .map((r) => (r.source === selectedEntity.id ? r.target : r.source))),
     ];
-    return otherIds.map((id) => getEntityById(id)).filter((e): e is NonNullable<typeof e> => !!e);
-  }, [selectedEntity]);
+    return otherIds.map((id) => entityById.get(id)).filter((e): e is NonNullable<typeof e> => !!e);
+  }, [selectedEntity, liveRelationships, entityById]);
+  const spotlightRole = useMemo(() => {
+    if (!selectedEntity) return undefined;
+    const score = Math.min(100, spotlightConnections.length * 12);
+    return {
+      score,
+      reasons: spotlightConnections.length
+        ? [`Directly connected to ${spotlightConnections.length} ${spotlightConnections.length === 1 ? "entity" : "entities"} in this investigation.`]
+        : ["Not yet linked to any other entity in the network."],
+    };
+  }, [selectedEntity, spotlightConnections]);
   const spotlightFootage = selectedEntity
     ? cctvFootage.find((f) => f.linkedEntityIds.includes(selectedEntity.id))
     : undefined;
   const spotlightLastObserved = useMemo(() => {
     if (!selectedEntity) return null;
-    const dates = relationshipsFor(selectedEntity.id)
+    const dates = liveRelationships.filter((r) => r.source === selectedEntity.id || r.target === selectedEntity.id)
       .map((r) => r.observedOn)
       .sort();
     return dates.length ? dates[dates.length - 1] : null;
-  }, [selectedEntity]);
+  }, [selectedEntity, liveRelationships]);
 
   return (
     <div className={`network-page ${selectedEntity ? "focus-mode" : ""}`}>
       <PageHeader
-        eyebrow="Analysis"
         title="Network Graph"
         right={
           tab === "graph" ? (
@@ -286,64 +291,6 @@ export default function NetworkGraph() {
 
       {tab === "graph" ? (
         <>
-          <div className="filter-bar">
-            <select className="select" value={caseId} onChange={(e) => setCaseId(e.target.value)}>
-              <option value="all">All cases</option>
-              {cases.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.code}: {c.title}
-                </option>
-              ))}
-            </select>
-            <select className="select" value={relationType} onChange={(e) => setRelationType(e.target.value as RelationType | "all")}>
-              <option value="all">All relationship types</option>
-              {allRelationTypes.map((t) => (
-                <option key={t} value={t} style={{ textTransform: "capitalize" }}>
-                  {t}
-                </option>
-              ))}
-            </select>
-            <select className="select" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value as SourceType | "all")}>
-              <option value="all">All evidence sources</option>
-              {allSources.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text-tertiary)" }}>
-              From
-              <input type="date" className="select" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
-            </label>
-            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text-tertiary)" }}>
-              To
-              <input type="date" className="select" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
-            </label>
-          </div>
-          <div className="filter-bar analysis-tools">
-            {allTypes.map((t) => (
-              <button key={t} className={`chip-toggle ${activeTypes.has(t) ? "active" : ""}`} onClick={() => toggleType(t)}>
-                <span className="swatch" style={{ background: typeSwatch[t] }} />
-                {entityTypeLabel[t]}
-              </button>
-            ))}
-            <button className={`btn ${pathfinderOpen ? "btn-primary" : ""}`} onClick={openPathfinder}>
-              Path finder
-            </button>
-            <button
-              className={`btn ${communitiesOn ? "btn-primary" : ""}`}
-              onClick={() => setCommunitiesOn((v) => !v)}
-            >
-              Communities
-            </button>
-            <button className={`btn ${timelineOn ? "btn-primary" : ""}`} onClick={toggleTimeline}>
-              Timeline
-            </button>
-            <div style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-tertiary)" }}>
-              {filteredEntities.length} entities &middot; {filteredRelationships.length} links
-            </div>
-          </div>
-
           {selectedEntity && (
             <div className="focus-exit">
               <div className="focus-exit-label">
@@ -359,27 +306,6 @@ export default function NetworkGraph() {
 
           <div className={`tab-fade-in graph-stage ${selectedEntity ? "focused" : ""}`}>
             <div className="graph-canvas-pane">
-              <div className="graph-stat-stack">
-                <div className="graph-stat-card graph-stat-live">
-                  <span className="graph-stat-live-dot" />
-                  <div>
-                    <div className="graph-stat-live-label">Live monitoring</div>
-                    <div className="graph-stat-live-sub">Feeds syncing every 6h</div>
-                  </div>
-                </div>
-                <div className="graph-stat-card">
-                  <div className="graph-stat-value">{filteredEntities.length}</div>
-                  <div className="graph-stat-label">Entities in view</div>
-                </div>
-                <div className="graph-stat-card">
-                  <div className="graph-stat-value">{filteredRelationships.length}</div>
-                  <div className="graph-stat-label">Links in view</div>
-                </div>
-                <div className="graph-stat-card">
-                  <div className="graph-stat-value">{crossCaseInView}</div>
-                  <div className="graph-stat-label">Cross-case links</div>
-                </div>
-              </div>
               {filteredEntities.length > 0 ? (
                 <GraphView2D
                   entities={filteredEntities}
@@ -393,9 +319,39 @@ export default function NetworkGraph() {
                   hiddenEdgeIds={hiddenEdgeIds}
                   dimmedNodeIds={dimmedNodeIds}
                   nodeColorOverride={nodeColorOverride}
+                  highlightNodeIds={highlightedKeyPlayerIds}
                 />
               ) : (
                 <div className="empty-state">No entities match the current filters.</div>
+              )}
+
+              {!selectedEntity && (
+                <aside className="graph-legend" aria-label="Graph legend">
+                  <div className="graph-legend-column">
+                    <div className="graph-legend-title">Entity types</div>
+                    {allTypes.map((type) => (
+                      <div key={type} className="graph-legend-row">
+                        <span className="graph-legend-type-swatch" style={{ background: typeSwatch[type] }} />
+                        <span>{entityTypeLabel[type]}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="graph-legend-column">
+                    <div className="graph-legend-title">Risk ring</div>
+                    <div className="graph-legend-row">
+                      <span className="graph-legend-risk-ring graph-legend-risk-high" />
+                      <span>High risk</span>
+                    </div>
+                    <div className="graph-legend-row">
+                      <span className="graph-legend-risk-ring graph-legend-risk-medium" />
+                      <span>Medium risk</span>
+                    </div>
+                    <div className="graph-legend-row">
+                      <span className="graph-legend-risk-ring graph-legend-risk-low" />
+                      <span>Low risk</span>
+                    </div>
+                  </div>
+                </aside>
               )}
 
               {timelineOn && timelineDates.length > 0 && (
@@ -470,6 +426,8 @@ export default function NetworkGraph() {
               {panelMode === "entity" && selectedEntity && (
                 <EntityDetailPanel
                   entity={selectedEntity}
+                  relationships={liveRelationships}
+                  entityById={entityById}
                   onClose={() => setSelectedId(null)}
                   onSelectRelated={setSelectedId}
                 />
@@ -520,11 +478,11 @@ export default function NetworkGraph() {
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                           {pathResult.entityIds.map((id, i) => {
-                            const ent = getEntityById(id);
+                            const ent = entityById.get(id);
                             if (!ent) return null;
                             const rel =
                               i < pathResult.relationshipIds.length
-                                ? relationships.find((r) => r.id === pathResult.relationshipIds[i])
+                                ? filteredRelationships.find((r) => r.id === pathResult.relationshipIds[i])
                                 : null;
                             return (
                               <div key={id}>
@@ -603,7 +561,7 @@ export default function NetworkGraph() {
                           </div>
                           <div className="community-members">
                             {c.entityIds.map((id) => {
-                              const ent = getEntityById(id);
+                              const ent = entityById.get(id);
                               if (!ent) return null;
                               return (
                                 <button
@@ -630,14 +588,70 @@ export default function NetworkGraph() {
               {panelMode === "legend" && (
                 <div className="card" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
                   <div className="card-header">
-                    <h2>Key players</h2>
+                    <h2>Network controls</h2>
                   </div>
-                  <div className="card-body" style={{ overflowY: "auto", flex: 1 }}>
-                    <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 12 }}>
-                      Entities ranked by number of connections under the current filters. A fast read on who
-                      holds the network together.
-                    </p>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 18 }}>
+                  <div className="graph-control-panel">
+                    <section className="graph-control-section">
+                      <div className="graph-control-label">Entity labels</div>
+                      <div className="graph-type-labels">
+                        {allTypes.map((type) => (
+                          <button
+                            key={type}
+                            type="button"
+                            className={`graph-type-label ${activeTypes.has(type) ? "is-active" : ""}`}
+                            aria-pressed={activeTypes.has(type)}
+                            onClick={() => toggleType(type)}
+                          >
+                            <span className="graph-legend-type-swatch" style={{ background: typeSwatch[type] }} />
+                            {graphTypeLabels[type]}
+                            <span className="graph-type-label-close" aria-hidden="true">×</span>
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="graph-control-label graph-control-spaced-label">Connection filters</div>
+                      <div className="graph-control-fields">
+                        <label>
+                          <span>Relationship type</span>
+                          <select className="select" value={relationType} onChange={(e) => setRelationType(e.target.value as RelationType | "all")}>
+                            <option value="all">All relationship types</option>
+                            {allRelationTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+                          </select>
+                        </label>
+                        <label>
+                          <span>Evidence source</span>
+                          <select className="select" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value as SourceType | "all")}>
+                            <option value="all">All evidence sources</option>
+                            {allSources.map((source) => <option key={source} value={source}>{source}</option>)}
+                          </select>
+                        </label>
+                      </div>
+                    </section>
+
+                    <section className="graph-control-section">
+                      <label className="graph-key-player-toggle">
+                        <input type="checkbox" checked={showKeyPlayers} onChange={(event) => setShowKeyPlayers(event.target.checked)} />
+                        <span>
+                          <strong>Show key players</strong>
+                          <small>Highlight the most connected entities in this view.</small>
+                        </span>
+                      </label>
+                    </section>
+
+                    <section className="graph-control-section">
+                      <div className="graph-control-label">Observed date</div>
+                      <div className="graph-date-fields">
+                        <label>
+                          <span>From</span>
+                          <input className="input" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+                        </label>
+                        <label>
+                          <span>To</span>
+                          <input className="input" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+                        </label>
+                      </div>
+                    </section>
+                    <div hidden>
                       {keyPlayers.length === 0 && <div className="empty-state">No connections in this view.</div>}
                       {keyPlayers.map(({ entity, count }, i) => (
                         <button
@@ -669,30 +683,6 @@ export default function NetworkGraph() {
                       ))}
                     </div>
 
-                    <div className="section-title">Entity types</div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
-                      {allTypes.map((t) => (
-                        <div key={t} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
-                          <span style={{ width: 10, height: 10, borderRadius: 3, background: typeSwatch[t] }} />
-                          {entityTypeLabel[t]}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="section-title">Risk ring</div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
-                        <span style={{ width: 10, height: 10, borderRadius: "50%", border: "2.5px solid var(--risk-high)" }} />
-                        High risk
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
-                        <span style={{ width: 10, height: 10, borderRadius: "50%", border: "2.5px solid var(--risk-medium)" }} />
-                        Medium risk
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
-                        <span style={{ width: 10, height: 10, borderRadius: "50%", border: "2.5px solid var(--border-strong)" }} />
-                        Low risk
-                      </div>
-                    </div>
                   </div>
                 </div>
               )}

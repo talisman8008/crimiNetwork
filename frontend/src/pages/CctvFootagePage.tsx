@@ -34,18 +34,23 @@ function Thumb({ clip, large }: { clip: CctvFootage; large?: boolean }) {
 export default function CctvFootagePage() {
   const { officerId } = useAuth();
   const [footage, setFootage] = useState<CctvFootage[]>(initialFootage);
-  const [caseId, setCaseId] = useState("all");
-  const [statusFilter, setStatusFilter] = useState<FootageStatus | "all">("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [caseFilter, setCaseFilter] = useState("all");
+  const [appliedFilters, setAppliedFilters] = useState({ search: "", dateFrom: "", dateTo: "", caseId: "all" });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
 
   const filtered = useMemo(
     () =>
-      footage
-        .filter((c) => (caseId === "all" ? true : c.caseId === caseId))
-        .filter((c) => (statusFilter === "all" ? true : c.status === statusFilter))
+      [...footage]
+        .filter((clip) => !appliedFilters.search || `${clip.title} ${clip.cameraId} ${clip.source} ${clip.locationLabel}`.toLowerCase().includes(appliedFilters.search.toLowerCase()))
+        .filter((clip) => appliedFilters.caseId === "all" || clip.caseId === appliedFilters.caseId)
+        .filter((clip) => !appliedFilters.dateFrom || clip.recordedOn.slice(0, 10) >= appliedFilters.dateFrom)
+        .filter((clip) => !appliedFilters.dateTo || clip.recordedOn.slice(0, 10) <= appliedFilters.dateTo)
         .sort((a, b) => (a.recordedOn < b.recordedOn ? 1 : -1)),
-    [footage, caseId, statusFilter],
+    [footage, appliedFilters],
   );
 
   const selected = selectedId ? footage.find((c) => c.id === selectedId) : undefined;
@@ -69,28 +74,9 @@ export default function CctvFootagePage() {
 
   return (
     <>
-      <PageHeader eyebrow="Field Evidence" title="CCTV Footage" />
-      <div className="filter-bar">
-        <select className="select" value={caseId} onChange={(e) => setCaseId(e.target.value)}>
-          <option value="all">All cases</option>
-          {cases.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.code}: {c.title}
-            </option>
-          ))}
-        </select>
-        <select className="select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as FootageStatus | "all")}>
-          <option value="all">All statuses</option>
-          <option value="unreviewed">Unreviewed</option>
-          <option value="reviewed">Reviewed</option>
-          <option value="flagged">Flagged</option>
-        </select>
-        <div style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-tertiary)" }}>
-          {filtered.length} of {footage.length} clips
-        </div>
-      </div>
+      <PageHeader title="CCTV Footage" />
 
-      <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
+      <div className="cctv-page-layout" style={{ flex: 1, display: "flex", minHeight: 0 }}>
         <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
           <div className="cctv-grid">
             {filtered.map((clip) => (
@@ -120,6 +106,40 @@ export default function CctvFootagePage() {
           </div>
           {filtered.length === 0 && <div className="empty-state">No footage matches the current filters.</div>}
         </div>
+
+        <aside className="cctv-search-panel">
+          <form
+            className="cctv-search-card"
+            onSubmit={(event) => {
+              event.preventDefault();
+              setAppliedFilters({ search: searchTerm.trim(), dateFrom, dateTo, caseId: caseFilter });
+            }}
+          >
+            <div className="cctv-search-card-title">Search footage</div>
+            <label className="cctv-search-field">
+              <span>Search</span>
+              <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Camera, location or title" />
+            </label>
+            <div className="cctv-date-fields">
+              <label className="cctv-search-field">
+                <span>From</span>
+                <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} />
+              </label>
+              <label className="cctv-search-field">
+                <span>To</span>
+                <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
+              </label>
+            </div>
+            <label className="cctv-search-field">
+              <span>Case</span>
+              <select value={caseFilter} onChange={(event) => setCaseFilter(event.target.value)}>
+                <option value="all">All cases</option>
+                {cases.map((item) => <option key={item.id} value={item.id}>{item.code}</option>)}
+              </select>
+            </label>
+            <button className="btn btn-primary cctv-search-submit" type="submit">Search footage</button>
+          </form>
+        </aside>
 
         {selected && (
           <div style={{ width: 380, borderLeft: "1px solid var(--border)", padding: 14, flexShrink: 0, overflowY: "auto" }}>

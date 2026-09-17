@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Investigator placeholder avatar">
+  <rect width="160" height="160" rx="80" fill="#e7eef9"/>
+  <circle cx="80" cy="60" r="28" fill="#98a9c0"/>
+  <path d="M29 144c5-31 27-49 51-49s46 18 51 49" fill="#526985"/>
+  <path d="M58 55c3-17 15-27 29-27 17 0 29 13 29 30-10-8-18-11-29-11-12 0-20 4-29 8Z" fill="#334a68"/>
+</svg>
