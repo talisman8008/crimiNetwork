@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
-  IconAlertTriangle,
   IconCamera,
   IconDatabase,
   IconFolder,
@@ -29,9 +28,9 @@ const caseItems: NavItem[] = [
   { to: "/workspace", label: "Case workspace", icon: IconFolder },
   { to: "/network", label: "Network analysis", icon: IconNetwork },
   { to: "/map", label: "Location Map", icon: IconMapPin },
-  { to: "/alerts", label: "Alerts", icon: IconAlertTriangle },
+
   { to: "/resolution", label: "Merge Review", icon: IconUsers },
-  { to: "/court-dates", label: "Court dates", icon: IconScale },
+  { to: "/alerts", label: "Events", icon: IconScale },
 ];
 
 /** Cross-case tools shown before an investigation has been opened. */

@@ -6,13 +6,6 @@ import { useActiveCase } from "../lib/activeCase";
 import { useCaseAlerts, useCaseGraph, useCases } from "../hooks/useCaseData";
 import type { AlertSeverity, AlertStatus } from "../data/types";
 
-const statusColor: Record<AlertStatus, string> = {
-  new: "var(--risk-high)",
-  "under review": "var(--risk-medium)",
-  actioned: "var(--status-connected)",
-  dismissed: "var(--text-tertiary)",
-};
-
 export default function Alerts() {
   const { activeCaseId } = useActiveCase();
   const { alerts, loading, error, markViewed } = useCaseAlerts(activeCaseId);
@@ -81,7 +74,6 @@ export default function Alerts() {
             </select>
             <select className="select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as AlertStatus | "all")}>
               <option value="all">All statuses</option>
-              <option value="new">New</option>
               <option value="under review">Under review</option>
               <option value="actioned">Actioned</option>
               <option value="dismissed">Dismissed</option>
@@ -96,28 +88,15 @@ export default function Alerts() {
             )}
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {filtered.map((a) => (
-                <div key={a.id} className="card card-hoverable">
+                <div key={a.id} className="card card-hoverable alert-tile">
                   <div className="card-body">
-                    <div style={{ display: "flex", justifyContent: "space-between", gap: 16, marginBottom: 8 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div className="alert-tile-title-row">
+                      <div className="alert-tile-title-group">
                         <SeverityBadge severity={a.severity} />
-                        <span
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 5,
-                            fontSize: 12,
-                            textTransform: "capitalize",
-                            color: "var(--text-secondary)",
-                          }}
-                        >
-                          <span className="status-dot" style={{ background: statusColor[a.status] }} />
-                          {a.status}
-                        </span>
+                        <div className="alert-tile-title">{a.title}</div>
                       </div>
-                      <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{formatDate(a.detectedOn)}</span>
+                      <span className="alert-tile-date">{formatDate(a.detectedOn)}</span>
                     </div>
-                    <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>{a.title}</div>
                     <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 12, maxWidth: 720 }}>
                       {displayDescription(a.description)}
                     </p>
@@ -137,7 +116,7 @@ export default function Alerts() {
                       </div>
                     )}
 
-                    <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                    <div className="alert-tile-actions" style={{ display: "flex", gap: 8, marginTop: 12 }}>
                       <button
                         className="btn"
                         onClick={() => setExpandedId(expandedId === a.id ? null : a.id)}

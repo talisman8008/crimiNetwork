@@ -4,322 +4,158 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import PageHeader from "../components/PageHeader";
 import EntityDetailPanel from "../components/EntityDetailPanel";
-import { cases, entities, getEntityById, relationshipsFor } from "../data/mockData";
-import type { EntityType, RiskLevel } from "../data/types";
+import { EntityIcon } from "../components/ui";
 import { IconMinus, IconPlus, IconTarget } from "../components/icons";
-import { eventDates, eventsWithLocation, eventTypeLabel } from "../data/timelineData";
-import EventTimeline from "../components/EventTimeline";
-import { formatDate } from "../components/ui";
 import { useActiveCase } from "../lib/activeCase";
+import { useCaseGraph, useCases } from "../hooks/useCaseData";
+import type { Entity, EntityType, RiskLevel } from "../data/types";
 
-const typeColor: Record<string, string> = {
-  person: "#2563eb",
-  location: "#0d9488",
-};
-
+const typeColor: Record<EntityType, string> = { person: "#2563eb", organization: "#7c6a45", location: "#0d9488", vehicle: "#5b5476", phone: "#7a4f58" };
 const riskSize: Record<RiskLevel, number> = { high: 22, medium: 17, low: 13 };
 
-interface MapPoint {
-  id: string;
-  type: EntityType;
-  label: string;
-  lat: number;
-  lng: number;
-  riskLevel: RiskLevel;
-}
+// The graph only persists coordinates for some records. These anchors are used when an actual
+// location label identifies a city; tooltips say so, rather than presenting it as GPS data.
+const cityAnchors: Array<{ terms: string[]; lat: number; lng: number }> = [
+  { terms: ["mumbai", "dadar", "andheri", "kurla", "nariman"], lat: 19.076, lng: 72.8777 },
+  { terms: ["pune", "kothrud", "shivajinagar"], lat: 18.5204, lng: 73.8567 },
+  { terms: ["panipat", "gt road", "haryana"], lat: 29.3909, lng: 76.9635 },
+  { terms: ["delhi", "rohini", "dwarka", "connaught"], lat: 28.6139, lng: 77.209 },
+  { terms: ["kolkata", "howrah"], lat: 22.5726, lng: 88.3639 },
+  { terms: ["bengaluru", "bangalore"], lat: 12.9716, lng: 77.5946 },
+  { terms: ["chennai"], lat: 13.0827, lng: 80.2707 },
+];
 
-function markerIcon(point: MapPoint) {
-  const color = typeColor[point.type] ?? "#5b6472";
+export interface MapPoint { id: string; type: EntityType; label: string; lat: number; lng: number; riskLevel: RiskLevel; precision: "recorded" | "city" | "linked"; }
+
+export function markerIcon(point: MapPoint) {
   const size = riskSize[point.riskLevel];
   return L.divIcon({
     className: "map-marker-icon",
-    html: `<span style="display:block;width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2.5px solid #fff;box-shadow:0 1px 4px rgba(15,32,54,0.5);"></span>`,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
+    html: `<span style="display:block;width:${size}px;height:${size}px;border-radius:50%;background:${typeColor[point.type]};border:2.5px solid #fff;box-shadow:0 1px 4px rgba(15,32,54,0.5);"></span>`,
+    iconSize: [size, size], iconAnchor: [size / 2, size / 2],
   });
 }
 
-const eventTypeColor: Record<string, string> = {
-  call: "#2563eb",
-  sighting: "#0d9488",
-  transaction: "#d97706",
-  "cell-site": "#7c3aed",
-  "vehicle-movement": "#e11d48",
-  meeting: "#16a34a",
-};
-
-/** Square marker so timed observations read differently from the round entity pins. */
-function eventIcon(type: string) {
-  const color = eventTypeColor[type] ?? "#5b6472";
-  return L.divIcon({
-    className: "map-event-icon",
-    html: `<span style="display:block;width:14px;height:14px;background:${color};border:2px solid #fff;box-shadow:0 1px 4px rgba(15,32,54,0.55);transform:rotate(45deg);"></span>`,
-    iconSize: [14, 14],
-    iconAnchor: [7, 7],
-  });
+export function locationCoordinate(entity: Entity) {
+  if (entity.type === "location" && Number.isFinite(entity.lat) && Number.isFinite(entity.lng) && !(entity.lat === 0 && entity.lng === 0)) {
+    return { lat: entity.lat, lng: entity.lng, precision: "recorded" as const };
+  }
+  const normalized = entity.label.toLowerCase();
+  const city = cityAnchors.find((anchor) => anchor.terms.some((term) => normalized.includes(term)));
+  return city ? { lat: city.lat, lng: city.lng, precision: "city" as const } : null;
 }
 
-function CaptureMap({ onReady }: { onReady: (map: L.Map) => void }) {
+export function CaptureMap({ onReady }: { onReady?: (map: L.Map) => void }) {
   const map = useMap();
   useEffect(() => {
-    onReady(map);
+    onReady?.(map);
+    const frame = requestAnimationFrame(() => requestAnimationFrame(() => map.invalidateSize()));
+    const observer = new ResizeObserver(() => map.invalidateSize());
+    observer.observe(map.getContainer());
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
   }, [map, onReady]);
   return null;
 }
 
-function FitBounds({ points }: { points: MapPoint[] }) {
+export function FitBounds({ points }: { points: MapPoint[] }) {
   const map = useMap();
+  const pointKey = points.map((point) => `${point.id}:${point.lat}:${point.lng}`).join(",");
   useEffect(() => {
-    if (points.length === 0) return;
-    if (points.length === 1) {
-      map.setView([points[0].lat, points[0].lng], 12);
-    } else {
-      map.fitBounds(
-        points.map((p) => [p.lat, p.lng]),
-        { padding: [48, 48] },
-      );
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [points.map((p) => p.id).join(","), map]);
+    if (!points.length) return;
+    if (points.length === 1) map.setView([points[0].lat, points[0].lng], 11);
+    else map.fitBounds(points.map((point) => [point.lat, point.lng]), { padding: [52, 52] });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, pointKey]);
   return null;
 }
 
 export default function MapView() {
   const { activeCaseId } = useActiveCase();
-  const [caseId, setCaseId] = useState(activeCaseId ?? "all");
+  const { cases } = useCases();
+  const [caseId, setCaseId] = useState(activeCaseId ?? "");
   const [showLocations, setShowLocations] = useState(true);
   const [showPersons, setShowPersons] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
-  const [dayIndex, setDayIndex] = useState<number>(0);
-  const [dayMode, setDayMode] = useState(true);
+  const { entities, relationships, loading, error } = useCaseGraph(caseId || null);
 
-  // Located observations for this case, and the days they fall on. Picking a day filters the
-  // map to what was actually recorded that day, with clock times, rather than static pins.
-  const locatedEvents = useMemo(
-    () => eventsWithLocation().filter((e) => caseId === "all" || e.caseId === caseId),
-    [caseId],
-  );
-  const days = useMemo(() => eventDates(locatedEvents), [locatedEvents]);
-  const activeDay = dayMode && days[dayIndex] ? days[dayIndex] : null;
-  const dayEvents = useMemo(
-    () => (activeDay ? locatedEvents.filter((e) => e.date === activeDay) : []),
-    [locatedEvents, activeDay],
-  );
+  useEffect(() => { if (activeCaseId) setCaseId(activeCaseId); }, [activeCaseId]);
 
+  const entityById = useMemo(() => new Map(entities.map((entity) => [entity.id, entity])), [entities]);
   const points = useMemo<MapPoint[]>(() => {
-    const result: MapPoint[] = [];
-    for (const e of entities) {
-      if (caseId !== "all" && !e.caseIds.includes(caseId)) continue;
-      if (e.type === "location" && showLocations) {
-        result.push({ id: e.id, type: e.type, label: e.label, lat: e.lat, lng: e.lng, riskLevel: e.riskLevel });
-      } else if (e.type === "person" && showPersons && e.lat != null && e.lng != null) {
-        result.push({ id: e.id, type: e.type, label: e.label, lat: e.lat, lng: e.lng, riskLevel: e.riskLevel });
-      }
-    }
-    return result;
-  }, [caseId, showLocations, showPersons]);
+    const plotted = new Map<string, MapPoint>();
+    if (showLocations) entities.filter((entity) => entity.type === "location").forEach((entity) => {
+      const coordinate = locationCoordinate(entity);
+      if (coordinate) plotted.set(entity.id, { ...entity, ...coordinate });
+    });
+    if (showPersons) entities.filter((entity) => entity.type === "person").forEach((person) => {
+      const relatedLocationId = relationships
+        .filter((relationship) => relationship.source === person.id || relationship.target === person.id)
+        .map((relationship) => relationship.source === person.id ? relationship.target : relationship.source)
+        .find((id) => entityById.get(id)?.type === "location");
+      const relatedLocation = relatedLocationId ? entityById.get(relatedLocationId) : undefined;
+      const coordinate = relatedLocation ? locationCoordinate(relatedLocation) : null;
+      if (coordinate) plotted.set(person.id, { id: person.id, type: person.type, label: person.label, lat: coordinate.lat, lng: coordinate.lng, riskLevel: person.riskLevel, precision: "linked" });
+    });
+    return [...plotted.values()];
+  }, [entities, relationships, entityById, showLocations, showPersons]);
 
-  const selectedEntity = selectedId ? getEntityById(selectedId) : undefined;
-  const selectedConnections = useMemo(() => {
-    if (!selectedEntity) return 0;
-    return new Set(
-      relationshipsFor(selectedEntity.id).map((r) => (r.source === selectedEntity.id ? r.target : r.source)),
-    ).size;
-  }, [selectedEntity]);
+  const selectedEntity = selectedId ? entityById.get(selectedId) : undefined;
+  const selectedConnections = useMemo(() => selectedEntity ? new Set(relationships.filter((relationship) => relationship.source === selectedEntity.id || relationship.target === selectedEntity.id).map((relationship) => relationship.source === selectedEntity.id ? relationship.target : relationship.source)).size : 0, [selectedEntity, relationships]);
 
   function recenter() {
-    if (!mapInstance || points.length === 0) return;
-    if (points.length === 1) {
-      mapInstance.setView([points[0].lat, points[0].lng], 12);
-    } else {
-      mapInstance.fitBounds(
-        points.map((p) => [p.lat, p.lng]),
-        { padding: [48, 48] },
-      );
-    }
+    if (!mapInstance || !points.length) return;
+    if (points.length === 1) mapInstance.setView([points[0].lat, points[0].lng], 11);
+    else mapInstance.fitBounds(points.map((point) => [point.lat, point.lng]), { padding: [52, 52] });
   }
 
-  return (
-    <>
-      <PageHeader eyebrow="Geospatial" title="Location Map" />
-      <div className="filter-bar">
-        <select className="select" value={caseId} onChange={(e) => setCaseId(e.target.value)}>
-          <option value="all">All cases</option>
-          {cases.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.code}: {c.title}
-            </option>
-          ))}
-        </select>
-        <div style={{ width: 1, height: 20, background: "var(--border)" }} />
-        <button className={`chip-toggle ${showLocations ? "active" : ""}`} onClick={() => setShowLocations((v) => !v)}>
-          <span className="swatch" style={{ background: typeColor.location }} />
-          Locations
-        </button>
-        <button className={`chip-toggle ${showPersons ? "active" : ""}`} onClick={() => setShowPersons((v) => !v)}>
-          <span className="swatch" style={{ background: typeColor.person }} />
-          Persons of interest
-        </button>
-        <div style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-tertiary)" }}>{points.length} plotted</div>
-      </div>
+  return <>
+    <PageHeader eyebrow="Geospatial" title="Location Map" />
+    <div className="filter-bar">
+      <select className="select" value={caseId} onChange={(event) => { setCaseId(event.target.value); setSelectedId(null); }}>
+        <option value="">Select a case</option>
+        {cases.map((caseData) => <option key={caseData.id} value={caseData.id}>{caseData.code}: {caseData.title}</option>)}
+      </select>
+      <div style={{ width: 1, height: 20, background: "var(--border)" }} />
+      <button className={`chip-toggle ${showLocations ? "active" : ""}`} onClick={() => setShowLocations((value) => !value)}><span className="swatch" style={{ background: typeColor.location }} /> Locations</button>
+      <button className={`chip-toggle ${showPersons ? "active" : ""}`} onClick={() => setShowPersons((value) => !value)}><span className="swatch" style={{ background: typeColor.person }} /> Persons at linked locations</button>
+      <div style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-tertiary)" }}>{points.length} plotted</div>
+    </div>
 
-      {days.length > 0 && (
-        <div className="filter-bar day-scrubber">
-          <button className={`btn ${dayMode ? "btn-primary" : ""}`} onClick={() => setDayMode((v) => !v)}>
-            {dayMode ? "Timeline on" : "Timeline off"}
-          </button>
-          <button
-            className="btn"
-            onClick={() => setDayIndex((i) => Math.max(0, i - 1))}
-            disabled={!dayMode || dayIndex === 0}
-          >
-            &lsaquo;
-          </button>
-          <input
-            type="range"
-            min={0}
-            max={days.length - 1}
-            value={dayIndex}
-            disabled={!dayMode}
-            onChange={(e) => setDayIndex(Number(e.target.value))}
-            aria-label="Scrub recorded days"
-            style={{ flex: 1, minWidth: 140, accentColor: "var(--accent)" }}
-          />
-          <button
-            className="btn"
-            onClick={() => setDayIndex((i) => Math.min(days.length - 1, i + 1))}
-            disabled={!dayMode || dayIndex === days.length - 1}
-          >
-            &rsaquo;
-          </button>
-          <span className="mono" style={{ fontSize: 12, fontWeight: 600, whiteSpace: "nowrap", minWidth: 92 }}>
-            {activeDay ? formatDate(activeDay) : `${days.length} days`}
-          </span>
-          <span style={{ fontSize: 12, color: "var(--text-tertiary)", whiteSpace: "nowrap" }}>
-            {activeDay
-              ? `${dayEvents.length} recorded ${dayEvents.length === 1 ? "event" : "events"}`
-              : `${locatedEvents.length} events total`}
-          </span>
+    <div className="location-map-workspace">
+      <div className="location-map-canvas" style={{ flex: 1, position: "relative" }}>
+        <MapContainer center={[20.5937, 78.9629]} zoom={5} zoomControl={false} style={{ height: "100%", width: "100%" }} scrollWheelZoom>
+          <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}" attribution="Tiles &copy; Esri" />
+          <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}" attribution="&copy; OpenStreetMap contributors" />
+          <FitBounds points={points} />
+          <CaptureMap onReady={setMapInstance} />
+          {points.map((point) => <Marker key={point.id} position={[point.lat, point.lng]} icon={markerIcon(point)} eventHandlers={{ click: () => setSelectedId(point.id) }}><Tooltip direction="top" offset={[0, -8]}><strong>{point.label}</strong><br />{point.precision === "recorded" ? "Recorded coordinates" : point.precision === "linked" ? "Linked location" : "City-level location"}</Tooltip></Marker>)}
+        </MapContainer>
+        <div className="icon-dock icon-dock-center-left">
+          <button className="icon-dock-btn" onClick={recenter} aria-label="Recenter map on plotted points"><IconTarget /></button>
+          <button className="icon-dock-btn" onClick={() => mapInstance?.zoomIn()} aria-label="Zoom in"><IconPlus /></button>
+          <button className="icon-dock-btn" onClick={() => mapInstance?.zoomOut()} aria-label="Zoom out"><IconMinus /></button>
         </div>
-      )}
-
-      <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
-        <div style={{ flex: 1, position: "relative" }}>
-          <MapContainer center={[20.5, 77]} zoom={5} zoomControl={false} style={{ height: "100%", width: "100%" }} scrollWheelZoom>
-            <TileLayer
-              url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
-              attribution="Tiles &copy; Esri"
-            />
-            <TileLayer
-              url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            />
-            <FitBounds points={points} />
-            <CaptureMap onReady={setMapInstance} />
-            {activeDay &&
-              dayEvents.map((ev) => (
-                <Marker
-                  key={ev.id}
-                  position={[ev.lat!, ev.lng!]}
-                  icon={eventIcon(ev.type)}
-                  eventHandlers={{ click: () => setSelectedId(ev.entityIds[0] ?? null) }}
-                >
-                  <Tooltip direction="top" offset={[0, -10]}>
-                    <strong>{ev.time}</strong> &middot; {eventTypeLabel[ev.type]}
-                    <br />
-                    {ev.summary}
-                  </Tooltip>
-                </Marker>
-              ))}
-            {points.map((p) => (
-              <Marker
-                key={p.id}
-                position={[p.lat, p.lng]}
-                icon={markerIcon(p)}
-                eventHandlers={{ click: () => setSelectedId(p.id) }}
-              >
-                <Tooltip direction="top" offset={[0, -8]}>
-                  {p.label}
-                </Tooltip>
-              </Marker>
-            ))}
-          </MapContainer>
-
-          <div className="icon-dock icon-dock-center-left">
-            <button className="icon-dock-btn" onClick={recenter} aria-label="Recenter map on plotted points">
-              <IconTarget />
-            </button>
-            <button className="icon-dock-btn" onClick={() => mapInstance?.zoomIn()} aria-label="Zoom in">
-              <IconPlus />
-            </button>
-            <button className="icon-dock-btn" onClick={() => mapInstance?.zoomOut()} aria-label="Zoom out">
-              <IconMinus />
-            </button>
+        {!loading && caseId && points.length === 0 && <div className="map-empty-overlay">No mapped locations in this case. Import coordinates or location labels that identify a city to plot them here.</div>}
+        {selectedEntity && <div className="map-stat-pills">
+          <div className="map-stat-pill"><div className="map-stat-pill-value">{selectedConnections}</div><div className="map-stat-pill-label">Connections</div></div>
+          <div className="map-stat-pill"><div className="map-stat-pill-value" style={{ textTransform: "capitalize" }}>{selectedEntity.riskLevel}</div><div className="map-stat-pill-label">Risk level</div></div>
+          <div className="map-stat-pill"><div className="map-stat-pill-value">{selectedEntity.caseIds.length}</div><div className="map-stat-pill-label">Cases</div></div>
+        </div>}
+      </div>
+      <div className="location-map-sidebar">
+        {selectedEntity ? <EntityDetailPanel entity={selectedEntity} relationships={relationships} entityById={entityById} onClose={() => setSelectedId(null)} onSelectRelated={setSelectedId} /> : <div className="card" style={{ height: "100%" }}>
+          <div className="card-header"><h2>Map guide</h2></div>
+          <div className="card-body">
+            {loading && <div className="empty-state">Loading case locations&hellip;</div>}
+            {error && <div className="empty-state">Could not load map data: {error}</div>}
+            {!loading && !error && <><p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 14 }}>Explore the current case geographically. Select a marker to inspect its live entity record and connections.</p><div style={{ display: "flex", flexDirection: "column", gap: 10 }}><div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}><EntityIcon type="location" /> Locations use recorded or city-level coordinates.</div><div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}><EntityIcon type="person" /> Person markers indicate a graph-linked location.</div></div></>}
           </div>
-
-          {selectedEntity && (
-            <div className="map-stat-pills">
-              <div className="map-stat-pill">
-                <div className="map-stat-pill-value">{selectedConnections}</div>
-                <div className="map-stat-pill-label">Connections</div>
-              </div>
-              <div className="map-stat-pill">
-                <div className="map-stat-pill-value" style={{ textTransform: "capitalize" }}>
-                  {selectedEntity.riskLevel}
-                </div>
-                <div className="map-stat-pill-label">Risk level</div>
-              </div>
-              <div className="map-stat-pill">
-                <div className="map-stat-pill-value">{selectedEntity.caseIds.length}</div>
-                <div className="map-stat-pill-label">{selectedEntity.caseIds.length === 1 ? "Case" : "Cases"}</div>
-              </div>
-            </div>
-          )}
-        </div>
-        <div style={{ width: 340, borderLeft: "1px solid var(--border)", padding: 14, flexShrink: 0, overflow: "hidden" }}>
-          {selectedEntity ? (
-            <EntityDetailPanel entity={selectedEntity} onClose={() => setSelectedId(null)} onSelectRelated={setSelectedId} />
-          ) : (
-            activeDay ? (
-            <div className="card" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-              <div className="card-header">
-                <h2>Activity on {formatDate(activeDay)}</h2>
-              </div>
-              <div className="card-body" style={{ overflowY: "auto", flex: 1 }}>
-                <EventTimeline events={dayEvents} activeDate={activeDay} emptyMessage="Nothing recorded on this day." />
-              </div>
-            </div>
-            ) : (
-            <div className="card" style={{ height: "100%" }}>
-              <div className="card-header">
-                <h2>Legend</h2>
-              </div>
-              <div className="card-body">
-                <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 14 }}>
-                  Select a marker to view its profile. Marker size reflects assessed risk level.
-                </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
-                    <span style={{ width: 10, height: 10, borderRadius: "50%", background: typeColor.location }} />
-                    Locations: warehouses, offices, residences
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
-                    <span style={{ width: 10, height: 10, borderRadius: "50%", background: typeColor.person }} />
-                    Persons of interest: last known location
-                  </div>
-                </div>
-                <div className="section-title">Data source</div>
-                <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
-                  Coordinates are derived from FIR filings, surveillance logs, and registered addresses. Positions
-                  are approximate.
-                </p>
-              </div>
-            </div>
-            )
-          )}
-        </div>
+        </div>}
       </div>
-    </>
-  );
+    </div>
+  </>;
 }

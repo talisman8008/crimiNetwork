@@ -4,11 +4,11 @@ import Dashboard from "./pages/Dashboard";
 import NetworkGraph from "./pages/NetworkGraph";
 import Entities from "./pages/Entities";
 import Cases from "./pages/Cases";
-import Alerts from "./pages/Alerts";
+import CaseEvents from "./pages/CaseEvents";
 import DataSources from "./pages/DataSources";
 import MapView from "./pages/MapView";
 import CctvFootagePage from "./pages/CctvFootagePage";
-import CourtDates from "./pages/CourtDates";
+
 import AccessLog from "./pages/AccessLog";
 import PersonProfile from "./pages/PersonProfile";
 import SupervisorConsole from "./pages/SupervisorConsole";
@@ -39,10 +39,10 @@ export default function App() {
                   <Route path="network" element={<NetworkGraph />} />
                   <Route path="entities" element={<Entities />} />
                   <Route path="cases" element={<Cases />} />
-                  <Route path="court-dates" element={<CourtDates />} />
+                  <Route path="court-dates" element={<CaseEvents />} />
                   <Route path="map" element={<MapView />} />
                   <Route path="cctv" element={<CctvFootagePage />} />
-                  <Route path="alerts" element={<Alerts />} />
+                  <Route path="alerts" element={<CaseEvents />} />
                   <Route path="sources" element={<DataSources />} />
                   <Route path="access-log" element={<AccessLog />} />
                   <Route path="profile/:entityId" element={<PersonProfile />} />

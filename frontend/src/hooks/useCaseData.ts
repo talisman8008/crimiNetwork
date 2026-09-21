@@ -36,7 +36,7 @@ export function useCases() {
                 }
             })
             .catch((err) => {
-                if (!cancelled) setError(err?.message ?? "Failed to load cases");
+                if (!cancelled) setError((err as Error)?.message ?? "Failed to load cases");
             })
             .finally(() => {
                 if (!cancelled) setLoading(false);
@@ -72,7 +72,7 @@ export function useCase(caseId: string | null | undefined) {
                 }
             })
             .catch((err) => {
-                if (!cancelled) setError(err?.message ?? "Failed to load case");
+                if (!cancelled) setError((err as Error)?.message ?? "Failed to load case");
             })
             .finally(() => {
                 if (!cancelled) setLoading(false);
@@ -120,7 +120,7 @@ export function useCaseGraph(
                 }
             })
             .catch((err) => {
-                if (!cancelled) setError(err?.message ?? "Failed to load graph");
+                if (!cancelled) setError((err as Error)?.message ?? "Failed to load graph");
             })
             .finally(() => {
                 if (!cancelled) setLoading(false);
@@ -157,7 +157,7 @@ export function useCaseAlerts(caseId: string | null | undefined) {
                 }
             })
             .catch((err) => {
-                if (!cancelled) setError(err?.message ?? "Failed to load alerts");
+                if (!cancelled) setError((err as Error)?.message ?? "Failed to load alerts");
             })
             .finally(() => {
                 if (!cancelled) setLoading(false);
@@ -178,7 +178,7 @@ export function useCaseAlerts(caseId: string | null | undefined) {
                 await markAlertViewed(caseId, alertId);
                 load();
             } catch (err) {
-                setError(err?.message ?? "Failed to update alert");
+                setError((err as Error)?.message ?? "Failed to update alert");
             }
         },
         [caseId, load]
@@ -211,7 +211,7 @@ export function useEntityResolutionQueue(caseId: string | null | undefined) {
             })
             .catch((err) => {
                 if (!cancelled) {
-                    setError(err?.message ?? "Failed to load entity resolution queue");
+                    setError((err as Error)?.message ?? "Failed to load entity resolution queue");
                 }
             })
             .finally(() => {
@@ -233,7 +233,7 @@ export function useEntityResolutionQueue(caseId: string | null | undefined) {
                 await approveMerge(caseId, pairId);
                 load();
             } catch (err) {
-                setError(err?.message ?? "Failed to approve merge");
+                setError((err as Error)?.message ?? "Failed to approve merge");
             }
         },
         [caseId, load]
@@ -246,7 +246,7 @@ export function useEntityResolutionQueue(caseId: string | null | undefined) {
                 await rejectMerge(caseId, pairId);
                 load();
             } catch (err) {
-                setError(err?.message ?? "Failed to reject merge");
+                setError((err as Error)?.message ?? "Failed to reject merge");
             }
         },
         [caseId, load]

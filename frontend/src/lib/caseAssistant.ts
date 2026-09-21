@@ -26,9 +26,17 @@ export async function askQuestion(
   query: string
 ): Promise<CopilotAnswer> {
   const res = await askCopilot(caseId, query);
+  const sourceLabel = (source: string | Record<string, unknown>) => {
+    if (typeof source === "string") return source;
+    for (const key of ["title", "name", "source", "source_ref", "id"]) {
+      const value = source[key];
+      if (typeof value === "string" && value) return value;
+    }
+    return "Case record";
+  };
   return {
     answer: res.answer,
-    sources: res.sources,
+    sources: res.sources.map(sourceLabel),
     confidence: res.confidence,
     referenced_entities: res.referenced_entities,
   };

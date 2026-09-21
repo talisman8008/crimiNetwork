@@ -119,7 +119,7 @@ export interface ResolutionQueueResponse {
 
 export interface CopilotResponse {
     answer: string;
-    sources: string[];
+    sources: Array<string | Record<string, unknown>>;
     confidence: number;
     referenced_entities: string[];
 }
