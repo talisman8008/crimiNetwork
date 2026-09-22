@@ -15,8 +15,6 @@ import SupervisorConsole from "./pages/SupervisorConsole";
 import CaseWorkspace from "./pages/CaseWorkspace";
 import EntityResolution from "./pages/EntityResolution";
 import CaseDossier from "./pages/CaseDossier";
-import Login from "./pages/Login";
-import RequireAuth from "./components/RequireAuth";
 import { AuthProvider } from "./lib/auth";
 import { RedactionProvider } from "./lib/redaction";
 import { WatchlistProvider } from "./lib/watchlist";
@@ -32,26 +30,23 @@ export default function App() {
           <OnboardingProvider>
           <BrowserRouter>
             <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route element={<RequireAuth />}>
-                <Route path="/" element={<Layout />}>
-                  <Route index element={<Dashboard />} />
-                  <Route path="network" element={<NetworkGraph />} />
-                  <Route path="entities" element={<Entities />} />
-                  <Route path="cases" element={<Cases />} />
-                  <Route path="court-dates" element={<CourtDates />} />
-                  <Route path="map" element={<MapView />} />
-                  <Route path="cctv" element={<CctvFootagePage />} />
-                  <Route path="alerts" element={<Alerts />} />
-                  <Route path="sources" element={<DataSources />} />
-                  <Route path="access-log" element={<AccessLog />} />
-                  <Route path="profile/:entityId" element={<PersonProfile />} />
-                  <Route path="workspace" element={<CaseWorkspace />} />
-                  <Route path="supervisor" element={<SupervisorConsole />} />
-                  <Route path="resolution" element={<EntityResolution />} />
-                </Route>
-                <Route path="dossier/:caseId" element={<CaseDossier />} />
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="network" element={<NetworkGraph />} />
+                <Route path="entities" element={<Entities />} />
+                <Route path="cases" element={<Cases />} />
+                <Route path="court-dates" element={<CourtDates />} />
+                <Route path="map" element={<MapView />} />
+                <Route path="cctv" element={<CctvFootagePage />} />
+                <Route path="alerts" element={<Alerts />} />
+                <Route path="sources" element={<DataSources />} />
+                <Route path="access-log" element={<AccessLog />} />
+                <Route path="profile/:entityId" element={<PersonProfile />} />
+                <Route path="workspace" element={<CaseWorkspace />} />
+                <Route path="supervisor" element={<SupervisorConsole />} />
+                <Route path="resolution" element={<EntityResolution />} />
               </Route>
+              <Route path="dossier/:caseId" element={<CaseDossier />} />
             </Routes>
           </BrowserRouter>
           </OnboardingProvider>
