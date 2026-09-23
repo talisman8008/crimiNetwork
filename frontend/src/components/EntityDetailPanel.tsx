@@ -181,6 +181,9 @@ export default function EntityDetailPanel({ entity, relationships, entityById, o
         {entity.type === "person" && (
           <>
             <div className="section-title">Social media intelligence</div>
+            <p style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 10 }}>
+              Demo sample only. No external social media accounts are queried.
+            </p>
             {socialProfile ? (
               <div>
                 <div
@@ -216,12 +219,12 @@ export default function EntityDetailPanel({ entity, relationships, entityById, o
               </div>
             ) : scanned ? (
               <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
-                No public social activity found linked to this subject.
+                No sample profile is available for this subject. A live platform scan was not performed.
               </p>
             ) : (
               <div>
                 <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 10 }}>
-                  Run an open-source scan for social accounts and posts associated with this subject.
+                  Preview the prepared sample scan result for this subject.
                 </p>
                 <button
                   className="btn"
@@ -234,7 +237,7 @@ export default function EntityDetailPanel({ entity, relationships, entityById, o
                     }, 900);
                   }}
                 >
-                  {scanning ? "Scanning open sources..." : "Scan for social activity"}
+                  {scanning ? "Loading sample result..." : "Show demo scan result"}
                 </button>
               </div>
             )}

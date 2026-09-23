@@ -82,7 +82,7 @@ export default function Sidebar() {
   const { role, logout } = useAuth();
   const { activeCaseId, openCase, closeCase } = useActiveCase();
   const { cases: loadedCases } = useCases();
-  const { startTour } = useOnboarding();
+  const { startTour, sidebarSpotlight } = useOnboarding();
   const navigate = useNavigate();
   const [switcherOpen, setSwitcherOpen] = useState(false);
 
@@ -93,7 +93,7 @@ export default function Sidebar() {
   const otherCases = availableCases.filter((caseItem) => caseItem.id !== activeCaseId);
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${sidebarSpotlight ? "ftue-expanded" : ""}`}>
       <div className="sidebar-brand">
         <img src="/netra-logo.png" alt="" />
         <div>

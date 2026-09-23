@@ -1,10 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 import {
-  alerts,
   getCaseById,
   linkedCasesFor,
-  topConnectedEntities,
 } from "../data/mockData";
 import { courtDatesForCase } from "../data/courtData";
 import { officersForCase } from "../data/officersData";
@@ -13,8 +11,9 @@ import { eventsForCase } from "../data/timelineData";
 import { caseStatusColor, EntityIcon, formatDate, RiskBadge, SeverityBadge } from "../components/ui";
 import EventTimeline from "../components/EventTimeline";
 import { useActiveCase } from "../lib/activeCase";
-import { useCase, useCaseGraph, useCases } from "../hooks/useCaseData";
+import { useCase, useCaseAlerts, useCaseGraph, useCases } from "../hooks/useCaseData";
 import { IconChevronRight } from "../components/icons";
+import CaseSourceUpload from "../components/CaseSourceUpload";
 
 const severityColor: Record<string, string> = {
   high: "var(--risk-high)",
@@ -40,6 +39,7 @@ export default function CaseWorkspace() {
   const { cases } = useCases();
   const { case: c, loading: caseLoading } = useCase(activeCaseId);
   const { entities: caseEntities, relationships: caseLinks } = useCaseGraph(activeCaseId);
+  const { alerts: loadedAlerts } = useCaseAlerts(activeCaseId);
 
   if (!c) {
     return (
@@ -73,14 +73,21 @@ export default function CaseWorkspace() {
   }
 
   const team = officersForCase(c.id);
-  const caseAlerts = alerts.filter((a) => a.caseId === c.id && a.status !== "dismissed");
+  const caseAlerts = loadedAlerts.filter((a) => a.status !== "dismissed");
   const hearings = courtDatesForCase(c.id);
   const upcoming = hearings.filter((h) => h.status === "upcoming");
   const footage = cctvFootage.filter((f) => f.caseId === c.id);
   const events = eventsForCase(c.id);
   const linked = linkedCasesFor(c.id);
-  const keyFigures = topConnectedEntities(60)
-    .filter((t) => t.entity.caseIds.includes(c.id))
+  const linkCounts = new Map<string, number>();
+  caseLinks.forEach((link) => {
+    linkCounts.set(link.source, (linkCounts.get(link.source) ?? 0) + 1);
+    linkCounts.set(link.target, (linkCounts.get(link.target) ?? 0) + 1);
+  });
+  const keyFigures = caseEntities
+    .map((entity) => ({ entity, count: linkCounts.get(entity.id) ?? 0 }))
+    .filter((item) => item.count > 0)
+    .sort((a, b) => b.count - a.count)
     .slice(0, 6);
   const topCount = keyFigures[0]?.count || 1;
 
@@ -153,9 +160,12 @@ export default function CaseWorkspace() {
         <div className="dash-split">
           <section>
             <div className="brief-heading">
-              <h2>Key figures</h2>
+              <h2>Investigator starting points</h2>
               <Link to={`/network?case=${c.id}`}>Open graph</Link>
             </div>
+            <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: "4px 0 8px" }}>
+              Start with the most connected entities in this case, then review their links and supporting records. This is a triage cue, not a risk score.
+            </p>
             <div className="rank-list">
               {keyFigures.map(({ entity: e, count }, i) => (
                 <Link key={e.id} to={`/profile/${e.id}`} className="rank-row">
@@ -249,6 +259,8 @@ export default function CaseWorkspace() {
             </div>
           </section>
         )}
+
+        <CaseSourceUpload caseId={c.id} />
 
         <div className="dash-split">
           <section>

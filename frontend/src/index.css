@@ -438,6 +438,21 @@ table {
   color: #fff;
 }
 
+.sidebar-link.ftue-spotlight-selected {
+  background: var(--navy-900);
+  color: #fff;
+  transition: background-color 0.42s ease, color 0.42s ease;
+}
+
+.sidebar.ftue-expanded .sidebar-link.active:not(.ftue-spotlight-selected) {
+  background: var(--surface);
+  color: var(--text-secondary);
+}
+
+.sidebar.ftue-expanded .sidebar-link.active:not(.ftue-spotlight-selected) .sidebar-badge {
+  background: var(--accent);
+}
+
 .sidebar-badge {
   margin-left: auto;
   min-width: 18px;
@@ -4133,7 +4148,7 @@ a.rank-row:hover .rank-name {
   border-radius: var(--radius-md);
   outline: 2px solid var(--navy-600);
   box-shadow: 0 0 0 9999px rgba(15, 44, 78, 0.45);
-  transition: top 0.18s ease, left 0.18s ease, width 0.18s ease, height 0.18s ease;
+  transition: top 0.42s cubic-bezier(0.22, 1, 0.36, 1), left 0.42s cubic-bezier(0.22, 1, 0.36, 1), width 0.32s ease, height 0.32s ease;
 }
 
 .tour-card {
@@ -5354,7 +5369,8 @@ a.rank-row:hover .rank-name {
 }
 
 .sidebar:hover,
-.sidebar:focus-within {
+.sidebar:focus-within,
+.sidebar.ftue-expanded {
   width: 236px;
   box-shadow: var(--shadow-lg);
 }
@@ -5380,14 +5396,23 @@ a.rank-row:hover .rank-name {
 }
 
 .sidebar:hover .sidebar-brand>div,
+.sidebar.ftue-expanded .sidebar-brand>div,
 .sidebar:hover .sidebar-group-label,
+.sidebar.ftue-expanded .sidebar-group-label,
 .sidebar:hover .sidebar-link>span:not(.sidebar-badge),
+.sidebar.ftue-expanded .sidebar-link>span:not(.sidebar-badge),
 .sidebar:hover .sidebar-search>span,
+.sidebar.ftue-expanded .sidebar-search>span,
 .sidebar:hover .sidebar-case-exit>span,
+.sidebar.ftue-expanded .sidebar-case-exit>span,
 .sidebar:hover .sidebar-help>span,
+.sidebar.ftue-expanded .sidebar-help>span,
 .sidebar:hover .sidebar-user-text,
+.sidebar.ftue-expanded .sidebar-user-text,
 .sidebar:hover .sidebar-logout,
+.sidebar.ftue-expanded .sidebar-logout,
 .sidebar:hover .sidebar-case,
+.sidebar.ftue-expanded .sidebar-case,
 .sidebar:focus-within .sidebar-brand>div,
 .sidebar:focus-within .sidebar-group-label,
 .sidebar:focus-within .sidebar-link>span:not(.sidebar-badge),

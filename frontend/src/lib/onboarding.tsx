@@ -11,6 +11,8 @@ interface OnboardingState {
 
 interface OnboardingContextValue {
   tourOpen: boolean;
+  sidebarSpotlight: boolean;
+  setSidebarSpotlight: (open: boolean) => void;
   /** Replay the tour on demand, from the help control in the navbar. */
   startTour: () => void;
   endTour: () => void;
@@ -22,6 +24,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated, role } = useAuth();
   const [state, setState] = useLocalStorage<OnboardingState>("netra-onboarding", { introDone: [] });
   const [tourOpen, setTourOpen] = useState(false);
+  const [sidebarSpotlight, setSidebarSpotlight] = useState(false);
+  const updateSidebarSpotlight = useCallback((open: boolean) => setSidebarSpotlight(open), []);
 
   const markDone = useCallback(() => {
     setState((prev) =>
@@ -40,10 +44,15 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const value = useMemo<OnboardingContextValue>(
     () => ({
       tourOpen,
+      sidebarSpotlight,
+      setSidebarSpotlight: updateSidebarSpotlight,
       startTour: () => setTourOpen(true),
-      endTour: () => setTourOpen(false),
+      endTour: () => {
+        setTourOpen(false);
+        setSidebarSpotlight(false);
+      },
     }),
-    [tourOpen],
+    [tourOpen, sidebarSpotlight, updateSidebarSpotlight],
   );
 
   return <OnboardingContext.Provider value={value}>{children}</OnboardingContext.Provider>;

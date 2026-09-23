@@ -273,9 +273,36 @@ export default function NetworkGraph() {
         title="Network Graph"
         right={
           tab === "graph" ? (
-            <div className="search-input">
-              <IconSearch />
-              <input placeholder="Search entities..." value={search} onChange={(e) => setSearch(e.target.value)} />
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  setSelectedId(null);
+                  setSearch("");
+                  setPathfinderOpen(true);
+                }}
+              >
+                Path finder
+              </button>
+              <button
+                type="button"
+                className={`btn ${timelineOn ? "btn-primary" : ""}`}
+                data-tour="timeline-toggle"
+                aria-pressed={timelineOn}
+                disabled={timelineDates.length === 0}
+                onClick={() => {
+                  setPlaying(false);
+                  setTimelineStep(0);
+                  setTimelineOn((on) => !on);
+                }}
+              >
+                {timelineOn ? "Close timeline" : "Timeline replay"}
+              </button>
+              <div className="search-input">
+                <IconSearch />
+                <input placeholder="Search entities..." value={search} onChange={(e) => setSearch(e.target.value)} />
+              </div>
             </div>
           ) : undefined
         }

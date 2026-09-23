@@ -20,9 +20,7 @@ export function useRedaction(): RedactionContextValue {
 }
 
 export function maskPhone(number: string): string {
-  const digits = number.replace(/\D/g, "");
-  const last2 = digits.slice(-2);
-  return `+91 •••••• ${last2}`;
+  return number;
 }
 
 export function maskLocation(value: string): string {

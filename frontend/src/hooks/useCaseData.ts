@@ -178,13 +178,13 @@ export function useCaseAlerts(caseId: string | null | undefined) {
                 await markAlertViewed(caseId, alertId);
                 load();
             } catch (err) {
-                setError(err?.message ?? "Failed to update alert");
+                setError(err instanceof Error ? err.message : "Failed to update alert");
             }
         },
         [caseId, load]
     );
 
-    return { alerts, loading, error, markViewed };
+    return { alerts, loading, error, markViewed, refresh: load };
 }
 
 // ----- useEntityResolutionQueue ---------------------------------------------
@@ -233,7 +233,7 @@ export function useEntityResolutionQueue(caseId: string | null | undefined) {
                 await approveMerge(caseId, pairId);
                 load();
             } catch (err) {
-                setError(err?.message ?? "Failed to approve merge");
+                setError(err instanceof Error ? err.message : "Failed to approve merge");
             }
         },
         [caseId, load]
@@ -246,7 +246,7 @@ export function useEntityResolutionQueue(caseId: string | null | undefined) {
                 await rejectMerge(caseId, pairId);
                 load();
             } catch (err) {
-                setError(err?.message ?? "Failed to reject merge");
+                setError(err instanceof Error ? err.message : "Failed to reject merge");
             }
         },
         [caseId, load]

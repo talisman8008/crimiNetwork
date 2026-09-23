@@ -6,6 +6,7 @@ import { IconBell, IconScale } from "./icons";
 import type { AlertSeverity } from "../data/types";
 import { useActiveCase } from "../lib/activeCase";
 import { useCaseAlerts } from "../hooks/useCaseData";
+import { useAuth } from "../lib/auth";
 
 const severityOrder: Record<AlertSeverity, number> = { high: 0, medium: 1, low: 2 };
 
@@ -16,14 +17,27 @@ export default function NotificationsPanel() {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const { activeCaseId } = useActiveCase();
-  const { alerts, loading: alertsLoading, error: alertsError } = useCaseAlerts(activeCaseId);
+  const { isAuthenticated } = useAuth();
+  const { alerts, loading: alertsLoading, error: alertsError, refresh } = useCaseAlerts(activeCaseId);
 
-  const activeAlerts = alerts
+  const sortedAlerts = alerts
     .filter((a) => a.status !== "dismissed")
-    .sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity] || (a.detectedOn < b.detectedOn ? 1 : -1))
-    .slice(0, 5);
+    .sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity] || (a.detectedOn < b.detectedOn ? 1 : -1));
+  const unviewedAnomalies = sortedAlerts.filter((a) => a.patternType === "anomaly" && !a.viewed);
+  const activeAlerts = [
+    ...unviewedAnomalies,
+    ...sortedAlerts.filter((a) => !unviewedAnomalies.some((anomaly) => anomaly.id === a.id)),
+  ].slice(0, 5);
   const hearings = upcomingCourtDates(5);
   const total = activeAlerts.length + hearings.length;
+
+  useEffect(() => {
+    if (isAuthenticated && activeCaseId) refresh();
+  }, [isAuthenticated, activeCaseId, refresh]);
+
+  useEffect(() => {
+    if (isAuthenticated && activeCaseId && !alertsLoading && unviewedAnomalies.length > 0) setOpen(true);
+  }, [isAuthenticated, activeCaseId, alertsLoading, unviewedAnomalies.length]);
 
   useEffect(() => {
     if (!open) return;

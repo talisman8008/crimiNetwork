@@ -140,6 +140,7 @@ export interface Alert {
   caseId: string;
   detectedOn: string;
   history: LogEntry[];
+  viewed?: boolean;
 }
 
 export interface DataSource {

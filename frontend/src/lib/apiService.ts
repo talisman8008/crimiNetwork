@@ -71,16 +71,20 @@ interface RawAlert {
     id: string;
     title?: string;
     description?: string;
-    severity?: "high" | "medium" | "low";
+    severity?: "high" | "medium" | "low" | "HIGH" | "MEDIUM" | "LOW";
     status?: "new" | "under review" | "dismissed" | "actioned";
     pattern_type?: string;
+    alert_type?: string;
     patternType?: string;
     related_entity_ids?: string[];
+    entity_ids?: string[];
     relatedEntityIds?: string[];
     case_id?: string;
     caseId?: string;
     detected_on?: string;
     detectedOn?: string;
+    timestamp?: string;
+    viewed?: boolean;
     history?: Array<{ actor: string; action: string; at: string }>;
 }
 
@@ -244,17 +248,19 @@ function buildCase(c: RawCase): Case {
 }
 
 function buildAlert(a: RawAlert): Alert {
+    const severity = String(a.severity ?? "medium").toLowerCase() as Alert["severity"];
     return {
         id: a.id,
         title: a.title ?? "",
         description: a.description ?? "",
-        severity: a.severity ?? "medium",
-        status: a.status ?? "new",
-        patternType: a.patternType ?? a.pattern_type ?? "",
-        relatedEntityIds: a.relatedEntityIds ?? a.related_entity_ids ?? [],
+        severity,
+        status: a.status ?? (a.viewed ? "under review" : "new"),
+        patternType: a.patternType ?? a.pattern_type ?? a.alert_type ?? "",
+        relatedEntityIds: a.relatedEntityIds ?? a.related_entity_ids ?? a.entity_ids ?? [],
         caseId: a.caseId ?? a.case_id ?? "",
-        detectedOn: a.detectedOn ?? a.detected_on ?? new Date().toISOString(),
+        detectedOn: a.detectedOn ?? a.detected_on ?? a.timestamp ?? new Date().toISOString(),
         history: a.history ?? [],
+        viewed: a.viewed ?? false,
     };
 }
 
@@ -364,12 +370,12 @@ export async function uploadFile(
     caseId: string,
     file: File,
     sourceType: string
-): Promise<void> {
+): Promise<{ job_id: string; status: string }> {
     const form = new FormData();
     form.append("file", file);
     form.append("source_type", sourceType);
 
-    const res = await fetch(`${API_BASE}/api/ingestion/cases/${caseId}/upload`, {
+    const res = await fetch(`${API_BASE}/api/cases/${caseId}/upload`, {
         method: "POST",
         headers: authHeaders(), // NOTE: no Content-Type — browser sets multipart boundary
         body: form,
@@ -379,4 +385,15 @@ export async function uploadFile(
         const text = await res.text().catch(() => "");
         throw new Error(`Upload failed (${res.status}): ${text}`);
     }
+    return res.json();
+}
+
+export interface UploadJobStatus {
+    status: "queued" | "parsing" | "nlp" | "analytics" | "complete" | "failed" | string;
+    progress: number;
+    error?: string | null;
+}
+
+export async function fetchUploadStatus(caseId: string, jobId: string): Promise<UploadJobStatus> {
+    return apiGet<UploadJobStatus>(`/api/cases/${caseId}/upload/status/${jobId}`);
 }

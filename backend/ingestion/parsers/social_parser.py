@@ -13,10 +13,10 @@ def parse_social(file_path: str) -> dict:
             df = pd.DataFrame() # Fallback
 
         col_map = {
-            "platform": ["platform", "source", "network"],
-            "username": ["username", "handle", "user", "author"],
-            "content": ["content", "text", "post", "message", "tweet"],
-            "date": ["date", "timestamp", "created_at"]
+            "platform": ["platform", "source", "network", "camera", "camera_id"],
+            "username": ["username", "handle", "user", "author", "subject", "entity"],
+            "content": ["content", "text", "post", "message", "tweet", "observation", "description", "event"],
+            "date": ["date", "timestamp", "created_at", "recorded_at", "observed_at"]
         }
 
         def get_col(df, possible_names):

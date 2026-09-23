@@ -11,20 +11,22 @@ interface TourStep {
   /** Route this step lives on. The tour walks the real journey — caseload, then the graph —
    *  rather than describing the graph from a page that is not showing it. */
   route?: string;
+  spotlightAll?: string;
 }
 
 const steps: TourStep[] = [
   {
     route: "/",
     selector: ".sidebar-nav",
+    spotlightAll: ".sidebar-nav .sidebar-link svg",
     title: "Everything lives on this rail",
     body: "Analysis is where you work: the dashboard, the case you have open, the graph and the full entity database. Below it sit casework, the evidence sources behind every link, and the oversight trail.",
   },
   {
     route: "/",
-    selector: ".case-workspace-grid",
+    selector: ".dashboard-case-list",
     title: "Start by opening a case",
-    body: "Each card carries the FIR number, how many entities and links are in it, open alerts, the lead officer and the next hearing. Opening one scopes the whole console to that investigation.",
+    body: "Choose an investigation from this list, then open it to review its evidence, alerts, and network.",
   },
   {
     selector: ".notif-bell",
@@ -39,9 +41,9 @@ const steps: TourStep[] = [
   },
   {
     route: "/network",
-    selector: ".analysis-tools",
-    title: "The analysis tools",
-    body: "Path finder traces how two people connect through everyone in between. Communities colours the clusters the network falls into. Timeline replays the case in the order the evidence actually arrived.",
+    selector: '[data-tour="timeline-toggle"]',
+    title: "Replay the network over time",
+    body: "Step through the dates recorded on the case links to see when each connection enters the graph.",
   },
   {
     route: "/network",
@@ -91,12 +93,15 @@ interface Placement {
 }
 
 export default function GuidedTour() {
-  const { tourOpen, endTour } = useOnboarding();
+  const { tourOpen, endTour, setSidebarSpotlight } = useOnboarding();
   const navigate = useNavigate();
   const location = useLocation();
   const [index, setIndex] = useState(0);
+  const [spotlightIndex, setSpotlightIndex] = useState(0);
   const [place, setPlace] = useState<Placement | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const spotlightIndexRef = useRef(0);
+  const spotlightRowsRef = useRef<HTMLElement[]>([]);
 
   // The anchors for most steps live on the dashboard, so the tour always starts there.
   useEffect(() => {
@@ -109,15 +114,43 @@ export default function GuidedTour() {
   }, [tourOpen]);
 
   const step = steps[index];
+  spotlightIndexRef.current = spotlightIndex;
+
+  useLayoutEffect(() => {
+    spotlightRowsRef.current.forEach((row) => row.classList.remove("ftue-spotlight-selected"));
+    spotlightRowsRef.current = [];
+    if (!tourOpen || !step?.spotlightAll) return;
+    const icons = document.querySelectorAll(step.spotlightAll);
+    const target = icons[spotlightIndex];
+    const row = target?.closest<HTMLElement>(".sidebar-link");
+    if (row) {
+      row.classList.add("ftue-spotlight-selected");
+      spotlightRowsRef.current = [row];
+    }
+    return () => {
+      spotlightRowsRef.current.forEach((item) => item.classList.remove("ftue-spotlight-selected"));
+      spotlightRowsRef.current = [];
+    };
+  }, [tourOpen, step, spotlightIndex]);
+
+  useEffect(() => {
+    setSidebarSpotlight(Boolean(tourOpen && step?.spotlightAll));
+    return () => setSidebarSpotlight(false);
+  }, [tourOpen, step, setSidebarSpotlight]);
 
   const measure = useCallback(() => {
     if (!tourOpen || !step) return;
     const el = document.querySelector(step.selector);
-    if (!el) {
+    const spotlightTarget = step.spotlightAll
+      ? document.querySelectorAll(step.spotlightAll)[spotlightIndexRef.current]
+      : null;
+    const ringEl = spotlightTarget?.closest(".sidebar-link") ?? el;
+    if (!el || !ringEl) {
       setPlace(null);
       return;
     }
     const r = el.getBoundingClientRect();
+    const rr = ringEl.getBoundingClientRect();
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const cardH = cardRef.current?.offsetHeight ?? 190;
@@ -139,9 +172,26 @@ export default function GuidedTour() {
     setPlace({
       cardLeft: Math.min(Math.max(MARGIN, cardLeft), vw - CARD_WIDTH - MARGIN),
       cardTop: Math.min(Math.max(MARGIN, cardTop), vh - cardH - MARGIN),
-      ring: { top: r.top - 6, left: r.left - 6, width: r.width + 12, height: r.height + 12 },
+      ring: { top: rr.top - 4, left: rr.left - 4, width: rr.width + 8, height: rr.height + 8 },
     });
   }, [tourOpen, step]);
+
+  useEffect(() => {
+    setSpotlightIndex(0);
+  }, [index, tourOpen]);
+
+  useEffect(() => {
+    if (!tourOpen || !step?.spotlightAll) return;
+    const timer = window.setInterval(() => {
+      const count = document.querySelectorAll(step.spotlightAll!).length;
+      if (count > 0) setSpotlightIndex((current) => (current + 1) % count);
+    }, 620);
+    return () => window.clearInterval(timer);
+  }, [tourOpen, step]);
+
+  useLayoutEffect(() => {
+    if (tourOpen && step?.spotlightAll) measure();
+  }, [spotlightIndex, tourOpen, step, measure]);
 
   // Walk past any step whose anchor is not rendered in this role or at this width.
   const next = useCallback(
@@ -210,7 +260,7 @@ export default function GuidedTour() {
 
   return (
     <div className="tour-layer">
-      {place ? (
+      {place && !step.spotlightAll ? (
         <div
           className="tour-ring"
           style={{
@@ -220,9 +270,9 @@ export default function GuidedTour() {
             height: place.ring.height,
           }}
         />
-      ) : (
+      ) : !step.spotlightAll ? (
         <div className="tour-dim" />
-      )}
+      ) : null}
 
       <div
         ref={cardRef}
