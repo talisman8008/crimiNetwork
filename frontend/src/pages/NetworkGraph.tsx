@@ -8,15 +8,17 @@ import { useCaseGraph } from "../hooks/useCaseData";
 import {
   cases,
   entitiesForCase,
+  relationshipsForCase,
 } from "../data/mockData";
 import { cctvFootage } from "../data/cctvData";
 import { EntityIcon, entityTypeLabel, formatDate, RiskBadge } from "../components/ui";
-import { IconCamera, IconFolder, IconNetwork, IconPause, IconPlay, IconScale, IconSearch, IconUsers } from "../components/icons";
+import { IconCamera, IconFolder, IconNetwork, IconPause, IconPlay, IconScale, IconUsers } from "../components/icons";
+import { Search } from "lucide-react";
 import { findShortestPath } from "../lib/graphAlgo";
 import { useCaseWorkspaces } from "../lib/caseWorkspace";
 import { communityColor, detectCommunities } from "../lib/communities";
 import { useActiveCase } from "../lib/activeCase";
-import type { EntityType, RelationType, SourceType } from "../data/types";
+import type { Entity, EntityType, RelationType, Relationship, SourceType } from "../data/types";
 import { eventsForCase } from "../data/timelineData";
 import EventTimeline from "../components/EventTimeline";
 
@@ -65,6 +67,19 @@ export default function NetworkGraph() {
   const { entities: liveEntities, relationships: liveRelationships } = useCaseGraph(
     caseId === "all" ? null : caseId
   );
+  const isDemoCase = caseId === "demo-uploaded-case";
+  const demoGraphLinks = useMemo<Relationship[]>(() => [
+    ...relationshipsForCase("case-1"),
+    { id: "demo-rk-rajan", source: "rk", target: "rajan", type: "financial", weight: 4, evidenceSource: "Financial Transactions", observedOn: "2026-03-12", description: "Front company account routed proceeds to the key suspect." },
+    { id: "demo-rajan-andheri", source: "rajan", target: "andheri", type: "frequents", weight: 3, evidenceSource: "Surveillance Reports", observedOn: "2026-03-15", description: "Subject sighted near the origin incident location." },
+    { id: "demo-rajan-car", source: "rajan", target: "car", type: "ownership", weight: 2, evidenceSource: "FIR & Police Reports", observedOn: "2026-02-04", description: "Vehicle access attributed to the key suspect." },
+    { id: "demo-imran-malad", source: "imran", target: "malad", type: "frequents", weight: 4, evidenceSource: "Surveillance Reports", observedOn: "2026-03-13", description: "Field coordinator was observed at Evershine Nagar before the interception." },
+    { id: "demo-rajan-phone", source: "rajan", target: "phone-key", type: "communication", weight: 6, evidenceSource: "Call Detail Records", observedOn: "2026-03-16", description: "Encrypted handset used by the key suspect." },
+    { id: "demo-phone-imran", source: "phone-key", target: "imran", type: "communication", weight: 5, evidenceSource: "Call Detail Records", observedOn: "2026-03-17", description: "Encrypted handset contacted the field coordinator." },
+  ], []);
+  const demoPhone: Entity = { id: "phone-key", type: "phone", label: "Encrypted Phone", number: "+91 98••• 4412", riskLevel: "high", caseIds: ["case-1"], tags: ["encrypted device", "CDR link"], notes: "Handset recovered from a vehicle associated with the key suspect." };
+  const graphEntities = isDemoCase ? [...entitiesForCase("case-1"), demoPhone] : liveEntities;
+  const graphRelationships = isDemoCase ? demoGraphLinks : liveRelationships;
   const { workspaces, save: saveWorkspace } = useCaseWorkspaces();
   const restoredFor = useRef<string | null>(null);
 
@@ -108,19 +123,19 @@ export default function NetworkGraph() {
   }, [caseId, selectedId, relationType, sourceFilter, dateFrom, dateTo, activeTypes, tab, timelineOn, timelineStep, search]);
 
   const filteredEntities = useMemo(() => {
-    return liveEntities.filter((e) => {
+    return graphEntities.filter((e) => {
       if (!activeTypes.has(e.type)) return false;
       if (search && !e.label.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     });
-  }, [liveEntities, activeTypes, search]);
+  }, [graphEntities, activeTypes, search]);
 
   const filteredIds = useMemo(() => new Set(filteredEntities.map((e) => e.id)), [filteredEntities]);
-  const entityById = useMemo(() => new Map(liveEntities.map((entity) => [entity.id, entity])), [liveEntities]);
+  const entityById = useMemo(() => new Map(graphEntities.map((entity) => [entity.id, entity])), [graphEntities]);
 
   const filteredRelationships = useMemo(
     () =>
-      liveRelationships.filter((r) => {
+      graphRelationships.filter((r) => {
         if (!filteredIds.has(r.source) || !filteredIds.has(r.target)) return false;
         if (relationType !== "all" && r.type !== relationType) return false;
         if (sourceFilter !== "all" && r.evidenceSource !== sourceFilter) return false;
@@ -128,7 +143,7 @@ export default function NetworkGraph() {
         if (dateTo && r.observedOn > dateTo) return false;
         return true;
       }),
-    [liveRelationships, filteredIds, relationType, sourceFilter, dateFrom, dateTo],
+    [graphRelationships, filteredIds, relationType, sourceFilter, dateFrom, dateTo],
   );
 
   const communityResult = useMemo(
@@ -241,11 +256,11 @@ export default function NetworkGraph() {
   const spotlightConnections = useMemo(() => {
     if (!selectedEntity) return [];
     const otherIds = [
-      ...new Set(liveRelationships.filter((r) => r.source === selectedEntity.id || r.target === selectedEntity.id)
+      ...new Set(graphRelationships.filter((r) => r.source === selectedEntity.id || r.target === selectedEntity.id)
         .map((r) => (r.source === selectedEntity.id ? r.target : r.source))),
     ];
     return otherIds.map((id) => entityById.get(id)).filter((e): e is NonNullable<typeof e> => !!e);
-  }, [selectedEntity, liveRelationships, entityById]);
+  }, [selectedEntity, graphRelationships, entityById]);
   const spotlightRole = useMemo(() => {
     if (!selectedEntity) return undefined;
     const score = Math.min(100, spotlightConnections.length * 12);
@@ -256,16 +271,50 @@ export default function NetworkGraph() {
         : ["Not yet linked to any other entity in the network."],
     };
   }, [selectedEntity, spotlightConnections]);
-  const spotlightFootage = selectedEntity
-    ? cctvFootage.find((f) => f.linkedEntityIds.includes(selectedEntity.id))
-    : undefined;
+  const spotlightFootage = useMemo(() => {
+    if (!selectedEntity) return [];
+    const linked = cctvFootage.filter((footage) => footage.linkedEntityIds.includes(selectedEntity.id));
+    if (linked.length) return linked;
+
+    // The demo graph uses its own curated entity ids, separate from the historical CCTV fixture.
+    // Keep the prototype informative for every selected entity without pretending it came from live video.
+    const linkedLocation = spotlightConnections[0];
+    const location = selectedEntity.type === "location"
+      ? selectedEntity.address
+      : selectedEntity.type === "person"
+        ? selectedEntity.lastKnownLocation
+        : linkedLocation?.type === "person"
+          ? linkedLocation.lastKnownLocation
+          : linkedLocation?.type === "location"
+            ? linkedLocation.address
+            : "Mumbai investigation area";
+    const tag = selectedEntity.label.replace(/[^A-Za-z0-9]/g, "").slice(0, 7).toUpperCase() || "NODE";
+    return [
+      {
+        id: `demo-cctv-${selectedEntity.id}-1`,
+        cameraId: `CAM-${tag}-021`,
+        title: `${selectedEntity.label} — route observation`,
+        duration: "03:12",
+        recordedOn: "2026-03-16 18:42",
+        locationLabel: location ?? "Mumbai investigation area",
+      },
+      {
+        id: `demo-cctv-${selectedEntity.id}-2`,
+        cameraId: `CAM-${tag}-044`,
+        title: `${selectedEntity.label} — linked activity`,
+        duration: "01:48",
+        recordedOn: "2026-03-17 09:15",
+        locationLabel: location ?? "Mumbai investigation area",
+      },
+    ];
+  }, [selectedEntity, spotlightConnections]);
   const spotlightLastObserved = useMemo(() => {
     if (!selectedEntity) return null;
-    const dates = liveRelationships.filter((r) => r.source === selectedEntity.id || r.target === selectedEntity.id)
+    const dates = graphRelationships.filter((r) => r.source === selectedEntity.id || r.target === selectedEntity.id)
       .map((r) => r.observedOn)
       .sort();
     return dates.length ? dates[dates.length - 1] : null;
-  }, [selectedEntity, liveRelationships]);
+  }, [selectedEntity, graphRelationships]);
 
   return (
     <div className={`network-page ${selectedEntity ? "focus-mode" : ""}`}>
@@ -274,7 +323,7 @@ export default function NetworkGraph() {
         right={
           tab === "graph" ? (
             <div className="search-input">
-              <IconSearch />
+                  <Search aria-hidden="true" />
               <input placeholder="Search entities..." value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
           ) : undefined
@@ -426,7 +475,7 @@ export default function NetworkGraph() {
               {panelMode === "entity" && selectedEntity && (
                 <EntityDetailPanel
                   entity={selectedEntity}
-                  relationships={liveRelationships}
+                  relationships={graphRelationships}
                   entityById={entityById}
                   onClose={() => setSelectedId(null)}
                   onSelectRelated={setSelectedId}
@@ -736,19 +785,20 @@ export default function NetworkGraph() {
               </div>
 
               <div className="entity-spotlight-media">
-                {spotlightFootage ? (
-                  <Link to="/cctv" className="cctv-thumb" style={{ display: "block", height: "100%" }}>
-                    <span className="cctv-thumb-rec">
-                      <span className="dot" /> {spotlightFootage.cameraId}
-                    </span>
-                    <span className="cctv-thumb-cam">
-                      <IconCamera />
-                    </span>
-                    <span className="cctv-play-btn">
-                      <IconPlay />
-                    </span>
-                    <span className="cctv-thumb-duration">{spotlightFootage.duration}</span>
-                  </Link>
+                {spotlightFootage.length ? (
+                  <div className="entity-spotlight-footage-stack" aria-label="Linked CCTV footage">
+                    <div className="entity-spotlight-footage-heading">Linked CCTV footage</div>
+                    {spotlightFootage.slice(0, 3).map((footage) => (
+                      <Link key={footage.id} to="/cctv" className="entity-spotlight-footage-item">
+                        <span className="entity-spotlight-footage-icon"><IconCamera /></span>
+                        <span className="entity-spotlight-footage-copy">
+                          <span className="entity-spotlight-footage-title">{footage.title}</span>
+                          <span className="entity-spotlight-footage-meta">{footage.cameraId} · {formatDate(footage.recordedOn)}</span>
+                        </span>
+                        <span className="entity-spotlight-footage-duration"><IconPlay /> {footage.duration}</span>
+                      </Link>
+                    ))}
+                  </div>
                 ) : (
                   <div className="entity-spotlight-media-empty">
                     <IconCamera />

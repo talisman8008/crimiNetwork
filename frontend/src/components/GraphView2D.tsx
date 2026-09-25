@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { createElement, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { Building2, CarFront, MapPin, Smartphone, UserRound, type LucideIcon } from "lucide-react";
 import type { Entity, EntityType, Relationship } from "../data/types";
 
 /**
@@ -52,9 +54,39 @@ interface Node2D {
 
 const WORLD = 1000;
 
+const presentationPositions: Record<string, [number, number]> = {
+  vikram: [-410, -175], rajan: [-65, -5], imran: [330, -145], nasreen: [-400, 165],
+  rk: [-40, -240], arun: [-240, 225], car: [80, 215], andheri: [225, 195],
+  dharavi: [-145, 245], salim: [440, 100], bike: [385, 235], malad: [130, -55], "phone-key": [245, 5],
+};
+const presentationRoles: Record<string, string> = {
+  rajan: "Key suspect", imran: "Coordinator", vikram: "Financier", nasreen: "Financial link",
+  arun: "Driver", rk: "Front company", andheri: "Origin site", dharavi: "Meeting point",
+  malad: "Interception", salim: "Associate", car: "Vehicle", bike: "Vehicle", "phone-key": "Encrypted device",
+};
+const paleTypeColor: Record<EntityType, string> = { person: "#eef5ff", organization: "#fff6e7", location: "#edf8f1", vehicle: "#f4eff8", phone: "#f9eef1" };
+const lucideByType: Record<EntityType, LucideIcon> = { person: UserRound, organization: Building2, location: MapPin, vehicle: CarFront, phone: Smartphone };
+const lucideImages: Partial<Record<EntityType, HTMLImageElement>> = {};
+
+function loadLucideIcon(type: EntityType, redraw: () => void): HTMLImageElement | null {
+  const existing = lucideImages[type];
+  if (existing) return existing.complete ? existing : null;
+  const svg = renderToStaticMarkup(createElement(lucideByType[type], { size: 48, strokeWidth: 2.2 }));
+  const image = new Image();
+  image.onload = redraw;
+  image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  lucideImages[type] = image;
+  return null;
+}
+
 function layout(entities: Entity[], relationships: Relationship[]): Node2D[] {
   const n = entities.length;
   if (n === 0) return [];
+
+  const presentation = entities.length > 3 && entities.every((entity) => presentationPositions[entity.id]);
+  if (presentation) {
+    return entities.map((entity) => ({ id: entity.id, entity, x: presentationPositions[entity.id][0], y: presentationPositions[entity.id][1], radius: entity.id === "rajan" ? 56 : 42, sx: 0, sy: 0 }));
+  }
 
   const degree = new Map<string, number>();
   relationships.forEach((r) => {
@@ -255,6 +287,7 @@ export default function GraphView2D({
       });
     }
 
+    const presentation = list.length > 3 && list.every((node) => presentationPositions[node.id]);
     // edges
     for (const r of rels) {
       if (hidden?.has(r.id)) continue;
@@ -269,17 +302,40 @@ export default function GraphView2D({
         ctx.strokeStyle = "#ea580c";
         ctx.lineWidth = 2.4;
       } else if (touchesSel) {
-        ctx.strokeStyle = "#c98a1f";
-        ctx.lineWidth = 1.9;
+        // A selection is a direct-evidence query: all of its incident links should be
+        // unmistakable, while the rest of the graph stays available as context.
+        ctx.strokeStyle = "#2563eb";
+        ctx.lineWidth = 3;
       } else {
         ctx.strokeStyle = "#c3cad6";
         ctx.lineWidth = 1;
       }
-      ctx.globalAlpha = sel && !touchesSel && !isPath ? 0.3 : 1;
+      ctx.globalAlpha = sel && !touchesSel && !isPath ? 0.16 : 1;
+      ctx.setLineDash(presentation && (r.type === "associate" || r.type === "communication") ? [6, 5] : []);
       ctx.beginPath();
       ctx.moveTo(a.sx, a.sy);
       ctx.lineTo(b.sx, b.sy);
       ctx.stroke();
+      ctx.setLineDash([]);
+      if (presentation) {
+        const angle = Math.atan2(b.sy - a.sy, b.sx - a.sx);
+        const end = Math.max(8, b.radius * zoom * 0.75);
+        const ex = b.sx - Math.cos(angle) * end;
+        const ey = b.sy - Math.sin(angle) * end;
+        ctx.fillStyle = ctx.strokeStyle;
+        ctx.beginPath();
+        ctx.moveTo(ex, ey);
+        ctx.lineTo(ex - Math.cos(angle - 0.45) * 7, ey - Math.sin(angle - 0.45) * 7);
+        ctx.lineTo(ex - Math.cos(angle + 0.45) * 7, ey - Math.sin(angle + 0.45) * 7);
+        ctx.closePath();
+        ctx.fill();
+        const mx = (a.sx + b.sx) / 2;
+        const my = (a.sy + b.sy) / 2 - 8;
+        ctx.font = `10px ${LABEL_FONT}`;
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#475569";
+        ctx.fillText(`${r.type.replace(/\b\w/g, (letter) => letter.toUpperCase())} · ${r.observedOn.slice(0, 10)}`, mx, my);
+      }
     }
     ctx.globalAlpha = 1;
 
@@ -296,7 +352,7 @@ export default function GraphView2D({
       ctx.globalAlpha = dimmed ? 0.16 : sel && !isSel && !isNeighbour ? 0.45 : 1;
 
       ctx.beginPath();
-      ctx.fillStyle = base;
+      ctx.fillStyle = presentation ? paleTypeColor[nd.entity.type] : base;
       ctx.arc(nd.sx, nd.sy, r, 0, Math.PI * 2);
       ctx.fill();
 
@@ -304,8 +360,8 @@ export default function GraphView2D({
       // case carry some flag, so ringing anything above "low" is a field of targets.
       const highRisk = nd.entity.riskLevel === "high" && !dimmed;
       ctx.beginPath();
-      ctx.strokeStyle = highRisk ? RISK_HIGH : "#ffffff";
-      ctx.lineWidth = highRisk ? 2 : 1.5;
+      ctx.strokeStyle = highRisk ? RISK_HIGH : presentation ? base : "#ffffff";
+      ctx.lineWidth = highRisk ? 2.4 : presentation ? 1.8 : 1.5;
       ctx.arc(nd.sx, nd.sy, r, 0, Math.PI * 2);
       ctx.stroke();
 
@@ -317,7 +373,21 @@ export default function GraphView2D({
         ctx.stroke();
       }
 
-      const worthLabel = isSel || isNeighbour || isHighlighted || nd.radius >= 12;
+      if (presentation && !dimmed) {
+        const icon = loadLucideIcon(nd.entity.type, draw);
+        if (icon) {
+          const iconSize = r * 0.43;
+          ctx.drawImage(icon, nd.sx - iconSize / 2, nd.sy - r * 0.68, iconSize, iconSize);
+        }
+        const words = nd.entity.label.split(" ");
+        const firstLine = words.length > 1 ? words.slice(0, Math.ceil(words.length / 2)).join(" ") : nd.entity.label;
+        const secondLine = words.length > 1 ? words.slice(Math.ceil(words.length / 2)).join(" ") : "";
+        ctx.font = `600 ${Math.max(7, Math.min(10, r / 4.4))}px ${LABEL_FONT}`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "#1e293b";
+        ctx.fillText(firstLine, nd.sx, nd.sy + r * 0.05);
+        if (secondLine) ctx.fillText(secondLine, nd.sx, nd.sy + r * 0.24);
+        ctx.font = `${Math.max(6.5, Math.min(8, r / 5.6))}px ${LABEL_FONT}`; ctx.fillStyle = base; ctx.fillText(presentationRoles[nd.id] ?? nd.entity.type, nd.sx, nd.sy + r * 0.58);
+      }
+      const worthLabel = !presentation && (isSel || isNeighbour || isHighlighted || nd.radius >= 12);
       if (worthLabel && !dimmed) {
         ctx.globalAlpha = 1;
         ctx.font = `${isSel ? 600 : 400} 11px ${LABEL_FONT}`;
