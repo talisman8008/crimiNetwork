@@ -21,12 +21,8 @@ function now(): string {
   return new Date().toISOString().slice(0, 16).replace("T", " ");
 }
 
-function deriveRole(data: api.LoginResponse): UserRole {
-  const r = String(data.role ?? "").toUpperCase();
-  if (r === "SUPERVISOR") return "supervisor";
-  // Backend may also return role inside a nested object or spelled differently; default safely.
-  return "investigator";
-}
+const DEMO_BADGE_ID = "BADGE001";
+const DEMO_PASSWORD = "SIH2026";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [officerId, setOfficerId] = useLocalStorage<string | null>(
@@ -41,23 +37,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<AuthContextValue>(
     () => ({
-      // Per Phase 1 spec: isAuthenticated = a JWT exists in localStorage.
+      // The prototype runs without a backend, so a local demo token represents this session.
       isAuthenticated: !!api.getToken(),
       officerId,
       role,
       accessLog,
       login: async (badgeId: string, password: string): Promise<UserRole> => {
-        const res = await api.login(badgeId, password);
-        api.setToken(res.access_token);
-        setOfficerId(res.badge_id);
-        const nextRole = deriveRole(res);
+        if (badgeId.toUpperCase() !== DEMO_BADGE_ID || password !== DEMO_PASSWORD) {
+          throw new api.ApiError("Invalid offline demo credentials", 401, null);
+        }
+
+        const nextRole: UserRole = "investigator";
+        api.setToken("netra-offline-demo-session");
+        setOfficerId(DEMO_BADGE_ID);
         setRole(nextRole);
 
         // Keep access-log behaviour simple (no mock IP). Phase 1 only.
         setAccessLog((prev) => [
           {
             id: `al-${Date.now()}`,
-            officerId: res.badge_id,
+            officerId: DEMO_BADGE_ID,
             action: "login",
             status: "success",
             ipAddress: "session",

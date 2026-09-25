@@ -134,7 +134,7 @@ export default function Login() {
                   <input
                     id="badgeId"
                     type="text"
-                    placeholder="e.g. BADGE001"
+                    placeholder="BADGE001"
                     value={badgeId}
                     onChange={(e) => setBadgeId(e.target.value)}
                     autoComplete="username"

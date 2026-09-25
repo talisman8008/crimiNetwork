@@ -22,38 +22,26 @@ const steps: TourStep[] = [
   },
   {
     route: "/",
-    selector: ".case-workspace-grid",
-    title: "Start by opening a case",
-    body: "Each card carries the FIR number, how many entities and links are in it, open alerts, the lead officer and the next hearing. Opening one scopes the whole console to that investigation.",
+    selector: ".dashboard-case-rail",
+    title: "Your investigation casebook",
+    body: "Use this rail to switch between active investigations. Select a case to update the dashboard, or start a new one from the Add case tile below.",
+  },
+  {
+    route: "/",
+    selector: ".dashboard-add-case-tile",
+    title: "Create a case from source files",
+    body: "Add the case details, upload one or more FIRs alongside CDR and financial records, then let NETRA assemble the investigation workspace.",
+  },
+  {
+    route: "/",
+    selector: ".dashboard-main-grid",
+    title: "Review the intelligence snapshot",
+    body: "The selected case shows its investigator, observed links, mapped locations and open-alert count before you enter the full workspace.",
   },
   {
     selector: ".notif-bell",
     title: "Hearings and alerts",
     body: "Upcoming court dates, cross-case entity matches and anything flagged since you were last in. The count is what still needs a decision.",
-  },
-  {
-    route: "/network",
-    selector: ".filter-bar",
-    title: "Narrow the picture",
-    body: "Filter by case, relationship type, the evidence a link came from, and the dates it was observed. The graph redraws as you go.",
-  },
-  {
-    route: "/network",
-    selector: ".analysis-tools",
-    title: "The analysis tools",
-    body: "Path finder traces how two people connect through everyone in between. Communities colours the clusters the network falls into. Timeline replays the case in the order the evidence actually arrived.",
-  },
-  {
-    route: "/network",
-    selector: ".graph-canvas-pane",
-    title: "Reading the graph",
-    body: "A node is bigger the more connections it holds, and carries a red border when it is high risk. Drag to orbit, scroll to zoom, and click anyone to pull their record, their links and the evidence each link rests on.",
-  },
-  {
-    route: "/network",
-    selector: ".assistant-fab",
-    title: "Ask about the open case",
-    body: "The assistant answers from that case's records only and cites what it used. It will tell you when it has nothing rather than guess.",
   },
 ];
 
