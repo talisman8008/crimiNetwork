@@ -124,6 +124,15 @@ export function IconX({ className, style }: IconProps) {
   );
 }
 
+export function IconLogOut({ className, style }: IconProps) {
+  return (
+    <svg {...base} className={className} style={style}>
+      <path d="M10 5H6.5A2.5 2.5 0 0 0 4 7.5v9A2.5 2.5 0 0 0 6.5 19H10" />
+      <path d="M13 8.5 16.5 12 13 15.5M8.5 12h8" />
+    </svg>
+  );
+}
+
 export function IconShield({ className, style }: IconProps) {
   return (
     <svg {...base} className={className} style={style}>
