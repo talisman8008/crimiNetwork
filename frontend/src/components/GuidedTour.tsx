@@ -43,6 +43,24 @@ const steps: TourStep[] = [
     title: "Hearings and alerts",
     body: "Upcoming court dates, cross-case entity matches and anything flagged since you were last in. The count is what still needs a decision.",
   },
+  {
+    route: "/workspace",
+    selector: ".workspace-current-project",
+    title: "Current investigation",
+    body: "This is the case-level brief: flagged patterns and connected investigations are gathered here before you decide where to focus next.",
+  },
+  {
+    route: "/workspace",
+    selector: ".workspace-activity-panel",
+    title: "Mapped activity",
+    body: "The workspace map uses the same confirmed locations as the full map, so the evidence stays consistent as you move between views.",
+  },
+  {
+    route: "/workspace",
+    selector: ".workspace-actions-column",
+    title: "Evidence and case actions",
+    body: "Open the graph, inspect the map, review hearings, and access CCTV sightings from this casework column.",
+  },
 ];
 
 const CARD_WIDTH = 340;
@@ -86,12 +104,24 @@ export default function GuidedTour() {
   const [place, setPlace] = useState<Placement | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // The anchors for most steps live on the dashboard, so the tour always starts there.
+  // The first dashboard step describes the rail itself, so keep it expanded until the visitor
+  // advances. After that, it returns to its normal compact behaviour.
+  useEffect(() => {
+    const holdSidebarOpen = tourOpen && index === 0 && location.pathname === "/";
+    document.documentElement.classList.toggle("tour-sidebar-open", holdSidebarOpen);
+    return () => document.documentElement.classList.remove("tour-sidebar-open");
+  }, [tourOpen, index, location.pathname]);
+
+  // Starting it from the workspace keeps this focused on casework; everywhere else follows
+  // the original dashboard-led introduction.
   useEffect(() => {
     if (!tourOpen) return;
-    if (location.pathname !== "/") navigate("/");
-    // Let the dashboard paint before deciding which anchors are actually on screen.
-    const t = window.setTimeout(() => setIndex(nextAvailable(0, 1, "/")), 60);
+    const workspaceStart = steps.findIndex((candidate) => candidate.route === "/workspace");
+    const startsInWorkspace = location.pathname === "/workspace" && workspaceStart >= 0;
+    const route = startsInWorkspace ? "/workspace" : "/";
+    if (location.pathname !== route) navigate(route);
+    // Let the destination paint before deciding which anchors are actually on screen.
+    const t = window.setTimeout(() => setIndex(nextAvailable(startsInWorkspace ? workspaceStart : 0, 1, route)), 60);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tourOpen]);

@@ -1,19 +1,47 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { MapContainer, Marker, TileLayer, Tooltip } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 import PageHeader from "../components/PageHeader";
 import { eventsForCase } from "../data/timelineData";
 import { courtDatesForCase } from "../data/courtData";
 import { caseStatusColor, formatDate } from "../components/ui";
 import { Bars } from "../components/Charts";
-import SeverityHeatmap from "../components/SeverityHeatmap";
 import { IconChevronLeft, IconChevronRight, IconPlus, IconSearch } from "../components/icons";
 import { useActiveCase } from "../lib/activeCase";
 import { useAuth } from "../lib/auth";
-import { useCaseAlerts, useCaseGraph, useCases } from "../hooks/useCaseData";
+import { useCaseAlerts, useCaseGraph } from "../hooks/useCaseData";
 import { alerts as mockAlerts, entitiesForCase, relationshipsForCase } from "../data/mockData";
 import type { Case } from "../data/types";
+import { CaptureMap, FitBounds, investigationMapPoints, markerIcon, demoMapLocations, demoMapRelationships } from "./MapView";
 
 const DEMO_CASE_STORAGE_KEY = "netra-demo-uploaded-case";
+const DEFAULT_NIGHTFALL_CASE: Case = {
+  id: "demo-uploaded-case",
+  code: "CASE-2026-0142",
+  title: "Operation Nightfall",
+  status: "active",
+  priority: "high",
+  openedOn: "2026-09-25",
+  leadOfficer: "Inspector Asha Kulkarni",
+  station: "Central Crime Station",
+  entityIds: [],
+  summary: "Curated intelligence analysis generated from uploaded case files.",
+  sections: [],
+};
+const DAY_TANGO_CASE: Case = {
+  id: "case-2",
+  code: "CASE-2026-0117",
+  title: "Day Tango",
+  status: "under review",
+  priority: "medium",
+  openedOn: "2026-09-12",
+  leadOfficer: "Inspector Asha Kulkarni",
+  station: "Central Crime Station",
+  entityIds: [],
+  summary: "Coordinated field and financial activity under review.",
+  sections: [],
+};
 
 function readDemoCase(): Case | null {
   try {
@@ -28,7 +56,6 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { openCase } = useActiveCase();
   useAuth();
-  const { cases: backendCases, loading: casesLoading, error: casesError } = useCases();
 
   const [caseSearch, setCaseSearch] = useState("");
   const [caseRailCollapsed, setCaseRailCollapsed] = useState(false);
@@ -41,13 +68,7 @@ export default function Dashboard() {
   const [caseNumber, setCaseNumber] = useState("");
   const [station, setStation] = useState("");
   const [createdCase, setCreatedCase] = useState<Case | null>(readDemoCase);
-
-  // Keep the selection valid as soon as the authenticated case registry arrives.
-  useEffect(() => {
-    if (backendCases.length > 0 && !backendCases.some((caseItem) => caseItem.id === selectedCaseId)) {
-      setSelectedCaseId(backendCases[0].id);
-    }
-  }, [backendCases, selectedCaseId]);
+  const [showOperationNightfall, setShowOperationNightfall] = useState(true);
 
   useEffect(() => {
     if (!isAnalysing) return;
@@ -82,17 +103,26 @@ export default function Dashboard() {
     setIsAddingCase(false);
   }, [caseNumber, caseTitle, isAnalysing, station, uploadPercent]);
 
-  const displayCases = createdCase ? [createdCase, ...backendCases] : backendCases;
+  const baseCases = [DAY_TANGO_CASE];
+  const operationNightfall = createdCase ?? DEFAULT_NIGHTFALL_CASE;
+  const displayCases = showOperationNightfall ? [operationNightfall, ...baseCases] : baseCases;
   const selectedCase = displayCases.find((c) => c.id === selectedCaseId) ?? displayCases[0];
-  const isDemoCase = selectedCase?.id === "demo-uploaded-case";
+  const isMockDashboardCase = selectedCase?.id === "demo-uploaded-case" || selectedCase?.id === "case-2";
+  const seededCaseId = isMockDashboardCase ? "case-1" : selectedCase?.id;
   const { entities: selectedEntities, relationships: selectedLinks, loading: graphLoading } = useCaseGraph(selectedCase?.id);
   const { alerts: selectedCaseAlerts } = useCaseAlerts(selectedCase?.id);
-  const dashboardEntities = isDemoCase ? entitiesForCase("case-1") : selectedEntities;
-  const dashboardLinks = isDemoCase ? relationshipsForCase("case-1") : selectedLinks;
-  const selectedAlerts = isDemoCase ? mockAlerts.filter((alert) => alert.caseId === "case-1" && alert.status !== "dismissed") : selectedCaseAlerts.filter((alert) => alert.status !== "dismissed");
-  const selectedEvents = selectedCase ? eventsForCase(isDemoCase ? "case-1" : selectedCase.id) : [];
+  const dashboardEntities = isMockDashboardCase ? entitiesForCase("case-1") : selectedEntities;
+  const dashboardLinks = isMockDashboardCase ? relationshipsForCase("case-1") : selectedLinks;
+  const dashboardMapEntities = isMockDashboardCase ? [...dashboardEntities, ...demoMapLocations] : dashboardEntities;
+  const dashboardMapLinks = isMockDashboardCase ? demoMapRelationships : dashboardLinks;
+  const dashboardMapPoints = useMemo(
+    () => investigationMapPoints(dashboardMapEntities, dashboardMapLinks),
+    [dashboardMapEntities, dashboardMapLinks],
+  );
+  const selectedAlerts = isMockDashboardCase ? mockAlerts.filter((alert) => alert.caseId === "case-1" && alert.status !== "dismissed") : selectedCaseAlerts.filter((alert) => alert.status !== "dismissed");
+  const selectedEvents = seededCaseId ? eventsForCase(seededCaseId) : [];
   const nextHearing = selectedCase
-    ? courtDatesForCase(selectedCase.id).find((h) => h.status === "upcoming")
+    ? courtDatesForCase(seededCaseId ?? selectedCase.id).find((h) => h.status === "upcoming")
     : undefined;
   const investigator = selectedCase?.leadOfficer
     ? { name: selectedCase.leadOfficer, role: `Lead investigator · ${selectedCase.station}` }
@@ -140,15 +170,28 @@ export default function Dashboard() {
           <aside className="dashboard-case-rail" aria-label="Investigation cases">
             <div className="dashboard-case-rail-header">
               {!caseRailCollapsed && <h2>Cases</h2>}
-              <button
-                type="button"
-                className="dashboard-rail-toggle"
-                onClick={() => setCaseRailCollapsed((collapsed) => !collapsed)}
-                aria-label={caseRailCollapsed ? "Expand cases" : "Collapse cases"}
-                title={caseRailCollapsed ? "Expand cases" : "Collapse cases"}
-              >
-                {caseRailCollapsed ? <IconChevronRight /> : <IconChevronLeft />}
-              </button>
+              <div className="dashboard-case-rail-controls">
+                {!caseRailCollapsed && <button
+                  type="button"
+                  className={`dashboard-nightfall-toggle ${showOperationNightfall ? "is-on" : ""}`}
+                  onClick={() => setShowOperationNightfall((shown) => {
+                    if (shown && selectedCaseId === "demo-uploaded-case") setSelectedCaseId(baseCases[0]?.id ?? "");
+                    return !shown;
+                  })}
+                  aria-label={showOperationNightfall ? "Hide Operation Nightfall" : "Show Operation Nightfall"}
+                  aria-pressed={showOperationNightfall}
+                  title={showOperationNightfall ? "Hide Operation Nightfall" : "Show Operation Nightfall"}
+                ><span /></button>}
+                <button
+                  type="button"
+                  className="dashboard-rail-toggle"
+                  onClick={() => setCaseRailCollapsed((collapsed) => !collapsed)}
+                  aria-label={caseRailCollapsed ? "Expand cases" : "Collapse cases"}
+                  title={caseRailCollapsed ? "Expand cases" : "Collapse cases"}
+                >
+                  {caseRailCollapsed ? <IconChevronRight /> : <IconChevronLeft />}
+                </button>
+              </div>
             </div>
 
             {!caseRailCollapsed && (
@@ -165,10 +208,6 @@ export default function Dashboard() {
                 </label>
 
                 <div className="dashboard-case-list">
-                  {casesLoading && <p className="dashboard-case-empty">Loading cases&hellip;</p>}
-                  {!casesLoading && casesError && (
-                    <p className="dashboard-case-empty">Could not load cases from the backend.</p>
-                  )}
                   {visibleCases.map((caseItem) => {
                     const isSelected = caseItem.id === selectedCase?.id;
                     return (
@@ -193,7 +232,7 @@ export default function Dashboard() {
                       </button>
                     );
                   })}
-                  {!casesLoading && !casesError && visibleCases.length === 0 && (
+                  {visibleCases.length === 0 && (
                     <p className="dashboard-case-empty">No cases match that search.</p>
                   )}
                 </div>
@@ -284,7 +323,7 @@ export default function Dashboard() {
                   <p className="dashboard-card-kicker">Activity</p>
                   <h2 className="chart-card-title">Links observed by day</h2>
                 </div>
-                <span className="dashboard-chart-total">{isDemoCase ? dashboardLinks.length : graphLoading ? "…" : dashboardLinks.length}</span>
+                <span className="dashboard-chart-total">{isMockDashboardCase ? dashboardLinks.length : graphLoading ? "…" : dashboardLinks.length}</span>
               </div>
               <Bars data={linksByDay} />
             </section>
@@ -307,7 +346,15 @@ export default function Dashboard() {
                   ))}
                 </select>
               </div>
-              <SeverityHeatmap caseId={isDemoCase ? "case-1" : selectedCase?.id} />
+              <div className="dashboard-shared-map">
+                <MapContainer center={[20.5937, 78.9629]} zoom={5} zoomControl={false} scrollWheelZoom={false} style={{ height: "100%", width: "100%" }}>
+                  <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}" attribution="Tiles &copy; Esri" />
+                  <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}" attribution="&copy; OpenStreetMap contributors" />
+                  <FitBounds points={dashboardMapPoints} />
+                  <CaptureMap />
+                  {dashboardMapPoints.map((point) => <Marker key={point.id} position={[point.lat, point.lng]} icon={markerIcon(point)}><Tooltip direction="top" offset={[0, -8]}><strong>{point.label}</strong><br />{point.precision === "recorded" ? "Recorded coordinates" : point.precision === "linked" ? "Linked location" : "City-level location"}</Tooltip></Marker>)}
+                </MapContainer>
+              </div>
             </section>
 
             <section className="panel dashboard-telemetry-card">
@@ -324,8 +371,8 @@ export default function Dashboard() {
                 )}
               </div>
               <dl className="dashboard-telemetry-grid">
-                <div><dt>Entities</dt><dd>{isDemoCase ? dashboardEntities.length : graphLoading ? "…" : dashboardEntities.length}</dd></div>
-                <div><dt>Links</dt><dd>{isDemoCase ? dashboardLinks.length : graphLoading ? "…" : dashboardLinks.length}</dd></div>
+                <div><dt>Entities</dt><dd>{isMockDashboardCase ? dashboardEntities.length : graphLoading ? "…" : dashboardEntities.length}</dd></div>
+                <div><dt>Links</dt><dd>{isMockDashboardCase ? dashboardLinks.length : graphLoading ? "…" : dashboardLinks.length}</dd></div>
                 <div><dt>Recorded events</dt><dd>{selectedEvents.length}</dd></div>
                 <div><dt>Open alerts</dt><dd className={selectedAlerts.length > 0 ? "has-alerts" : ""}>{selectedAlerts.length}</dd></div>
               </dl>

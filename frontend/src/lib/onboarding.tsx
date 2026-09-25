@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useLocalStorage } from "./useLocalStorage";
 import { useAuth } from "./auth";
 import type { UserRole } from "../data/types";
@@ -20,8 +20,9 @@ const OnboardingContext = createContext<OnboardingContextValue | null>(null);
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated, role } = useAuth();
-  const [state, setState] = useLocalStorage<OnboardingState>("netra-onboarding", { introDone: [] });
+  const [, setState] = useLocalStorage<OnboardingState>("netra-onboarding", { introDone: [] });
   const [tourOpen, setTourOpen] = useState(false);
+  const autoStartedForSession = useRef(false);
 
   const markDone = useCallback(() => {
     setState((prev) =>
@@ -29,13 +30,19 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     );
   }, [role, setState]);
 
-  // First time in as this role, the tour just starts. A modal standing between an officer and
-  // their caseload gets dismissed unread; walking the actual screens does not.
+  // The prototype should reliably introduce the dashboard after every new login. Local storage
+  // still records that this role has seen it, but it never suppresses the demo's session tour.
   useEffect(() => {
-    if (!isAuthenticated || state.introDone.includes(role)) return;
+    if (!isAuthenticated) {
+      autoStartedForSession.current = false;
+      return;
+    }
+    if (autoStartedForSession.current) return;
+    autoStartedForSession.current = true;
     markDone();
-    setTourOpen(true);
-  }, [isAuthenticated, role, state.introDone, markDone]);
+    const timer = window.setTimeout(() => setTourOpen(true), 180);
+    return () => window.clearTimeout(timer);
+  }, [isAuthenticated, markDone]);
 
   const value = useMemo<OnboardingContextValue>(
     () => ({

@@ -169,30 +169,29 @@ export default function NetworkGraph() {
 
   const currentDate = timelineDates[Math.min(timelineStep, timelineDates.length - 1)] ?? null;
 
-  const hiddenEdgeIds = useMemo(() => {
-    if (!timelineOn || !currentDate) return undefined;
-    return new Set(filteredRelationships.filter((r) => r.observedOn > currentDate).map((r) => r.id));
-  }, [timelineOn, currentDate, filteredRelationships]);
-
   const visibleAtStep = useMemo(
     () => (currentDate ? filteredRelationships.filter((r) => r.observedOn <= currentDate) : []),
     [filteredRelationships, currentDate],
   );
 
+  // Feed the canvas only the links known by this point in time. This makes the network itself
+  // grow during playback instead of merely changing the timeline counter.
+  const relationshipsAtStep = timelineOn ? visibleAtStep : filteredRelationships;
+
+  const entitiesAtStep = useMemo(() => {
+    if (!timelineOn) return filteredEntities;
+    const revealedIds = new Set<string>();
+    visibleAtStep.forEach((relationship) => {
+      revealedIds.add(relationship.source);
+      revealedIds.add(relationship.target);
+    });
+    return filteredEntities.filter((entity) => revealedIds.has(entity.id));
+  }, [timelineOn, visibleAtStep, filteredEntities]);
+
   const newAtStep = useMemo(
     () => (currentDate ? filteredRelationships.filter((r) => r.observedOn === currentDate).length : 0),
     [filteredRelationships, currentDate],
   );
-
-  const dimmedNodeIds = useMemo(() => {
-    if (!timelineOn || !currentDate) return undefined;
-    const connected = new Set<string>();
-    visibleAtStep.forEach((r) => {
-      connected.add(r.source);
-      connected.add(r.target);
-    });
-    return new Set(filteredEntities.filter((e) => !connected.has(e.id)).map((e) => e.id));
-  }, [timelineOn, currentDate, visibleAtStep, filteredEntities]);
 
   // advance the scrubber while playing, stopping at the final date
   useEffect(() => {
@@ -206,6 +205,10 @@ export default function NetworkGraph() {
       if (playTimer.current) window.clearTimeout(playTimer.current);
     };
   }, [playing, timelineStep, timelineDates.length]);
+
+  useEffect(() => {
+    setTimelineStep((step) => Math.min(step, Math.max(timelineDates.length - 1, 0)));
+  }, [timelineDates.length]);
 
   const keyPlayers = useMemo(() => {
     const degree = new Map<string, number>();
@@ -353,20 +356,19 @@ export default function NetworkGraph() {
             </div>
           )}
 
+          <div className="network-graph-workspace">
           <div className={`tab-fade-in graph-stage ${selectedEntity ? "focused" : ""}`}>
             <div className="graph-canvas-pane">
-              {filteredEntities.length > 0 ? (
+              {entitiesAtStep.length > 0 ? (
                 <GraphView2D
-                  entities={filteredEntities}
-                  relationships={filteredRelationships}
+                  entities={entitiesAtStep}
+                  relationships={relationshipsAtStep}
                   selectedId={selectedId}
                   onSelect={(id) => {
                     setSelectedId(id);
                     if (id) setPathfinderOpen(false);
                   }}
                   highlightEdgeIds={highlightEdgeIds}
-                  hiddenEdgeIds={hiddenEdgeIds}
-                  dimmedNodeIds={dimmedNodeIds}
                   nodeColorOverride={nodeColorOverride}
                   highlightNodeIds={highlightedKeyPlayerIds}
                 />
@@ -403,53 +405,13 @@ export default function NetworkGraph() {
                 </aside>
               )}
 
-              {timelineOn && timelineDates.length > 0 && (
-                <div className="timeline-bar">
-                  <button
-                    className="timeline-play"
-                    onClick={() => {
-                      if (timelineStep >= timelineDates.length - 1) setTimelineStep(0);
-                      setPlaying((p) => !p);
-                    }}
-                    aria-label={playing ? "Pause timeline" : "Play timeline"}
-                  >
-                    {playing ? <IconPause /> : <IconPlay />}
-                  </button>
-
-                  <div className="timeline-track">
-                    <input
-                      type="range"
-                      min={0}
-                      max={timelineDates.length - 1}
-                      value={Math.min(timelineStep, timelineDates.length - 1)}
-                      onChange={(e) => {
-                        setPlaying(false);
-                        setTimelineStep(Number(e.target.value));
-                      }}
-                      aria-label="Scrub network timeline"
-                    />
-                    <div className="timeline-ends">
-                      <span className="mono">{formatDate(timelineDates[0])}</span>
-                      <span className="mono">{formatDate(timelineDates[timelineDates.length - 1])}</span>
-                    </div>
-                  </div>
-
-                  <div className="timeline-readout">
-                    <div className="timeline-readout-date mono">{currentDate ? formatDate(currentDate) : ""}</div>
-                    <div className="timeline-readout-sub">
-                      {visibleAtStep.length} of {filteredRelationships.length} links
-                      {newAtStep > 0 && ` · +${newAtStep} today`}
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
             <div className="graph-side-pane">
               {/* Activity feed when timeline is on */}
               {timelineOn && !selectedEntity && !pathfinderOpen && (() => {
                 const caseEvents = caseId === "all"
                   ? [...eventsForCase("case-1"), ...eventsForCase("case-2")].sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`))
-                  : eventsForCase(caseId);
+                  : eventsForCase(caseId === "demo-uploaded-case" ? "case-1" : caseId);
                 const visibleEvents = currentDate
                   ? caseEvents.filter((e) => e.date <= currentDate)
                   : caseEvents;
@@ -681,24 +643,17 @@ export default function NetworkGraph() {
                       <label className="graph-key-player-toggle">
                         <input type="checkbox" checked={showKeyPlayers} onChange={(event) => setShowKeyPlayers(event.target.checked)} />
                         <span>
-                          <strong>Show key players</strong>
+                          <strong>Show key entities</strong>
                           <small>Highlight the most connected entities in this view.</small>
                         </span>
                       </label>
                     </section>
 
                     <section className="graph-control-section">
-                      <div className="graph-control-label">Observed date</div>
-                      <div className="graph-date-fields">
-                        <label>
-                          <span>From</span>
-                          <input className="input" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
-                        </label>
-                        <label>
-                          <span>To</span>
-                          <input className="input" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
-                        </label>
-                      </div>
+                      <div className="graph-control-label">Timeline</div>
+                      <button className={`btn ${timelineOn ? "btn-primary" : ""}`} type="button" aria-pressed={timelineOn} onClick={() => { setPlaying(false); setTimelineStep(0); setTimelineOn((value) => !value); }}>
+                        {timelineOn ? "Hide timeline" : "Replay timeline"}
+                      </button>
                     </section>
                     <div hidden>
                       {keyPlayers.length === 0 && <div className="empty-state">No connections in this view.</div>}
@@ -736,6 +691,60 @@ export default function NetworkGraph() {
                 </div>
               )}
             </div>
+          </div>
+          {timelineDates.length > 0 && (
+            <div className="timeline-bar">
+              <button
+                className="timeline-play"
+                onClick={() => {
+                  if (timelineStep >= timelineDates.length - 1) setTimelineStep(0);
+                  setTimelineOn(true);
+                  setPlaying((p) => !p);
+                }}
+                aria-label={playing ? "Pause timeline" : "Play timeline"}
+              >
+                {playing ? <IconPause /> : <IconPlay />}
+              </button>
+
+              <div className="timeline-date-range" aria-label="Timeline date range">
+                <label>
+                  <span>Start</span>
+                  <input type="date" value={dateFrom} max={dateTo || undefined} onChange={(event) => { setPlaying(false); setDateFrom(event.target.value); setTimelineStep(0); }} />
+                </label>
+                <label>
+                  <span>End</span>
+                  <input type="date" value={dateTo} min={dateFrom || undefined} onChange={(event) => { setPlaying(false); setDateTo(event.target.value); setTimelineStep(0); }} />
+                </label>
+              </div>
+
+              <div className="timeline-track">
+                <input
+                  type="range"
+                  min={0}
+                  max={timelineDates.length - 1}
+                  value={Math.min(timelineStep, timelineDates.length - 1)}
+                  onChange={(e) => {
+                    setPlaying(false);
+                    setTimelineOn(true);
+                    setTimelineStep(Number(e.target.value));
+                  }}
+                  aria-label="Scrub network timeline"
+                />
+                <div className="timeline-ends">
+                  <span className="mono">{formatDate(timelineDates[0])}</span>
+                  <span className="mono">{formatDate(timelineDates[timelineDates.length - 1])}</span>
+                </div>
+              </div>
+
+              <div className="timeline-readout">
+                <div className="timeline-readout-date mono">{currentDate ? formatDate(currentDate) : ""}</div>
+                <div className="timeline-readout-sub">
+                  {visibleAtStep.length} of {filteredRelationships.length} links
+                  {newAtStep > 0 && ` · +${newAtStep} today`}
+                </div>
+              </div>
+            </div>
+          )}
           </div>
 
           {selectedEntity && (

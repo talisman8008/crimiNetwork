@@ -15,7 +15,7 @@ import { caseStatusColor, EntityIcon, formatDate, SeverityBadge } from "../compo
 import { useActiveCase } from "../lib/activeCase";
 import { useCase, useCaseGraph, useCases } from "../hooks/useCaseData";
 import { IconChevronRight } from "../components/icons";
-import { CaptureMap, FitBounds, investigationMapPoints, markerIcon, demoMapLocations, demoMapRelationships, type MapPoint } from "./MapView";
+import { CaptureMap, FitBounds, investigationMapPoints, markerIcon, demoMapLocations, demoMapRelationships } from "./MapView";
 import type { Case } from "../data/types";
 
 const DEMO_CASE_ID = "demo-uploaded-case";
@@ -119,7 +119,6 @@ export default function CaseWorkspace() {
   const mapPoints = investigationMapPoints(workspaceEntities, workspaceLinks);
   // The preview intentionally reuses the same marker set as the full map.
   const previewPoints = mapPoints;
-  const activityPoints: MapPoint[] = [];
   const showLinkedFirst = linked.length > 0 && caseAlerts.length === 0;
 
   const flaggedPatterns = (secondary = false) => (
@@ -227,15 +226,11 @@ export default function CaseWorkspace() {
                   <FitBounds points={mapPoints} />
                   <CaptureMap />
                   {mapPoints.map((point) => <Marker key={point.id} position={[point.lat, point.lng]} icon={markerIcon(point)}><Tooltip direction="top" offset={[0, -8]}><strong>{point.label}</strong><br />{point.precision === "recorded" ? "Recorded coordinates" : point.precision === "linked" ? "Linked location" : "City-level location"}</Tooltip></Marker>)}
-                  {activityPoints.map((point) => {
-                    const event = events.find((item) => `activity-${item.id}` === point.id);
-                    return <Marker key={point.id} position={[point.lat, point.lng]} icon={markerIcon(point)}><Tooltip direction="top" offset={[0, -8]}><strong>{event?.time} · {event?.locationLabel ?? "Recorded activity"}</strong><br />{event?.summary}</Tooltip></Marker>;
-                  })}
                 </MapContainer>
                 {!previewPoints.length && <div className="workspace-map-empty">No mapped locations in this case.</div>}
               </div>
               <div className="workspace-activity-ribbon">
-                {events.length === 0 ? "No timestamped activity logged for this case." : `${events.length} timestamped activit${events.length === 1 ? "y" : "ies"} recorded · ${activityPoints.length} mapped`}
+                {events.length === 0 ? "No timestamped activity logged for this case." : `${events.length} timestamped activit${events.length === 1 ? "y" : "ies"} recorded · map markers match the full location view`}
               </div>
             </section>
           </main>

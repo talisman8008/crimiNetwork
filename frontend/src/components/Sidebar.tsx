@@ -102,18 +102,13 @@ export default function Sidebar() {
         </div>
       </div>
 
-      <button className="sidebar-search" onClick={() => navigate("/entities")}>
-        <IconSearch />
-        <span>Search entities</span>
-      </button>
-
       {activeCaseId && (
         <button
           className="sidebar-case-exit"
           onClick={() => {
             closeCase();
             setSwitcherOpen(false);
-            navigate("/cases");
+            navigate("/");
           }}
           aria-label="Exit current case"
           title="Exit current case"
