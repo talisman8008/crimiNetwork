@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { askQuestion, suggestedPrompts, type CopilotAnswer } from "../lib/caseAssistant";
+import { ArrowDown, RotateCcw, SendHorizontal, X } from "lucide-react";
+import { getEntityById } from "../data/mockData";
 
 type ChatMessage =
   | { id: string; role: "user"; text: string }
@@ -11,7 +13,10 @@ function MessageContent({ message }: { message: ChatMessage }) {
   return <div className="case-chat-message case-chat-message-assistant">
     <p>{message.answer.answer}</p>
     {message.answer.referenced_entities.length > 0 && <div className="case-chat-entities">
-      {message.answer.referenced_entities.map((entityId) => <Link key={entityId} to={`/profile/${entityId}`}>View referenced entity</Link>)}
+      {[...new Set(message.answer.referenced_entities)].map((entityId) => {
+        const entity = getEntityById(entityId);
+        return <Link key={entityId} to={`/profile/${entityId}`}>{entity?.label ?? "Open referenced record"}</Link>;
+      })}
     </div>}
     {message.answer.sources.length > 0 && <details className="case-chat-sources">
       <summary>Sources used ({message.answer.sources.length})</summary>
@@ -26,16 +31,48 @@ export default function CaseAssistantWidget({ caseId }: { caseId: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const threadRef = useRef<HTMLDivElement>(null);
+  const followingRef = useRef(true);
+  const [showJumpToLatest, setShowJumpToLatest] = useState(false);
 
   const resetChat = () => {
     setMessages([]);
     setQuery("");
     setError(null);
+    followingRef.current = true;
+    setShowJumpToLatest(false);
   };
+
+  const jumpToLatest = () => {
+    const thread = threadRef.current;
+    if (!thread) return;
+    thread.scrollTo({ top: thread.scrollHeight, behavior: "smooth" });
+    followingRef.current = true;
+    setShowJumpToLatest(false);
+  };
+
+  const updateFollowing = () => {
+    const thread = threadRef.current;
+    if (!thread) return;
+    const following = thread.scrollHeight - thread.scrollTop - thread.clientHeight < 28;
+    followingRef.current = following;
+    setShowJumpToLatest(!following && messages.length > 0);
+  };
+
+  useEffect(() => {
+    if (!followingRef.current) return;
+    const frame = requestAnimationFrame(() => {
+      const thread = threadRef.current;
+      if (thread) thread.scrollTop = thread.scrollHeight;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [messages, loading]);
 
   const submit = async (prompt?: string) => {
     const trimmed = (prompt ?? query).trim();
     if (!trimmed || loading) return;
+    followingRef.current = true;
+    setShowJumpToLatest(false);
     setMessages((current) => [...current, { id: `user-${Date.now()}`, role: "user", text: trimmed }]);
     setQuery("");
     setLoading(true);
@@ -56,14 +93,15 @@ export default function CaseAssistantWidget({ caseId }: { caseId: string }) {
 
   return <section className="case-chat-panel" aria-label="Case assistant">
     <header className="case-chat-header">
-      <div><h2>Case Assistant</h2><p>How can I help with this case?</p></div>
+      <div><span className="case-chat-eyebrow">Case intelligence</span><h2>Case Assistant</h2><p>Grounded in the open investigation.</p></div>
       <div className="case-chat-header-actions">
-        <button type="button" onClick={resetChat} aria-label="Start a new chat" title="New chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M20 11a8 8 0 1 0 2 5.3" /><path d="M20 4v7h-7" /></svg></button>
-        <button type="button" onClick={() => setOpen(false)} aria-label="Close case assistant">×</button>
+        <button type="button" onClick={resetChat} aria-label="Start a new chat" title="New chat"><RotateCcw aria-hidden="true" /></button>
+        <button type="button" onClick={() => setOpen(false)} aria-label="Close case assistant"><X aria-hidden="true" /></button>
       </div>
     </header>
 
-    <div className="case-chat-thread" aria-live="polite">
+    <div className="case-chat-scroller">
+    <div className="case-chat-thread" ref={threadRef} onScroll={updateFollowing} aria-live="polite">
       {messages.length === 0 ? <div className="case-chat-empty">
         <span className="case-chat-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg></span>
         <h3>Start an investigation chat</h3>
@@ -73,10 +111,12 @@ export default function CaseAssistantWidget({ caseId }: { caseId: string }) {
       {loading && <div className="case-chat-message case-chat-message-assistant case-chat-thinking">Reviewing case records<span>…</span></div>}
       {error && <div className="case-chat-error">{error}</div>}
     </div>
+    {showJumpToLatest && <button className="case-chat-jump" type="button" onClick={jumpToLatest}><ArrowDown aria-hidden="true" /> Jump to latest</button>}
+    </div>
 
     <form className="case-chat-composer" onSubmit={(event) => { event.preventDefault(); void submit(); }}>
       <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ask about this case…" disabled={loading} aria-label="Ask the case assistant" />
-      <button type="submit" disabled={loading || !query.trim()} aria-label="Send question"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m5 12 14-7-4 14-3.5-5.5L5 12Z" /><path d="m11.5 13.5 3-3" /></svg></button>
+      <button type="submit" disabled={loading || !query.trim()} aria-label="Send question"><SendHorizontal aria-hidden="true" /></button>
     </form>
   </section>;
 }

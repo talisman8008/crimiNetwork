@@ -39,7 +39,7 @@ export default function EventTimeline({ events, activeDate, emptyMessage }: Even
           <div className="event-day-head">{formatDate(day)}</div>
           {dayEvents.map((e) => (
             <div key={e.id} className="event-row">
-              <span className="event-time mono">{e.time}</span>
+              {e.time && e.time !== "—" && <span className="event-time mono">{e.time}</span>}
               <span className="event-dot" style={{ background: typeColor[e.type] }} />
               <div className="event-body">
                 <div className="event-summary">{e.summary}</div>

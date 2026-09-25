@@ -7,7 +7,6 @@ import {
   entitiesForCase,
   getCaseById,
   linkedCasesFor,
-  relationshipsForCase,
 } from "../data/mockData";
 import { courtDatesForCase } from "../data/courtData";
 import { cctvFootage } from "../data/cctvData";
@@ -16,7 +15,7 @@ import { caseStatusColor, EntityIcon, formatDate, SeverityBadge } from "../compo
 import { useActiveCase } from "../lib/activeCase";
 import { useCase, useCaseGraph, useCases } from "../hooks/useCaseData";
 import { IconChevronRight } from "../components/icons";
-import { CaptureMap, FitBounds, locationCoordinate, markerIcon, type MapPoint } from "./MapView";
+import { CaptureMap, FitBounds, investigationMapPoints, markerIcon, demoMapLocations, demoMapRelationships, type MapPoint } from "./MapView";
 import type { Case } from "../data/types";
 
 const DEMO_CASE_ID = "demo-uploaded-case";
@@ -97,8 +96,8 @@ export default function CaseWorkspace() {
   const team = c.leadOfficer
     ? [{ id: `${c.id}-lead`, name: c.leadOfficer, role: `Lead investigator · ${c.station}` }]
     : [];
-  const workspaceEntities = isDemoCase ? entitiesForCase("case-1") : caseEntities;
-  const workspaceLinks = isDemoCase ? relationshipsForCase("case-1") : caseLinks;
+  const workspaceEntities = isDemoCase ? [...entitiesForCase("case-1"), ...demoMapLocations] : caseEntities;
+  const workspaceLinks = isDemoCase ? demoMapRelationships : caseLinks;
   const caseAlerts = alerts.filter((a) => a.caseId === (isDemoCase ? "case-1" : c.id) && a.status !== "dismissed");
   const seededId = isDemoCase ? "case-1" : c.code.startsWith("CASE001") ? "case-1" : c.code.startsWith("CASE002") ? "case-2" : null;
   // Court dates remain a deliberate local demo data source until that backend endpoint is available.
@@ -117,24 +116,10 @@ export default function CaseWorkspace() {
     .sort((a, b) => b.count - a.count)
     .slice(0, 6);
   const topCount = keyFigures[0]?.count || 1;
-  const mapPoints: MapPoint[] = workspaceEntities.flatMap((entity) => {
-    if (entity.type !== "location") return [];
-    const coordinate = locationCoordinate(entity);
-    return coordinate ? [{ id: entity.id, type: entity.type, label: entity.label, riskLevel: entity.riskLevel, ...coordinate }] : [];
-  });
-  const activityPoints: MapPoint[] = events.flatMap((event) => {
-    if (!Number.isFinite(event.lat) || !Number.isFinite(event.lng)) return [];
-    return [{
-      id: `activity-${event.id}`,
-      type: "location",
-      label: event.locationLabel ?? event.summary,
-      lat: event.lat!,
-      lng: event.lng!,
-      riskLevel: "high",
-      precision: "recorded",
-    }];
-  });
-  const previewPoints = [...mapPoints, ...activityPoints];
+  const mapPoints = investigationMapPoints(workspaceEntities, workspaceLinks);
+  // The preview intentionally reuses the same marker set as the full map.
+  const previewPoints = mapPoints;
+  const activityPoints: MapPoint[] = [];
   const showLinkedFirst = linked.length > 0 && caseAlerts.length === 0;
 
   const flaggedPatterns = (secondary = false) => (
@@ -239,9 +224,9 @@ export default function CaseWorkspace() {
                 <MapContainer center={[20.5937, 78.9629]} zoom={5} zoomControl={false} scrollWheelZoom={false} style={{ height: "100%", width: "100%" }}>
                   <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}" attribution="Tiles &copy; Esri" />
                   <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}" attribution="&copy; OpenStreetMap contributors" />
-                  <FitBounds points={previewPoints} />
+                  <FitBounds points={mapPoints} />
                   <CaptureMap />
-                  {mapPoints.map((point) => <Marker key={point.id} position={[point.lat, point.lng]} icon={markerIcon(point)}><Tooltip direction="top" offset={[0, -8]}><strong>{point.label}</strong><br />{point.precision === "recorded" ? "Recorded coordinates" : "City-level location"}</Tooltip></Marker>)}
+                  {mapPoints.map((point) => <Marker key={point.id} position={[point.lat, point.lng]} icon={markerIcon(point)}><Tooltip direction="top" offset={[0, -8]}><strong>{point.label}</strong><br />{point.precision === "recorded" ? "Recorded coordinates" : point.precision === "linked" ? "Linked location" : "City-level location"}</Tooltip></Marker>)}
                   {activityPoints.map((point) => {
                     const event = events.find((item) => `activity-${item.id}` === point.id);
                     return <Marker key={point.id} position={[point.lat, point.lng]} icon={markerIcon(point)}><Tooltip direction="top" offset={[0, -8]}><strong>{event?.time} · {event?.locationLabel ?? "Recorded activity"}</strong><br />{event?.summary}</Tooltip></Marker>;

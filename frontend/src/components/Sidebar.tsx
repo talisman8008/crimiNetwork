@@ -7,6 +7,7 @@ import {
   IconGrid,
   IconHelp,
   IconLock,
+  IconLogOut,
   IconMapPin,
   IconNetwork,
   IconScale,
@@ -36,7 +37,6 @@ const caseItems: NavItem[] = [
 /** Cross-case tools shown before an investigation has been opened. */
 const globalItems: NavItem[] = [
   { to: "/", label: "Dashboard", icon: IconGrid, end: true },
-  { to: "/cases", label: "Cases", icon: IconFolder },
   { to: "/cctv", label: "CCTV Footage", icon: IconCamera },
   { to: "/entities", label: "Entity Registry", icon: IconSearch },
 ];
@@ -182,7 +182,7 @@ export default function Sidebar() {
         {activeCaseId ? (
           <>
             <NavGroup label="Open case" items={caseItems} role={role} />
-            <NavGroup label="Global views" items={globalItems} role={role} />
+            <NavGroup label="Global views" items={globalItems.filter((item) => item.to !== "/")} role={role} />
           </>
         ) : (
           <NavGroup label="Command Center" items={globalItems} role={role} />
@@ -205,12 +205,14 @@ export default function Sidebar() {
           </div>
           <button
             className="sidebar-logout"
+            aria-label="Log out"
+            title="Log out"
             onClick={() => {
               logout();
               navigate("/login", { replace: true });
             }}
           >
-            Log out
+            <IconLogOut />
           </button>
         </div>
       </div>

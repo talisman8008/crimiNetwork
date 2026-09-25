@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
-import { getCaseById } from "../data/mockData";
+import { entitiesForCase, getCaseById } from "../data/mockData";
 import type { MergeDecision } from "../lib/entityResolution";
 import { useLocalStorage } from "../lib/useLocalStorage";
 import { EntityIcon, formatDate, RiskBadge } from "../components/ui";
@@ -10,12 +10,33 @@ import { useActiveCase } from "../lib/activeCase";
 import { useEntityResolutionQueue } from "../hooks/useCaseData";
 import { useCaseGraph } from "../hooks/useCaseData";
 import type { Entity } from "../data/types";
+import type { ResolutionQueueResponse } from "../lib/apiService";
 
 interface DecisionRecord {
   decision: MergeDecision;
   by: string;
   at: string;
 }
+
+const demoResolutionQueue: ResolutionQueueResponse = {
+  pending_pairs: 2,
+  pairs: [
+    {
+      pair_id: "demo-rajan-kyc",
+      entity_a: { id: "rajan", name: "Rajan Kumar", type: "person", sources: ["FIR", "CDR"], phones: ["+91 98••• 4412"], addresses: ["Andheri West"], appearances: 4 },
+      entity_b: { id: "demo-rajan-kyc", name: "Raju Kumar", type: "person", sources: ["Bank KYC"], phones: ["+91 98••• 4412"], addresses: ["Andheri West"], appearances: 1 },
+      similarity: 0.91,
+      suggested_action: "Review alias and matching handset before merging.",
+    },
+    {
+      pair_id: "demo-imran-telecom",
+      entity_a: { id: "imran", name: "Imran Sheikh", type: "person", sources: ["FIR", "CDR"], phones: ["+91 97••• 2284"], addresses: ["Andheri West"], appearances: 3 },
+      entity_b: { id: "demo-imran-telecom", name: "Imran S. Sheikh", type: "person", sources: ["Telecom subscriber record"], phones: ["+91 97••• 2284"], addresses: ["Andheri West"], appearances: 1 },
+      similarity: 0.87,
+      suggested_action: "Confirm the subscriber address and alias before merging.",
+    },
+  ],
+};
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
@@ -28,7 +49,12 @@ export default function EntityResolution() {
   const { officerId } = useAuth();
   const { activeCaseId } = useActiveCase();
   const { queue, loading, error, approve, reject } = useEntityResolutionQueue(activeCaseId);
-  const { entities } = useCaseGraph(activeCaseId);
+  const { entities: liveEntities } = useCaseGraph(activeCaseId);
+  const isDemoCase = activeCaseId === "demo-uploaded-case";
+  const entities = isDemoCase ? entitiesForCase("case-1") : liveEntities;
+  const activeQueue = isDemoCase ? demoResolutionQueue : queue;
+  const queueLoading = isDemoCase ? false : loading;
+  const queueError = isDemoCase ? null : error;
   const [decisions, setDecisions] = useLocalStorage<Record<string, DecisionRecord>>("netra-merge-decisions", {});
 
   // Resolve entity IDs from the backend pairs to full Entity objects via the loaded graph.
@@ -38,7 +64,7 @@ export default function EntityResolution() {
     return m;
   }, [entities]);
 
-  const pairs = queue?.pairs ?? [];
+  const pairs = activeQueue?.pairs ?? [];
   const pending = pairs.filter((p) => !decisions[p.pair_id]);
   const resolved = pairs.filter((p) => decisions[p.pair_id]);
 
@@ -47,8 +73,10 @@ export default function EntityResolution() {
       ...prev,
       [pairId]: { decision, by: officerId ?? "unknown", at: today() },
     }));
-    if (decision === "approved") approve(pairId);
-    else reject(pairId);
+    if (!isDemoCase) {
+      if (decision === "approved") approve(pairId);
+      else reject(pairId);
+    }
   }
 
   function undo(pairId: string) {
@@ -83,19 +111,19 @@ export default function EntityResolution() {
           </div>
         )}
 
-        {activeCaseId && loading && (
+        {activeCaseId && queueLoading && (
           <div className="card">
             <div className="empty-state">Loading merge queue&hellip;</div>
           </div>
         )}
 
-        {activeCaseId && error && (
+        {activeCaseId && queueError && (
           <div className="card">
-            <div className="empty-state">Could not load the merge queue: {error}</div>
+            <div className="empty-state">Could not load the merge queue: {queueError}</div>
           </div>
         )}
 
-        {activeCaseId && !loading && !error && pending.length === 0 && (
+        {activeCaseId && !queueLoading && !queueError && pending.length === 0 && (
           <div className="card">
             <div className="empty-state">No candidate duplicates awaiting review.</div>
           </div>
@@ -178,7 +206,7 @@ export default function EntityResolution() {
                   <button className="btn" onClick={() => decide(p.pair_id, "rejected")}>
                     Not the same
                   </button>
-                  <Link className="btn" to={`/profile/${p.entity_b.id}`}>
+                  <Link className="btn" to={`/profile/${duplicate?.id ?? p.entity_a.id}`}>
                     Inspect record
                   </Link>
                 </div>

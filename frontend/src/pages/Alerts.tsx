@@ -4,24 +4,32 @@ import PageHeader from "../components/PageHeader";
 import { formatDate, SeverityBadge } from "../components/ui";
 import { useActiveCase } from "../lib/activeCase";
 import { useCaseAlerts, useCaseGraph, useCases } from "../hooks/useCaseData";
+import { alerts as curatedAlerts, cases as curatedCases, entitiesForCase } from "../data/mockData";
 import type { AlertSeverity, AlertStatus } from "../data/types";
 
 export default function Alerts() {
   const { activeCaseId } = useActiveCase();
   const { alerts, loading, error, markViewed } = useCaseAlerts(activeCaseId);
-  const { entities } = useCaseGraph(activeCaseId);
-  const { cases } = useCases();
+  const { entities: liveEntities } = useCaseGraph(activeCaseId);
+  const { cases: liveCases } = useCases();
+  const isMockCase = activeCaseId === "demo-uploaded-case" || activeCaseId === "case-1" || activeCaseId === "case-2";
+  const mockCaseId = activeCaseId === "case-2" ? "case-2" : "case-1";
+  const visibleAlerts = isMockCase ? curatedAlerts.filter((alert) => alert.caseId === mockCaseId) : alerts;
+  const entities = isMockCase ? entitiesForCase(mockCaseId) : liveEntities;
+  const cases = isMockCase ? curatedCases : liveCases;
+  const alertLoading = isMockCase ? false : loading;
+  const alertError = isMockCase ? null : error;
 
   const [severityFilter, setSeverityFilter] = useState<AlertSeverity | "all">("all");
   const [statusFilter, setStatusFilter] = useState<AlertStatus | "all">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
-    return [...alerts]
+    return [...visibleAlerts]
       .filter((a) => (severityFilter === "all" ? true : a.severity === severityFilter))
       .filter((a) => (statusFilter === "all" ? true : a.status === statusFilter))
       .sort((a, b) => (a.detectedOn < b.detectedOn ? 1 : -1));
-  }, [alerts, severityFilter, statusFilter]);
+  }, [visibleAlerts, severityFilter, statusFilter]);
 
   const entityLabels = useMemo(
     () => new Map(entities.map((entity) => [entity.id, entity.label])),
@@ -53,17 +61,17 @@ export default function Alerts() {
   return (
     <>
       <PageHeader eyebrow="Detection" title="Alerts" />
-      {loading && (
+      {alertLoading && (
         <div className="content">
           <div className="empty-state">Loading alerts&hellip;</div>
         </div>
       )}
-      {error && (
+      {alertError && (
         <div className="content">
-          <div className="empty-state">Could not load alerts: {error}</div>
+          <div className="empty-state">Could not load alerts: {alertError}</div>
         </div>
       )}
-      {!loading && !error && (
+      {!alertLoading && !alertError && (
         <>
           <div className="filter-bar">
             <select className="select" value={severityFilter} onChange={(e) => setSeverityFilter(e.target.value as AlertSeverity | "all")}>
@@ -79,7 +87,7 @@ export default function Alerts() {
               <option value="dismissed">Dismissed</option>
             </select>
             <div style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-tertiary)" }}>
-              {filtered.length} of {alerts.length} alerts
+              {filtered.length} of {visibleAlerts.length} alerts
             </div>
           </div>
           <div className="content">
@@ -126,7 +134,7 @@ export default function Alerts() {
                       {a.status === "new" && (
                         <button
                           className="btn btn-primary"
-                          onClick={() => markViewed(a.id)}
+                          onClick={() => { if (!isMockCase) markViewed(a.id); }}
                         >
                           Mark viewed
                         </button>
