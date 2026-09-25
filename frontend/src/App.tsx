@@ -36,6 +36,7 @@ export default function App() {
               <Route element={<RequireAuth />}>
                 <Route path="/" element={<Layout />}>
                   <Route index element={<Dashboard />} />
+                  <Route path="dashboard" element={<Dashboard />} />
                   <Route path="network" element={<NetworkGraph />} />
                   <Route path="entities" element={<Entities />} />
                   <Route path="cases" element={<Cases />} />
