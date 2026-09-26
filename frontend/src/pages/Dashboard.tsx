@@ -68,7 +68,7 @@ export default function Dashboard() {
   const [caseNumber, setCaseNumber] = useState("");
   const [station, setStation] = useState("");
   const [createdCase, setCreatedCase] = useState<Case | null>(readDemoCase);
-  const [showOperationNightfall, setShowOperationNightfall] = useState(true);
+  const [hideOperationNightfall, setHideOperationNightfall] = useState(true);
 
   useEffect(() => {
     if (!isAnalysing) return;
@@ -105,7 +105,7 @@ export default function Dashboard() {
 
   const baseCases = [DAY_TANGO_CASE];
   const operationNightfall = createdCase ?? DEFAULT_NIGHTFALL_CASE;
-  const displayCases = showOperationNightfall ? [operationNightfall, ...baseCases] : baseCases;
+  const displayCases = hideOperationNightfall ? baseCases : [operationNightfall, ...baseCases];
   const selectedCase = displayCases.find((c) => c.id === selectedCaseId) ?? displayCases[0];
   const isMockDashboardCase = selectedCase?.id === "demo-uploaded-case" || selectedCase?.id === "case-2";
   const seededCaseId = isMockDashboardCase ? "case-1" : selectedCase?.id;
@@ -173,14 +173,14 @@ export default function Dashboard() {
               <div className="dashboard-case-rail-controls">
                 {!caseRailCollapsed && <button
                   type="button"
-                  className={`dashboard-nightfall-toggle ${showOperationNightfall ? "is-on" : ""}`}
-                  onClick={() => setShowOperationNightfall((shown) => {
-                    if (shown && selectedCaseId === "demo-uploaded-case") setSelectedCaseId(baseCases[0]?.id ?? "");
-                    return !shown;
+                  className={`dashboard-nightfall-toggle ${hideOperationNightfall ? "is-on" : ""}`}
+                  onClick={() => setHideOperationNightfall((hidden) => {
+                    if (!hidden && selectedCaseId === "demo-uploaded-case") setSelectedCaseId(baseCases[0]?.id ?? "");
+                    return !hidden;
                   })}
-                  aria-label={showOperationNightfall ? "Hide Operation Nightfall" : "Show Operation Nightfall"}
-                  aria-pressed={showOperationNightfall}
-                  title={showOperationNightfall ? "Hide Operation Nightfall" : "Show Operation Nightfall"}
+                  aria-label={hideOperationNightfall ? "Show Operation Nightfall" : "Hide Operation Nightfall"}
+                  aria-pressed={hideOperationNightfall}
+                  title={hideOperationNightfall ? "Operation Nightfall hidden" : "Hide Operation Nightfall"}
                 ><span /></button>}
                 <button
                   type="button"
