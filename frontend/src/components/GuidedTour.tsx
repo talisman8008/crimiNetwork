@@ -8,8 +8,7 @@ interface TourStep {
   selector: string;
   title: string;
   body: string;
-  /** Route this step lives on. The tour walks the real journey — caseload, then the graph —
-   *  rather than describing the graph from a page that is not showing it. */
+  /** Route this step lives on when a tour needs to navigate before highlighting it. */
   route?: string;
 }
 
@@ -42,24 +41,6 @@ const steps: TourStep[] = [
     selector: ".notif-bell",
     title: "Hearings and alerts",
     body: "Upcoming court dates, cross-case entity matches and anything flagged since you were last in. The count is what still needs a decision.",
-  },
-  {
-    route: "/workspace",
-    selector: ".workspace-current-project",
-    title: "Current investigation",
-    body: "This is the case-level brief: flagged patterns and connected investigations are gathered here before you decide where to focus next.",
-  },
-  {
-    route: "/workspace",
-    selector: ".workspace-activity-panel",
-    title: "Mapped activity",
-    body: "The workspace map uses the same confirmed locations as the full map, so the evidence stays consistent as you move between views.",
-  },
-  {
-    route: "/workspace",
-    selector: ".workspace-actions-column",
-    title: "Evidence and case actions",
-    body: "Open the graph, inspect the map, review hearings, and access CCTV sightings from this casework column.",
   },
 ];
 
@@ -112,8 +93,7 @@ export default function GuidedTour() {
     return () => document.documentElement.classList.remove("tour-sidebar-open");
   }, [tourOpen, index, location.pathname]);
 
-  // Starting it from the workspace keeps this focused on casework; everywhere else follows
-  // the original dashboard-led introduction.
+  // The tour is dashboard-led, including when it is launched from elsewhere.
   useEffect(() => {
     if (!tourOpen) return;
     const workspaceStart = steps.findIndex((candidate) => candidate.route === "/workspace");
