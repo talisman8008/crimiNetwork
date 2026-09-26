@@ -20,13 +20,26 @@ import type { Case } from "../data/types";
 
 const DEMO_CASE_ID = "demo-uploaded-case";
 const DEMO_CASE_STORAGE_KEY = "netra-demo-uploaded-case";
+const DEFAULT_NIGHTFALL_CASE: Case = {
+  id: DEMO_CASE_ID,
+  code: "CASE-2026-0142",
+  title: "Operation Nightfall",
+  status: "active",
+  priority: "high",
+  openedOn: "2026-09-25",
+  leadOfficer: "Inspector Asha Kulkarni",
+  station: "Central Crime Station",
+  entityIds: [],
+  summary: "Curated intelligence analysis generated from uploaded case files.",
+  sections: [],
+};
 
 function readDemoCase(): Case | null {
   try {
     const value = localStorage.getItem(DEMO_CASE_STORAGE_KEY);
-    return value ? JSON.parse(value) as Case : null;
+    return value ? JSON.parse(value) as Case : DEFAULT_NIGHTFALL_CASE;
   } catch {
-    return null;
+    return DEFAULT_NIGHTFALL_CASE;
   }
 }
 
@@ -60,7 +73,12 @@ export default function CaseWorkspace() {
   const { case: backendCase, loading: caseLoading } = useCase(activeCaseId);
   const { entities: caseEntities, relationships: caseLinks } = useCaseGraph(activeCaseId);
   const isDemoCase = activeCaseId === DEMO_CASE_ID;
-  const c = isDemoCase ? readDemoCase() : backendCase;
+  // Resolve the mock case immediately. The API-backed hook starts empty for a
+  // render, which previously exposed the "No case open" state after clicking
+  // the dashboard button.
+  const c = isDemoCase
+    ? readDemoCase()
+    : backendCase ?? (activeCaseId ? getCaseById(activeCaseId) : null);
 
   if (!c) {
     return (

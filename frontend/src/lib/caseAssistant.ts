@@ -85,6 +85,12 @@ export async function askQuestion(
   caseId: string,
   query: string
 ): Promise<CopilotAnswer> {
+  // The recorded prototype stays fully offline. Answer known demo cases from
+  // the curated brief instead of making a request that will fail without API.
+  if (mockCaseIds.has(caseId)) {
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 450));
+    return mockAnswer(query);
+  }
   try {
     // A real authenticated case uses the backend RAG copilot. The prototype case has no
     // server-side counterpart, so it deliberately falls through to its offline brief.
@@ -104,10 +110,6 @@ export async function askQuestion(
       referenced_entities: res.referenced_entities,
     };
   } catch (error) {
-    if (mockCaseIds.has(caseId)) {
-      await new Promise<void>((resolve) => window.setTimeout(resolve, 450));
-      return mockAnswer(query);
-    }
     throw error;
   }
 }
