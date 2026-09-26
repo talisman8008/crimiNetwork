@@ -124,6 +124,32 @@ export interface CopilotResponse {
     referenced_entities: string[];
 }
 
+export interface EntityProfileResponse {
+    identity: {
+        id?: string;
+        name?: string;
+        aliases?: string[];
+        entity_type?: string;
+        sources?: string[];
+        appearance_count?: number;
+        confidence?: number;
+    };
+    connections: Array<{
+        entity?: string;
+        entity_id?: string;
+        relationship?: string;
+        confidence?: number;
+        frequency?: number;
+        source?: string;
+    }>;
+    risk: {
+        anomaly_score?: number;
+        factors?: string[];
+        community_id?: number;
+        centrality_rank?: number;
+    };
+}
+
 // ----- Helpers --------------------------------------------------------------
 
 const API_BASE: string =
@@ -295,6 +321,10 @@ export async function fetchGraph(
     const entities = (raw.nodes ?? []).map((n) => buildEntity(n, caseId));
     const relationships = (raw.edges ?? []).map(buildRelationship);
     return { entities, relationships };
+}
+
+export async function fetchEntityProfile(caseId: string, entityId: string): Promise<EntityProfileResponse> {
+    return apiGet<EntityProfileResponse>(`/api/cases/${caseId}/entities/${entityId}`);
 }
 
 export async function fetchAlerts(caseId: string): Promise<Alert[]> {
