@@ -25,6 +25,14 @@ export const suggestedPrompts: string[] = [
 
 function mockAnswer(query: string): CopilotAnswer {
   const text = query.toLowerCase();
+  if (/kulupwadi|kulup wadi/.test(text)) {
+    return {
+      answer: "A CCTV sighting was recorded near Kulupwadi on 18 February 2026. The MH-02-BQ-4471 sedan was observed stopping briefly near the service lane, followed by a short meeting between Rajan Kumar and Nasreen Shaikh. The event supports the financial-routing link already identified between the two subjects.",
+      sources: ["Kulupwadi CCTV observation", "Vehicle sighting log", "Financial-routing alert"],
+      confidence: 0.91,
+      referenced_entities: ["rajan", "nasreen", "car"],
+    };
+  }
   if (/(second|next|important|priority|rank)/.test(text)) {
     return {
       answer: "After Rajan Kumar, Imran Sheikh is the most operationally important figure. He bridges the core extortion network to the Malad branch, has direct communications with Rajan, and is linked to Evershine Nagar through surveillance and call-detail activity.",

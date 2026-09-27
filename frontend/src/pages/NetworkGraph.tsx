@@ -18,7 +18,7 @@ import { findShortestPath } from "../lib/graphAlgo";
 import { useCaseWorkspaces } from "../lib/caseWorkspace";
 import { communityColor, detectCommunities } from "../lib/communities";
 import { useActiveCase } from "../lib/activeCase";
-import type { Entity, EntityType, RelationType, Relationship, SourceType } from "../data/types";
+import type { Entity, EntityType, RelationType, Relationship, SourceType, TimelineEvent } from "../data/types";
 import { eventsForCase } from "../data/timelineData";
 import EventTimeline from "../components/EventTimeline";
 
@@ -43,6 +43,13 @@ const graphTypeLabels: Record<EntityType, string> = {
   phone: "Phone",
 };
 
+const PROTOTYPE_TIMELINE_START = "2026-02-02";
+const PROTOTYPE_TIMELINE_END = "2026-03-03";
+const prototypeTimelineDates = [
+  "2026-02-03", "2026-02-04", "2026-02-14", "2026-02-15", "2026-02-16", "2026-02-20",
+  "2026-03-01", "2026-03-02", "2026-03-03",
+];
+
 export default function NetworkGraph() {
   const [searchParams] = useSearchParams();
   const { activeCaseId } = useActiveCase();
@@ -54,6 +61,7 @@ export default function NetworkGraph() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [showKeyPlayers, setShowKeyPlayers] = useState(false);
+  const [legendExpanded, setLegendExpanded] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(searchParams.get("entity"));
   const [pathfinderOpen, setPathfinderOpen] = useState(false);
@@ -64,22 +72,39 @@ export default function NetworkGraph() {
   const [timelineStep, setTimelineStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   const playTimer = useRef<number | null>(null);
+  const activityLogRef = useRef<HTMLDivElement>(null);
   const { entities: liveEntities, relationships: liveRelationships } = useCaseGraph(
     caseId === "all" ? null : caseId
   );
   const isDemoCase = caseId === "demo-uploaded-case";
   const demoGraphLinks = useMemo<Relationship[]>(() => [
-    ...relationshipsForCase("case-1"),
-    { id: "demo-rk-rajan", source: "rk", target: "rajan", type: "financial", weight: 4, evidenceSource: "Financial Transactions", observedOn: "2026-03-12", description: "Front company account routed proceeds to the key suspect." },
-    { id: "demo-rajan-andheri", source: "rajan", target: "andheri", type: "frequents", weight: 3, evidenceSource: "Surveillance Reports", observedOn: "2026-03-15", description: "Subject sighted near the origin incident location." },
+    ...relationshipsForCase("case-1").map((relationship, index) => ({
+      ...relationship,
+      observedOn: prototypeTimelineDates[index % prototypeTimelineDates.length],
+    })),
+    { id: "demo-rk-rajan", source: "rk", target: "rajan", type: "financial", weight: 4, evidenceSource: "Financial Transactions", observedOn: "2026-02-16", description: "Front company account routed proceeds to the key suspect." },
+    { id: "demo-rajan-andheri", source: "rajan", target: "andheri", type: "frequents", weight: 3, evidenceSource: "Surveillance Reports", observedOn: "2026-02-20", description: "Subject sighted near the origin incident location." },
     { id: "demo-rajan-car", source: "rajan", target: "car", type: "ownership", weight: 2, evidenceSource: "FIR & Police Reports", observedOn: "2026-02-04", description: "Vehicle access attributed to the key suspect." },
-    { id: "demo-imran-malad", source: "imran", target: "malad", type: "frequents", weight: 4, evidenceSource: "Surveillance Reports", observedOn: "2026-03-13", description: "Field coordinator was observed at Evershine Nagar before the interception." },
-    { id: "demo-rajan-phone", source: "rajan", target: "phone-key", type: "communication", weight: 6, evidenceSource: "Call Detail Records", observedOn: "2026-03-16", description: "Encrypted handset used by the key suspect." },
-    { id: "demo-phone-imran", source: "phone-key", target: "imran", type: "communication", weight: 5, evidenceSource: "Call Detail Records", observedOn: "2026-03-17", description: "Encrypted handset contacted the field coordinator." },
+    { id: "demo-imran-malad", source: "imran", target: "malad", type: "frequents", weight: 4, evidenceSource: "Surveillance Reports", observedOn: "2026-03-01", description: "Field coordinator was observed at Evershine Nagar before the interception." },
+    { id: "demo-rajan-phone", source: "rajan", target: "phone-key", type: "communication", weight: 6, evidenceSource: "Call Detail Records", observedOn: "2026-03-02", description: "Encrypted handset used by the key suspect." },
+    { id: "demo-phone-imran", source: "phone-key", target: "imran", type: "communication", weight: 5, evidenceSource: "Call Detail Records", observedOn: "2026-03-03", description: "Encrypted handset contacted the field coordinator." },
   ], []);
   const demoPhone: Entity = { id: "phone-key", type: "phone", label: "Encrypted Phone", number: "+91 98••• 4412", riskLevel: "high", caseIds: ["case-1"], tags: ["encrypted device", "CDR link"], notes: "Handset recovered from a vehicle associated with the key suspect." };
   const graphEntities = isDemoCase ? [...entitiesForCase("case-1"), demoPhone] : liveEntities;
   const graphRelationships = isDemoCase ? demoGraphLinks : liveRelationships;
+  const activeDateFrom = isDemoCase ? PROTOTYPE_TIMELINE_START : dateFrom;
+  const activeDateTo = isDemoCase ? PROTOTYPE_TIMELINE_END : dateTo;
+  const prototypeActivityEvents = useMemo<TimelineEvent[]>(() => demoGraphLinks.map((relationship, index) => ({
+    id: `timeline-${relationship.id}`,
+    type: relationship.type === "communication" ? "call" : relationship.type === "financial" ? "transaction" : relationship.type === "frequents" ? "sighting" : "meeting",
+    caseId: "case-1",
+    date: relationship.observedOn,
+    time: `${String(9 + (index % 8)).padStart(2, "0")}:${index % 2 ? "35" : "10"}`,
+    entityIds: [relationship.source, relationship.target],
+    evidenceSource: relationship.evidenceSource,
+    sourceRef: relationship.evidenceSource,
+    summary: relationship.description,
+  })), [demoGraphLinks]);
   const { workspaces, save: saveWorkspace } = useCaseWorkspaces();
   const restoredFor = useRef<string | null>(null);
 
@@ -98,8 +123,10 @@ export default function NetworkGraph() {
     setDateTo(w.dateTo);
     setSearch(w.search);
     setSelectedId(w.selectedEntityId);
-    setTimelineOn(w.timelineOn);
-    setTimelineStep(w.timelineStep);
+    // The prototype always opens with the complete network visible. Replay is
+    // an explicit action from the play button, never a restored state.
+    setTimelineOn(false);
+    setTimelineStep(0);
     setPlaying(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseId]);
@@ -139,11 +166,11 @@ export default function NetworkGraph() {
         if (!filteredIds.has(r.source) || !filteredIds.has(r.target)) return false;
         if (relationType !== "all" && r.type !== relationType) return false;
         if (sourceFilter !== "all" && r.evidenceSource !== sourceFilter) return false;
-        if (dateFrom && r.observedOn < dateFrom) return false;
-        if (dateTo && r.observedOn > dateTo) return false;
+        if (activeDateFrom && r.observedOn < activeDateFrom) return false;
+        if (activeDateTo && r.observedOn > activeDateTo) return false;
         return true;
       }),
-    [graphRelationships, filteredIds, relationType, sourceFilter, dateFrom, dateTo],
+    [graphRelationships, filteredIds, relationType, sourceFilter, activeDateFrom, activeDateTo],
   );
 
   const communityResult = useMemo(
@@ -209,6 +236,16 @@ export default function NetworkGraph() {
   useEffect(() => {
     setTimelineStep((step) => Math.min(step, Math.max(timelineDates.length - 1, 0)));
   }, [timelineDates.length]);
+
+  useEffect(() => {
+    if (!timelineOn || !activityLogRef.current) return;
+    const log = activityLogRef.current;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const frame = window.requestAnimationFrame(() => {
+      log.scrollTo({ top: log.scrollHeight, behavior: reduceMotion ? "auto" : "smooth" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [timelineOn, currentDate]);
 
   const keyPlayers = useMemo(() => {
     const degree = new Map<string, number>();
@@ -378,30 +415,35 @@ export default function NetworkGraph() {
 
               {!selectedEntity && (
                 <aside className="graph-legend" aria-label="Graph legend">
-                  <div className="graph-legend-column">
-                    <div className="graph-legend-title">Entity types</div>
-                    {allTypes.map((type) => (
+                  <button type="button" className="graph-legend-toggle" aria-expanded={legendExpanded} onClick={() => setLegendExpanded((expanded) => !expanded)}>
+                    <span>Map guide</span><span aria-hidden="true">{legendExpanded ? "−" : "+"}</span>
+                  </button>
+                  {legendExpanded && <div className="graph-legend-content">
+                    <div className="graph-legend-column">
+                      <div className="graph-legend-title">Entity types</div>
+                      {allTypes.map((type) => (
                       <div key={type} className="graph-legend-row">
                         <span className="graph-legend-type-swatch" style={{ background: typeSwatch[type] }} />
                         <span>{entityTypeLabel[type]}</span>
                       </div>
-                    ))}
-                  </div>
-                  <div className="graph-legend-column">
-                    <div className="graph-legend-title">Risk ring</div>
-                    <div className="graph-legend-row">
-                      <span className="graph-legend-risk-ring graph-legend-risk-high" />
-                      <span>High risk</span>
+                      ))}
                     </div>
-                    <div className="graph-legend-row">
-                      <span className="graph-legend-risk-ring graph-legend-risk-medium" />
-                      <span>Medium risk</span>
+                    <div className="graph-legend-column">
+                      <div className="graph-legend-title">Risk ring</div>
+                      <div className="graph-legend-row">
+                        <span className="graph-legend-risk-ring graph-legend-risk-high" />
+                        <span>High risk</span>
+                      </div>
+                      <div className="graph-legend-row">
+                        <span className="graph-legend-risk-ring graph-legend-risk-medium" />
+                        <span>Medium risk</span>
+                      </div>
+                      <div className="graph-legend-row">
+                        <span className="graph-legend-risk-ring graph-legend-risk-low" />
+                        <span>Low risk</span>
+                      </div>
                     </div>
-                    <div className="graph-legend-row">
-                      <span className="graph-legend-risk-ring graph-legend-risk-low" />
-                      <span>Low risk</span>
-                    </div>
-                  </div>
+                  </div>}
                 </aside>
               )}
 
@@ -409,9 +451,11 @@ export default function NetworkGraph() {
             <div className="graph-side-pane">
               {/* Activity feed when timeline is on */}
               {timelineOn && !selectedEntity && !pathfinderOpen && (() => {
-                const caseEvents = caseId === "all"
-                  ? [...eventsForCase("case-1"), ...eventsForCase("case-2")].sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`))
-                  : eventsForCase(caseId === "demo-uploaded-case" ? "case-1" : caseId);
+                const caseEvents = isDemoCase
+                  ? prototypeActivityEvents
+                  : caseId === "all"
+                    ? [...eventsForCase("case-1"), ...eventsForCase("case-2")].sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`))
+                    : eventsForCase(caseId);
                 const visibleEvents = currentDate
                   ? caseEvents.filter((e) => e.date <= currentDate)
                   : caseEvents;
@@ -423,7 +467,7 @@ export default function NetworkGraph() {
                         {visibleEvents.length} events
                       </span>
                     </div>
-                    <div className="card-body" style={{ overflowY: "auto", flex: 1 }}>
+                    <div ref={activityLogRef} className="card-body" style={{ overflowY: "auto", flex: 1 }}>
                       <EventTimeline
                         events={visibleEvents}
                         activeDate={currentDate}
@@ -651,8 +695,8 @@ export default function NetworkGraph() {
 
                     <section className="graph-control-section">
                       <div className="graph-control-label">Timeline</div>
-                      <button className={`btn ${timelineOn ? "btn-primary" : ""}`} type="button" aria-pressed={timelineOn} onClick={() => { setPlaying(false); setTimelineStep(0); setTimelineOn((value) => !value); }}>
-                        {timelineOn ? "Hide timeline" : "Replay timeline"}
+                      <button className="btn" type="button" onClick={() => { setPlaying(false); setTimelineStep(0); setTimelineOn(false); }}>
+                        Reset replay
                       </button>
                     </section>
                     <div hidden>
@@ -709,11 +753,11 @@ export default function NetworkGraph() {
               <div className="timeline-date-range" aria-label="Timeline date range">
                 <label>
                   <span>Start</span>
-                  <input type="date" value={dateFrom} max={dateTo || undefined} onChange={(event) => { setPlaying(false); setDateFrom(event.target.value); setTimelineStep(0); }} />
+                  <input type="date" value={activeDateFrom} max={activeDateTo || undefined} readOnly={isDemoCase} onChange={(event) => { setPlaying(false); setDateFrom(event.target.value); setTimelineStep(0); }} />
                 </label>
                 <label>
                   <span>End</span>
-                  <input type="date" value={dateTo} min={dateFrom || undefined} onChange={(event) => { setPlaying(false); setDateTo(event.target.value); setTimelineStep(0); }} />
+                  <input type="date" value={activeDateTo} min={activeDateFrom || undefined} readOnly={isDemoCase} onChange={(event) => { setPlaying(false); setDateTo(event.target.value); setTimelineStep(0); }} />
                 </label>
               </div>
 
@@ -725,7 +769,6 @@ export default function NetworkGraph() {
                   value={Math.min(timelineStep, timelineDates.length - 1)}
                   onChange={(e) => {
                     setPlaying(false);
-                    setTimelineOn(true);
                     setTimelineStep(Number(e.target.value));
                   }}
                   aria-label="Scrub network timeline"
