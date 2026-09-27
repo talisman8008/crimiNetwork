@@ -5428,8 +5428,9 @@ a.rank-row:hover .rank-name {
   align-items: center;
   padding: 2px;
   border: 1px solid transparent;
+  border: 1px solid #fff;
   border-radius: 999px;
-  background: transparent;
+  background: #fff;
   cursor: pointer;
 }
 
@@ -5438,17 +5439,17 @@ a.rank-row:hover .rank-name {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--text-tertiary);
+  background: #fff;
 }
 
 .dashboard-nightfall-toggle.is-on {
   justify-content: flex-end;
-  border-color: transparent;
-  background: transparent;
+  border-color: #fff;
+  background: #fff;
 }
 
 .dashboard-nightfall-toggle.is-on span {
-  background: var(--text-primary);
+  background: #fff;
 }
 
 .dashboard-case-rail-header h2,
